@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fopenmp -shared -Wl,-soname,libbuild_partition_main.so -o libbuild_partition_main.so CMakeFiles/build_partition_main.dir/build_partition_main.cpp.o  -lstdc++fs /usr/lib/x86_64-linux-gnu/libz.so -lrt 
