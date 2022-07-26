@@ -20,6 +20,7 @@ main_func_t ktree_main;
 main_func_t minimiser_main;
 main_func_t partree_main;
 main_func_t partree_multi_main;
+main_func_t tree_main;
 main_func_t sos;
 
 struct cmd_func
@@ -36,6 +37,7 @@ cmd_func cmd_list[] = {
     {"pbuild", &build_partition_main},
     {"partree", &partree_main},
     {"partreeM", &partree_multi_main},
+    {"tree", &tree_main},
 
     /* help in all its form. Must be first non-command */
     {"help", &sos},

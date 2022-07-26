@@ -65,46 +65,17 @@ CMAKE_BINARY_DIR = /mnt/c/DataCopied/Research/tree/build
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target install/local
-install/local: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
 
-# Special rule for the target install/local
-install/local/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local/fast
-
-# Special rule for the target list_install_components
-list_install_components:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
-.PHONY : list_install_components
-
-# Special rule for the target list_install_components
-list_install_components/fast: list_install_components
-.PHONY : list_install_components/fast
-
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-.PHONY : rebuild_cache/fast
-
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/usr/local/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-.PHONY : edit_cache/fast
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
 
 # Special rule for the target install
 install: preinstall
@@ -118,17 +89,46 @@ install/fast: preinstall/fast
 	/usr/local/bin/cmake -P cmake_install.cmake
 .PHONY : install/fast
 
-# Special rule for the target install/strip
-install/strip: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/local/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+.PHONY : edit_cache
 
-# Special rule for the target install/strip
-install/strip/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip/fast
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+.PHONY : edit_cache/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+.PHONY : rebuild_cache/fast
+
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -162,82 +162,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named partree_multi_main
+# Target rules for targets named build_partition_main
 
 # Build rule for target.
-partree_multi_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 partree_multi_main
-.PHONY : partree_multi_main
+build_partition_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 build_partition_main
+.PHONY : build_partition_main
 
 # fast build rule for target.
-partree_multi_main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_multi_main.dir/build.make CMakeFiles/partree_multi_main.dir/build
-.PHONY : partree_multi_main/fast
-
-#=============================================================================
-# Target rules for targets named partree_main
-
-# Build rule for target.
-partree_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 partree_main
-.PHONY : partree_main
-
-# fast build rule for target.
-partree_main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_main.dir/build.make CMakeFiles/partree_main.dir/build
-.PHONY : partree_main/fast
-
-#=============================================================================
-# Target rules for targets named minimiser_main
-
-# Build rule for target.
-minimiser_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 minimiser_main
-.PHONY : minimiser_main
-
-# fast build rule for target.
-minimiser_main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/minimiser_main.dir/build.make CMakeFiles/minimiser_main.dir/build
-.PHONY : minimiser_main/fast
-
-#=============================================================================
-# Target rules for targets named ktree_main
-
-# Build rule for target.
-ktree_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ktree_main
-.PHONY : ktree_main
-
-# fast build rule for target.
-ktree_main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ktree_main.dir/build.make CMakeFiles/ktree_main.dir/build
-.PHONY : ktree_main/fast
-
-#=============================================================================
-# Target rules for targets named tree
-
-# Build rule for target.
-tree: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tree
-.PHONY : tree
-
-# fast build rule for target.
-tree/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree.dir/build.make CMakeFiles/tree.dir/build
-.PHONY : tree/fast
-
-#=============================================================================
-# Target rules for targets named build_main
-
-# Build rule for target.
-build_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 build_main
-.PHONY : build_main
-
-# fast build rule for target.
-build_main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_main.dir/build.make CMakeFiles/build_main.dir/build
-.PHONY : build_main/fast
+build_partition_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_partition_main.dir/build.make CMakeFiles/build_partition_main.dir/build
+.PHONY : build_partition_main/fast
 
 #=============================================================================
 # Target rules for targets named similarity_main
@@ -253,17 +188,95 @@ similarity_main/fast:
 .PHONY : similarity_main/fast
 
 #=============================================================================
-# Target rules for targets named build_partition_main
+# Target rules for targets named tree
 
 # Build rule for target.
-build_partition_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 build_partition_main
-.PHONY : build_partition_main
+tree: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tree
+.PHONY : tree
 
 # fast build rule for target.
-build_partition_main/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_partition_main.dir/build.make CMakeFiles/build_partition_main.dir/build
-.PHONY : build_partition_main/fast
+tree/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree.dir/build.make CMakeFiles/tree.dir/build
+.PHONY : tree/fast
+
+#=============================================================================
+# Target rules for targets named ktree_main
+
+# Build rule for target.
+ktree_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ktree_main
+.PHONY : ktree_main
+
+# fast build rule for target.
+ktree_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ktree_main.dir/build.make CMakeFiles/ktree_main.dir/build
+.PHONY : ktree_main/fast
+
+#=============================================================================
+# Target rules for targets named minimiser_main
+
+# Build rule for target.
+minimiser_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 minimiser_main
+.PHONY : minimiser_main
+
+# fast build rule for target.
+minimiser_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/minimiser_main.dir/build.make CMakeFiles/minimiser_main.dir/build
+.PHONY : minimiser_main/fast
+
+#=============================================================================
+# Target rules for targets named partree_main
+
+# Build rule for target.
+partree_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 partree_main
+.PHONY : partree_main
+
+# fast build rule for target.
+partree_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_main.dir/build.make CMakeFiles/partree_main.dir/build
+.PHONY : partree_main/fast
+
+#=============================================================================
+# Target rules for targets named partree_multi_main
+
+# Build rule for target.
+partree_multi_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 partree_multi_main
+.PHONY : partree_multi_main
+
+# fast build rule for target.
+partree_multi_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_multi_main.dir/build.make CMakeFiles/partree_multi_main.dir/build
+.PHONY : partree_multi_main/fast
+
+#=============================================================================
+# Target rules for targets named build_main
+
+# Build rule for target.
+build_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 build_main
+.PHONY : build_main
+
+# fast build rule for target.
+build_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_main.dir/build.make CMakeFiles/build_main.dir/build
+.PHONY : build_main/fast
+
+#=============================================================================
+# Target rules for targets named tree_main
+
+# Build rule for target.
+tree_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tree_main
+.PHONY : tree_main
+
+# fast build rule for target.
+tree_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree_main.dir/build.make CMakeFiles/tree_main.dir/build
+.PHONY : tree_main/fast
 
 build_main.o: build_main.cpp.o
 .PHONY : build_main.o
@@ -457,6 +470,30 @@ similarity_main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/similarity_main.cpp.s
 .PHONY : similarity_main.cpp.s
 
+tree_main.o: tree_main.cpp.o
+.PHONY : tree_main.o
+
+# target to build an object file
+tree_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree_main.dir/build.make CMakeFiles/tree_main.dir/tree_main.cpp.o
+.PHONY : tree_main.cpp.o
+
+tree_main.i: tree_main.cpp.i
+.PHONY : tree_main.i
+
+# target to preprocess a source file
+tree_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree_main.dir/build.make CMakeFiles/tree_main.dir/tree_main.cpp.i
+.PHONY : tree_main.cpp.i
+
+tree_main.s: tree_main.cpp.s
+.PHONY : tree_main.s
+
+# target to generate assembly for a file
+tree_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree_main.dir/build.make CMakeFiles/tree_main.dir/tree_main.cpp.s
+.PHONY : tree_main.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -477,6 +514,7 @@ help:
 	@echo "... partree_multi_main"
 	@echo "... similarity_main"
 	@echo "... tree"
+	@echo "... tree_main"
 	@echo "... build_main.o"
 	@echo "... build_main.i"
 	@echo "... build_main.s"
@@ -501,6 +539,9 @@ help:
 	@echo "... similarity_main.o"
 	@echo "... similarity_main.i"
 	@echo "... similarity_main.s"
+	@echo "... tree_main.o"
+	@echo "... tree_main.i"
+	@echo "... tree_main.s"
 .PHONY : help
 
 
