@@ -34,6 +34,7 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
     // Retrieve the sequences and ids.
     for (auto &[seq, id, qual] : file_in)
     {
+        // fprintf(stdout, ">\n");
         for (auto &&hashes : seq | minimiser_view)
         {
             for (size_t hash : hashes)
@@ -48,7 +49,7 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
 
             bf.clear();
         }
-        // fprintf(stdout, "\n");
+        
 
         // fprintf(stderr,">s\n");
 

@@ -26,9 +26,9 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-tree_type clusterSignatures(const vector<vector<sig_type>> &seqs)
+tree_type clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 {
-    size_t seqCount = seqs.size() - 1;
+    size_t seqCount = seqs.size();
     vector<size_t> clusters(seqCount);
     tree_type tree(partree_capacity);
 
@@ -46,20 +46,26 @@ tree_type clusterSignatures(const vector<vector<sig_type>> &seqs)
         insertionList.push_back(partree_capacity - i);
     }
 
+    firstNodes = 2;
+
     // Insert first 1 nodes single-threaded
     for (size_t i = 0; i < firstNodes; i++)
     {
         tree.first_insert(seqs[i], insertionList, i);
+        
     }
+
 
     for (size_t i = firstNodes; i < seqCount; i++)
     {
         // fprintf(stdout, "inserting %zu", i);
-        tree.next_insert(seqs[i], insertionList, i);
+        tree.insert(seqs[i], insertionList, i, i%2+1);
     }
 
-    cout<<"var treeData=";
-    tree.printSubTreeJson(tree.root);
+    tree.insert(seqs[0], insertionList, seqCount, 7);
+
+    // cout<<"var treeData=";
+    // tree.printSubTreeJson(tree.root);
 
     // Recursively destroy all locks
     tree.destroyLocks();
@@ -72,21 +78,6 @@ void outputClusters(FILE *pFile, const vector<size_t> &clusters)
     for (size_t sig = 0; sig < clusters.size(); sig++)
     {
         fprintf(pFile, "%llu,%llu\n", static_cast<unsigned long long>(sig), static_cast<unsigned long long>(clusters[sig]));
-    }
-}
-
-void search(tree_type tree, const vector<vector<sig_type>> &queries)
-{
-    // vector<sig_type> query;
-    // query.push_back(0);
-    // query.push_back(18);
-    // query.push_back(35);
-    // query.push_back(0);
-
-    for (size_t i = 0; i < queries.size() - 1; i++)
-    {
-        cout << "Found " << i << " in: ";
-        tree.search(queries[i]);
     }
 }
 
@@ -104,29 +95,15 @@ int tree_main(int argc, char *argv[])
 
     string inputFile = args.input_arg;
 
-    vector<vector<sig_type>> seqs = readPartition(inputFile);
-    // std::cout << "seqCount: " << seqCount << "\n";
-    // for (auto seq : seqs)
-    // {
-    //     for (auto h : seq)
-    //     {
-    //         std::cout << h << ",";
-    //     }
-    //     std::cout << "\n";
-    // }
-
+    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
     fprintf(stderr, "Loaded signatures...\n");
 
+    signatureSize = seqs[0][0].size();
     fprintf(stderr, "Building Signature...\n");
     default_random_engine rng;
     tree_type tree = clusterSignatures(seqs);
 
-    if (args.query_given)
-    {
-        fprintf(stderr, "Searching queries...\n");
-        vector<vector<sig_type>> queries = readPartition(args.query_arg);
-        search(tree, queries);
-    }
+    tree.printTreeJson(stdout);
 
     return 0;
 }
