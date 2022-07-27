@@ -120,12 +120,15 @@ public:
         isBranchNode[root] = 0;
     }
 
-    size_t calcHD(const sig_type *a, const sig_type *b) const
+    size_t calcHD(seq_type a, seq_type b) const
     {
         size_t c = 0;
-        for (size_t i = 0; i < signatureSize; i++)
+        for ()
         {
-            c += __builtin_popcountll(a[i] ^ b[i]);
+            for (size_t i = 0; i < signatureSize; i++)
+            {
+                c += __builtin_popcountll(a[i] ^ b[i]);
+            }
         }
         return c;
     }
@@ -181,12 +184,13 @@ public:
 
     */
 
-    void printMatrix(size_t node)
+    void printMatrix(File *stream, size_t node)
     {
-        // for (sig_type val : matrices[node])
-        // {
-        //     std::cout << val << "n";
-        // }
+        fprintf(stream, ">>>printing matrix at node %zu\n", node);
+        for (seq_type seq : matrices[node])
+        {
+            dbgPrintSignature(stream, seq);
+        }
     }
 
     size_t getNewNodeIdx(vector<size_t> &insertionList)
@@ -515,6 +519,14 @@ public:
         printSubTreeJson(stream, root);
     }
 
+    void addSigToMatrix(size_t node, seq_type signature)
+    {
+        matrices[node].push_back(signature);
+
+        // // debug
+        // printMatrix(stderr, node);
+    }
+
     inline void first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         size_t parent = root;
@@ -525,11 +537,38 @@ public:
         childCounts[parent]++;
 
         seqIDs[node].push_back(idx);
-        // addSigToMatrix(node, &signature[0]);
+        addSigToMatrix(node, signature);
     }
-    inline void insert(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t parent)
+
+    inline size_t traverse(seq_type signature) const
     {
-        // size_t parent = 1;
+        size_t node = root;
+
+        while (isBranchNode[node])
+        {
+            size_t lowestHD = numeric_limits<size_t>::max();
+            size_t lowestHDchild = childLinks[node][0];
+
+            for (size_t i = 0; i < childCounts[node]; i++)
+            {
+                size_t child = childLinks[node][i];
+                size_t hd = calcHD(matrices[node][child], signature);
+                if (hd < lowestHD)
+                {
+                    lowestHD = hd;
+                    lowestHDchild = child;
+                }
+            }
+
+            node = lowestHDchild;
+        }
+
+        return node;
+    }
+
+    inline void insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    {
+        size_t parent = 1;
         size_t node = getNewNodeIdx(insertionList);
         parentLinks[node] = parent;
         childLinks[parent].push_back(node);

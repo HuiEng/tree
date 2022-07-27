@@ -120,7 +120,9 @@ function update(source) {
 			// } else {
 			// 	return d.node;
 			// }
-			return d.node;
+			//?
+			// return d.node;
+			return d.childCount;
 		}).call(wrap,1)
 		.style("fill-opacity", 1e-6);
 
@@ -196,7 +198,7 @@ function click(d) {
 }
 
 function mouseover(d) {
-	document.getElementById("info").innerHTML = "childCount: " + d.childCount + "\ncontent: " + d.content + "\n";
+	document.getElementById("info").innerHTML = "node: " + d.node + "\ncontent: " + d.content + "\n";
 }
 
 // click(root)

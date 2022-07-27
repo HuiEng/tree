@@ -46,26 +46,17 @@ tree_type clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
         insertionList.push_back(partree_capacity - i);
     }
 
-    firstNodes = 2;
-
     // Insert first 1 nodes single-threaded
     for (size_t i = 0; i < firstNodes; i++)
     {
         tree.first_insert(seqs[i], insertionList, i);
-        
     }
-
 
     for (size_t i = firstNodes; i < seqCount; i++)
     {
         // fprintf(stdout, "inserting %zu", i);
-        tree.insert(seqs[i], insertionList, i, i%2+1);
+        tree.insert(seqs[i], insertionList, i);
     }
-
-    tree.insert(seqs[0], insertionList, seqCount, 7);
-
-    // cout<<"var treeData=";
-    // tree.printSubTreeJson(tree.root);
 
     // Recursively destroy all locks
     tree.destroyLocks();
