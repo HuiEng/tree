@@ -121,8 +121,9 @@ function update(source) {
 			// 	return d.node;
 			// }
 			//?
-			// return d.node;
-			return d.childCount;
+			//return d.node - 1;
+			// return d.childCount;
+			return d.content;
 		}).call(wrap,1)
 		.style("fill-opacity", 1e-6);
 

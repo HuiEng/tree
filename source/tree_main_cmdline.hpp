@@ -360,7 +360,8 @@ public:
   size_t order_arg;
   size_t capacity_arg;
   const char *query_arg;
-  double threshold_arg;
+  double split_threshold_arg;
+  double stay_threshold_arg;
 
   bool input_given;
   bool order_given;
@@ -368,7 +369,8 @@ public:
   bool multiple_arg;
   bool intersect_arg;
   bool query_given;
-  bool threshold_given;
+  bool split_threshold_given;
+  bool stay_threshold_given;
 
   enum
   {
@@ -377,22 +379,24 @@ public:
   };
 
   tree_main_cmdline() : input_arg(""),
-                         order_arg(0), capacity_arg(0),
-                         input_given(false),
-                         order_given(false), capacity_given(false),
-                         multiple_arg(false), intersect_arg(false),
-                         query_given(false), query_arg(""),
-                         threshold_given(false), threshold_arg(0)
+                        order_arg(0), capacity_arg(0),
+                        input_given(false),
+                        order_given(false), capacity_given(false),
+                        multiple_arg(false), intersect_arg(false),
+                        query_given(false), query_arg(""),
+                        split_threshold_given(false), split_threshold_arg(0),
+                        stay_threshold_given(false), stay_threshold_arg(0)
   {
   }
 
   tree_main_cmdline(int argc, char *argv[]) : input_arg(""),
-                                               order_arg(0), capacity_arg(0),
-                                               input_given(false),
-                                               order_given(false), capacity_given(false),
-                                               multiple_arg(false), intersect_arg(false),
-                                               query_given(false), query_arg(""),
-                                               threshold_given(false), threshold_arg(0)
+                                              order_arg(0), capacity_arg(0),
+                                              input_given(false),
+                                              order_given(false), capacity_given(false),
+                                              multiple_arg(false), intersect_arg(false),
+                                              query_given(false), query_arg(""),
+                                              split_threshold_given(false), split_threshold_arg(0),
+                                              stay_threshold_given(false), stay_threshold_arg(0)
   {
     parse(argc, argv);
   }
@@ -403,7 +407,8 @@ public:
         {"input", 1, 0, 'i'},
         {"capacity", 1, 0, 'c'},
         {"order", 1, 0, 'o'},
-        {"threshold", 1, 0, 't'},
+        {"split", 1, 0, 'L'},
+        {"stay", 1, 0, 'S'},
         {"multiple", 0, 0, 'm'},
         {"intersect", 0, 0, 'I'},
         {"query", 1, 0, 'q'},
@@ -411,7 +416,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:mIq:t:";
+    static const char *short_options = "hVi:o:c:mIq:S:L:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -454,10 +459,17 @@ public:
         query_given = true;
         query_arg = optarg;
         break;
-      case 't':
-        threshold_given = true;
-        threshold_arg = conv_double((const char *)optarg, err, false);
-        // CHECK_ERR(double, optarg, "-t, --threshold=double")
+      case 'L':
+        split_threshold_given = true;
+        split_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(double, optarg, "-t, --split=double")
+        // split_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        // CHECK_ERR(size_t, optarg, "-t, --split=size_t")
+        break;
+      case 'S':
+        stay_threshold_given = true;
+        stay_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(double, optarg, "-t, --stay=double")
         break;
       case 'o':
         order_given = true;
@@ -547,7 +559,8 @@ public:
            " -o,                                      tree order [default=10]\n"
            " -c,                                      tree capacity [default=1000000]\n"
            " -q, --query                              query file\n"
-           " -t, --threshold                          split root if BFI < BF_len * threshold [default=0]\n"
+           " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
+           " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            " -I, --intersect                          compare BF by intersecting bits [default=FALSE, calc by HD]\n"
            "     --usage                              Usage\n"
@@ -574,8 +587,10 @@ public:
     os << " intersect_arg:" << intersect_arg << "\n";
     os << " query_given:" << query_given << "\t"
        << " query_arg:" << query_arg << "\n";
-    os << " threshold_given:" << threshold_given << "\t"
-       << " threshold_arg:" << threshold_arg << "\n";
+    os << " split_threshold_given:" << split_threshold_given << "\t"
+       << " split_threshold_arg:" << split_threshold_arg << "\n";
+    os << " stay_threshold_given:" << stay_threshold_given << "\t"
+       << " stay_threshold_arg:" << stay_threshold_arg << "\n";
   }
 };
 #endif // __TREE_MAIN_CMDLINE_HPP__"

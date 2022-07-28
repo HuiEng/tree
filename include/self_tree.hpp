@@ -20,6 +20,8 @@
 #include "read.hpp"
 
 typedef vector<vector<cell_type>> seq_type;
+double split_threshold = 1;
+double stay_threshold = 0;
 using namespace std;
 
 // typedef unsigned char cell_type;
@@ -120,17 +122,38 @@ public:
         isBranchNode[root] = 0;
     }
 
-    size_t calcHD(seq_type a, seq_type b) const
+    size_t calcHDwrapper(seq_type shorter, seq_type longer) const
     {
         size_t c = 0;
-        for ()
+        // treat tail subseq as mismatch
+        for (int w = 0; w < shorter.size(); w++)
         {
             for (size_t i = 0; i < signatureSize; i++)
             {
-                c += __builtin_popcountll(a[i] ^ b[i]);
+                c += __builtin_popcountll(shorter[w][i] ^ longer[w][i]);
+            }
+        }
+        // treat tail subseq as mismatch
+        for (int w = shorter.size(); w < longer.size(); w++)
+        {
+            for (size_t i = 0; i < signatureSize; i++)
+            {
+                c += __builtin_popcountll(longer[w][i]);
             }
         }
         return c;
+    }
+
+    size_t calcHD(seq_type a, seq_type b) const
+    {
+        if (a.size() < b.size())
+        {
+            return calcHDwrapper(a, b);
+        }
+        else
+        {
+            return calcHDwrapper(b, a);
+        }
     }
 
     /*
@@ -184,7 +207,7 @@ public:
 
     */
 
-    void printMatrix(File *stream, size_t node)
+    void printMatrix(FILE *stream, size_t node)
     {
         fprintf(stream, ">>>printing matrix at node %zu\n", node);
         for (seq_type seq : matrices[node])
@@ -208,6 +231,13 @@ public:
         return idx;
     }
 
+    size_t findAncestor(size_t node){
+        while(parentLinks[node]!=root){
+            node = parentLinks[node];
+        }
+        return node;
+    }
+    
     /*
         // lock parent while updating matrix, return parent node for unlocking later
         size_t findParent(size_t node, sig_type *meanSig)
@@ -527,7 +557,7 @@ public:
         // printMatrix(stderr, node);
     }
 
-    inline void first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    inline size_t first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         size_t parent = root;
         size_t node = getNewNodeIdx(insertionList);
@@ -538,44 +568,85 @@ public:
 
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
+        return node;
     }
 
-    inline size_t traverse(seq_type signature) const
+    // return if found same, and the destination node
+    inline tuple<bool, size_t> traverse(seq_type signature) const
     {
         size_t node = root;
+        size_t a = signature.size();
 
         while (isBranchNode[node])
         {
+            // fprintf(stderr, " \n%zu: ", node);
             size_t lowestHD = numeric_limits<size_t>::max();
             size_t lowestHDchild = childLinks[node][0];
+            size_t mismatch = 0;
 
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t hd = calcHD(matrices[node][child], signature);
-                if (hd < lowestHD)
+                size_t hd = calcHD(matrices[child][0], signature);
+                size_t b = matrices[child][0].size();
+
+                // found same, move on with the next seq
+                if (hd <= stay_threshold * max(a, b))
+                {
+                    return make_tuple(true, child);
+                }
+                else if (hd < lowestHD)
                 {
                     lowestHD = hd;
                     lowestHDchild = child;
                 }
+
+                // count how many nodes mismatch
+                if (hd >= split_threshold * a)
+                {
+                    mismatch++;
+                }
+
+                // fprintf(stderr, " <%zu,%zu> ", child, hd);
+            }
+
+
+            // nothing is close enough, spawn new child under parent
+            if (mismatch == childCounts[node])
+            {
+                return make_tuple(false, node);
             }
 
             node = lowestHDchild;
         }
 
-        return node;
+        return std::make_tuple(false, node);
+        ;
     }
 
-    inline void insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
-        size_t parent = 1;
-        size_t node = getNewNodeIdx(insertionList);
-        parentLinks[node] = parent;
-        childLinks[parent].push_back(node);
-        isBranchNode[parent] = 1;
-        childCounts[parent]++;
+        bool stay;
+        size_t parent;
+        tie(stay, parent) = traverse(signature);
+        // fprintf(stderr, "inserting seq %zu at node %zu; stay: %d\n", idx, parent, stay);
 
-        seqIDs[node].push_back(idx);
+        if (!stay)
+        {
+            size_t node = getNewNodeIdx(insertionList);
+            parentLinks[node] = parent;
+            childLinks[parent].push_back(node);
+            isBranchNode[parent] = 1;
+            childCounts[parent]++;
+            addSigToMatrix(node, signature);
+            seqIDs[node].push_back(idx);
+            return node;
+        }
+        else
+        {
+            seqIDs[parent].push_back(idx);
+            return parent;
+        }
 
         // size_t insertionPoint = traverse(signature);
 

@@ -7,6 +7,14 @@ using namespace std;
 
 static tree_main_cmdline args; // Command line switches and arguments
 
+void outputClusters(FILE *pFile, const vector<size_t> &clusters)
+{
+    for (size_t sig = 0; sig < clusters.size(); sig++)
+    {
+        fprintf(pFile, "%llu,%llu\n", static_cast<unsigned long long>(sig), static_cast<unsigned long long>(clusters[sig]));
+    }
+}
+
 void compressClusterList(vector<size_t> &clusters)
 {
     unordered_map<size_t, size_t> remap;
@@ -26,7 +34,7 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-tree_type clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
+vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 {
     size_t seqCount = seqs.size();
     vector<size_t> clusters(seqCount);
@@ -49,28 +57,25 @@ tree_type clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
     // Insert first 1 nodes single-threaded
     for (size_t i = 0; i < firstNodes; i++)
     {
-        tree.first_insert(seqs[i], insertionList, i);
+        size_t clus = tree.first_insert(seqs[i], insertionList, i);
+        clusters[i] = clus;
     }
 
     for (size_t i = firstNodes; i < seqCount; i++)
     {
         // fprintf(stdout, "inserting %zu", i);
-        tree.insert(seqs[i], insertionList, i);
+        size_t clus = tree.insert(seqs[i], insertionList, i);
+        clusters[i] = tree.findAncestor(clus);
     }
 
     // Recursively destroy all locks
     tree.destroyLocks();
 
-    return tree;
+    tree.printTreeJson(stdout);
+
+    return clusters;
 }
 
-void outputClusters(FILE *pFile, const vector<size_t> &clusters)
-{
-    for (size_t sig = 0; sig < clusters.size(); sig++)
-    {
-        fprintf(pFile, "%llu,%llu\n", static_cast<unsigned long long>(sig), static_cast<unsigned long long>(clusters[sig]));
-    }
-}
 
 int tree_main(int argc, char *argv[])
 {
@@ -84,6 +89,16 @@ int tree_main(int argc, char *argv[])
         return 0;
     }
 
+    if(args.split_threshold_given){
+        split_threshold = args.split_threshold_arg;
+        fprintf(stderr, "split threshold: %f\n", split_threshold);
+    }
+
+    if(args.stay_threshold_given){
+        stay_threshold = args.stay_threshold_arg;
+        fprintf(stderr, "stay threshold: %f\n", stay_threshold);
+    }
+
     string inputFile = args.input_arg;
 
     vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
@@ -92,9 +107,18 @@ int tree_main(int argc, char *argv[])
     signatureSize = seqs[0][0].size();
     fprintf(stderr, "Building Signature...\n");
     default_random_engine rng;
-    tree_type tree = clusterSignatures(seqs);
+    vector<size_t> clusters = clusterSignatures(seqs);
 
-    tree.printTreeJson(stdout);
+    fprintf(stderr, "writing output...\n");
+
+    size_t firstindex = inputFile.find_last_of("/") + 1;
+    size_t lastindex = inputFile.find_last_of(".");
+    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
+
+    auto fileName = rawname + "-s" + to_string(stay_threshold) + "-l" + to_string(split_threshold);
+    FILE *pFile = fopen((fileName + ".txt").c_str(), "w");
+    outputClusters(pFile, clusters);
+
 
     return 0;
 }
