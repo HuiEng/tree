@@ -621,7 +621,6 @@ public:
         }
 
         return std::make_tuple(false, node);
-        ;
     }
 
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
@@ -668,6 +667,59 @@ public:
         //     }
         // }
         // omp_unset_lock(&locks[insertionPoint]);
+    }
+
+    // return if found same, and the destination node
+    inline size_t search(seq_type signature, size_t idx) const
+    {
+        size_t node = root;
+        size_t a = signature.size();
+
+        while (isBranchNode[node])
+        {
+            // fprintf(stderr, " \n%zu: ", node);
+            size_t lowestHD = numeric_limits<size_t>::max();
+            size_t lowestHDchild = childLinks[node][0];
+            size_t mismatch = 0;
+
+            for (size_t i = 0; i < childCounts[node]; i++)
+            {
+                size_t child = childLinks[node][i];
+                size_t hd = calcHD(matrices[child][0], signature);
+                size_t b = matrices[child][0].size();
+
+                // found same, move on with the next seq
+                if (hd <= stay_threshold * max(a, b))
+                {
+                    return child;
+                }
+                else if (hd < lowestHD)
+                {
+                    lowestHD = hd;
+                    lowestHDchild = child;
+                }
+
+                // count how many nodes mismatch
+                if (hd >= split_threshold * a)
+                {
+                    mismatch++;
+                }
+
+                // fprintf(stderr, " <%zu,%zu> ", child, hd);
+            }
+
+
+            //? nothing is close enough, return parent
+            if (mismatch == childCounts[node])
+            {
+                fprintf(stderr, ">%zu mismatch\n", idx);
+                return parentLinks[node];
+            }
+
+            node = lowestHDchild;
+        }
+
+        return node;
     }
 
     void destroyLocks(size_t node)

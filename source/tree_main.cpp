@@ -7,11 +7,15 @@ using namespace std;
 
 static tree_main_cmdline args; // Command line switches and arguments
 
-void outputClusters(FILE *pFile, const vector<size_t> &clusters)
+void outputClusters(FILE *pFile, const vector<tuple<size_t, size_t>> &clusters)
 {
+    fprintf(pFile, "seqID,cluster,ancestor\n");
     for (size_t sig = 0; sig < clusters.size(); sig++)
     {
-        fprintf(pFile, "%llu,%llu\n", static_cast<unsigned long long>(sig), static_cast<unsigned long long>(clusters[sig]));
+        fprintf(pFile, "%llu,%llu,%llu\n",
+                static_cast<unsigned long long>(sig),
+                static_cast<unsigned long long>(get<0>(clusters[sig])),
+                static_cast<unsigned long long>(get<1>(clusters[sig])));
     }
 }
 
@@ -34,10 +38,10 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
+vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 {
     size_t seqCount = seqs.size();
-    vector<size_t> clusters(seqCount);
+    vector<tuple<size_t, size_t>> clusters(seqCount);
     tree_type tree(partree_capacity);
 
     size_t firstNodes = 1;
@@ -58,14 +62,23 @@ vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
     for (size_t i = 0; i < firstNodes; i++)
     {
         size_t clus = tree.first_insert(seqs[i], insertionList, i);
-        clusters[i] = clus;
+        clusters[i] = make_tuple(clus, clus);
     }
 
     for (size_t i = firstNodes; i < seqCount; i++)
     {
         // fprintf(stdout, "inserting %zu", i);
         size_t clus = tree.insert(seqs[i], insertionList, i);
-        clusters[i] = tree.findAncestor(clus);
+        // clusters[i] = tree.findAncestor(clus);
+        clusters[i] = make_tuple(clus, tree.findAncestor(clus));
+    }
+
+    for (size_t i = 0; i < seqCount; i++)
+    {
+        // fprintf(stdout, "inserting %zu", i);
+        size_t clus = tree.search(seqs[i], i);
+        // clusters[i] = tree.findAncestor(clus);
+        clusters[i] = make_tuple(clus, tree.findAncestor(clus));
     }
 
     // Recursively destroy all locks
@@ -75,7 +88,6 @@ vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 
     return clusters;
 }
-
 
 int tree_main(int argc, char *argv[])
 {
@@ -89,12 +101,14 @@ int tree_main(int argc, char *argv[])
         return 0;
     }
 
-    if(args.split_threshold_given){
+    if (args.split_threshold_given)
+    {
         split_threshold = args.split_threshold_arg;
         fprintf(stderr, "split threshold: %f\n", split_threshold);
     }
 
-    if(args.stay_threshold_given){
+    if (args.stay_threshold_given)
+    {
         stay_threshold = args.stay_threshold_arg;
         fprintf(stderr, "stay threshold: %f\n", stay_threshold);
     }
@@ -107,7 +121,7 @@ int tree_main(int argc, char *argv[])
     signatureSize = seqs[0][0].size();
     fprintf(stderr, "Building Signature...\n");
     default_random_engine rng;
-    vector<size_t> clusters = clusterSignatures(seqs);
+    vector<tuple<size_t, size_t>> clusters = clusterSignatures(seqs);
 
     fprintf(stderr, "writing output...\n");
 
@@ -115,10 +129,9 @@ int tree_main(int argc, char *argv[])
     size_t lastindex = inputFile.find_last_of(".");
     string rawname = inputFile.substr(firstindex, lastindex - firstindex);
 
-    auto fileName = rawname + "-s" + to_string(stay_threshold) + "-l" + to_string(split_threshold);
+    auto fileName = rawname + "-s" + to_string((int)stay_threshold) + "-l" + to_string((int)split_threshold);
     FILE *pFile = fopen((fileName + ".txt").c_str(), "w");
     outputClusters(pFile, clusters);
-
 
     return 0;
 }
