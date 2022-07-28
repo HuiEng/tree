@@ -164,7 +164,7 @@ public:
         isBranchNode[root] = 0;
     }
 
-    size_t calcHDwrapper(seq_type shorter, seq_type longer) const
+    size_t calcHD(seq_type shorter, seq_type longer) const
     {
         size_t c = 0;
         // treat tail subseq as mismatch
@@ -186,15 +186,15 @@ public:
         return c;
     }
 
-    size_t calcHD(seq_type a, seq_type b) const
+    size_t calcDistance(seq_type a, seq_type b) const
     {
         if (a.size() < b.size())
         {
-            return calcHDwrapper(a, b);
+            return calcHD(a, b);
         }
         else
         {
-            return calcHDwrapper(b, a);
+            return calcHD(b, a);
         }
     }
 
@@ -227,7 +227,7 @@ public:
                 for (size_t i = 0; i < childCounts[node]; i++)
                 {
                     size_t child = childLinks[node][i];
-                    size_t hd = calcHD(&means[child * signatureSize], signature);
+                    size_t hd = calcDistance(&means[child * signatureSize], signature);
                     if (hd < lowestHD)
                     {
                         lowestHD = hd;
@@ -615,6 +615,19 @@ public:
         return node;
     }
 
+    // if there is only 1 path and the input is closer to the parent than the child, rotate them
+    inline void rotate(size_t node, seq_type signature){
+        size_t parent = parentLinks[node];
+        size_t d1 = calcDistance(signature, matrices[node][0]);
+        size_t d2 = calcDistance(signature, matrices[parent][0]);
+
+
+        
+
+
+
+    }
+    
     // return if found same, and the destination node
     inline tuple<bool, size_t> traverse(seq_type signature) const
     {
@@ -632,7 +645,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t hd = calcHD(matrices[child][0], signature);
+                size_t hd = calcDistance(matrices[child][0], signature);
                 size_t b = countBits(matrices[child][0]);
 
                 fprintf(stderr, " <%zu,%zu,%zu> ", child, hd, b);
@@ -760,7 +773,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t hd = calcHD(matrices[child][0], signature);
+                size_t hd = calcDistance(matrices[child][0], signature);
                 size_t b = countBits(matrices[child][0]);
 
                 // found same, move on with the next seq
