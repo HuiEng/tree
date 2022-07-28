@@ -107,8 +107,9 @@ function update(source) {
 
 	nodeEnter.append("circle")
 		.attr("r", 1e-6)
-		.style("fill", function (d) { {return d.node ? "lightsteelblue" : "#fff"; }});
+		//.style("fill", function (d) { {return d.node ? "lightsteelblue" : "#fff"; }});
 		// .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; });
+		.style("fill", function (d) {return d.content.split(/,/).length == 2 ? "red" : "lightsteelblue";});
 
 	nodeEnter.append("text")
 		.attr("x", function (d) { return d.children || d._children ? -13 : 1; })
@@ -124,7 +125,7 @@ function update(source) {
 			//return d.node - 1;
 			// return d.childCount;
 			return d.content;
-		}).call(wrap,1)
+		}).call(wrap, 1)
 		.style("fill-opacity", 1e-6);
 
 	// Transition nodes to their new position.
@@ -134,8 +135,10 @@ function update(source) {
 
 	nodeUpdate.select("circle")
 		.attr("r", 10)
-		.style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; })
-		.style("stroke", function (d) { return d.node ? "lightsteelblue" : "#fff"; });
+		// .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; })
+		.style("fill", function (d) {return d.content.split(/,/).length == 2 ? "red" : "lightsteelblue";})
+		.style("stroke", function (d) {return d.content.split(/,/).length == 2 ? "red" : "lightsteelblue";});
+		// .style("stroke", function (d) { return d.node ? "lightsteelblue" : "#fff"; });
 
 	nodeUpdate.select("text")
 		.style("fill-opacity", 1);
@@ -154,7 +157,7 @@ function update(source) {
 
 	// Update the links…
 	var link = svg.selectAll("path.link")
-		.data(links, function (d) { if(d.target.node){return d.target.id;} });
+		.data(links, function (d) { if (d.target.node) { return d.target.id; } });
 
 	// Enter any new links at the parent's previous position.
 	link.enter().insert("path", "g")

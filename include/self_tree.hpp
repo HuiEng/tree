@@ -29,6 +29,39 @@ bloom_parameters parameters;
 size_t signatureSize; // Signature size (depends on element in BF, obtained while read binary)
 size_t partree_capacity = 100;
 
+size_t countBits(seq_type seq)
+{
+    size_t c = 0;
+    for (int w = 0; w < seq.size(); w++)
+    {
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(seq[w][i]);
+        }
+    }
+    return c;
+}
+
+
+inline void toBinaryIdx(FILE *stream, vector<cell_type> sig)
+{
+    for (int i = 0; i < signatureSize; i++)
+    {
+        int binary[bits_per_char];
+        for (int n = 0; n < bits_per_char; n++)
+            binary[bits_per_char - 1 - n] = (sig[i] >> n) & 1;
+
+        for (int n = 0; n < bits_per_char; n++)
+        {
+            if (binary[n] > 0)
+            {
+                fprintf(stream, "%zu,", n + i * bits_per_char);
+            }
+        }
+    }
+    fprintf(stream, "\n");
+}
+
 void toBinary(FILE *stream, vector<cell_type> sig)
 {
     //   fprintf(stderr, "%p: ", sig);
@@ -50,6 +83,15 @@ void dbgPrintSignature(FILE *stream, vector<vector<cell_type>> seq)
     for (auto window : seq)
     {
         toBinary(stream, window);
+    }
+    fprintf(stream, "\n");
+}
+
+void dbgPrintSignatureIdx(FILE *stream, vector<vector<cell_type>> seq)
+{
+    for (auto window : seq)
+    {
+        toBinaryIdx(stream, window);
     }
     fprintf(stream, "\n");
 }
@@ -231,13 +273,15 @@ public:
         return idx;
     }
 
-    size_t findAncestor(size_t node){
-        while(parentLinks[node]!=root){
+    size_t findAncestor(size_t node)
+    {
+        while (parentLinks[node] != root)
+        {
             node = parentLinks[node];
         }
         return node;
     }
-    
+
     /*
         // lock parent while updating matrix, return parent node for unlocking later
         size_t findParent(size_t node, sig_type *meanSig)
@@ -575,11 +619,12 @@ public:
     inline tuple<bool, size_t> traverse(seq_type signature) const
     {
         size_t node = root;
-        size_t a = signature.size();
+        size_t a = countBits(signature);
+        fprintf(stderr, " \n(%zu,%f )", a, split_threshold * (a + a));
 
         while (isBranchNode[node])
         {
-            // fprintf(stderr, " \n%zu: ", node);
+            fprintf(stderr, " \n%zu: ", node);
             size_t lowestHD = numeric_limits<size_t>::max();
             size_t lowestHDchild = childLinks[node][0];
             size_t mismatch = 0;
@@ -588,10 +633,12 @@ public:
             {
                 size_t child = childLinks[node][i];
                 size_t hd = calcHD(matrices[child][0], signature);
-                size_t b = matrices[child][0].size();
+                size_t b = countBits(matrices[child][0]);
+
+                fprintf(stderr, " <%zu,%zu,%zu> ", child, hd, b);
 
                 // found same, move on with the next seq
-                if (hd <= stay_threshold * max(a, b))
+                if (hd <= stay_threshold * (a + b))
                 {
                     return make_tuple(true, child);
                 }
@@ -602,14 +649,13 @@ public:
                 }
 
                 // count how many nodes mismatch
-                if (hd >= split_threshold * a)
+                if (hd >= split_threshold * (a + b))
                 {
                     mismatch++;
                 }
 
-                // fprintf(stderr, " <%zu,%zu> ", child, hd);
+                
             }
-
 
             // nothing is close enough, spawn new child under parent
             if (mismatch == childCounts[node])
@@ -630,7 +676,7 @@ public:
         tie(stay, parent) = traverse(signature);
         // fprintf(stderr, "inserting seq %zu at node %zu; stay: %d\n", idx, parent, stay);
 
-        if (!stay)
+        if (!stay) // add new node
         {
             size_t node = getNewNodeIdx(insertionList);
             parentLinks[node] = parent;
@@ -641,7 +687,7 @@ public:
             seqIDs[node].push_back(idx);
             return node;
         }
-        else
+        else // add seq without adding new node
         {
             seqIDs[parent].push_back(idx);
             return parent;
@@ -669,11 +715,40 @@ public:
         // omp_unset_lock(&locks[insertionPoint]);
     }
 
+    inline void removeSingleton(vector<tuple<size_t, size_t>> &clusters, vector<size_t> &insertionList)
+    {
+        vector<size_t> tempChildren;
+        vector<size_t> singletons;
+        for (size_t i = 0; i < childCounts[root]; i++)
+        {
+            size_t node = childLinks[root][i];
+            if (childCounts[node] > 1)
+            {
+                tempChildren.push_back(node);
+            }
+            else
+            {
+                singletons.push_back(node);
+            }
+        }
+        childLinks[root].clear();
+        childLinks[root] = tempChildren;
+        childCounts[root] = tempChildren.size();
+
+        for (size_t node : singletons)
+        {
+            size_t i = seqIDs[node][0];
+            // insertionList.push_back(node);
+            size_t clu = insert(matrices[node][0], insertionList, i);
+            clusters[i] = make_tuple(clu, findAncestor(clu));
+        }
+    }
+
     // return if found same, and the destination node
     inline size_t search(seq_type signature, size_t idx) const
     {
         size_t node = root;
-        size_t a = signature.size();
+        size_t a = countBits(signature);
 
         while (isBranchNode[node])
         {
@@ -686,7 +761,7 @@ public:
             {
                 size_t child = childLinks[node][i];
                 size_t hd = calcHD(matrices[child][0], signature);
-                size_t b = matrices[child][0].size();
+                size_t b = countBits(matrices[child][0]);
 
                 // found same, move on with the next seq
                 if (hd <= stay_threshold * max(a, b))
@@ -700,14 +775,13 @@ public:
                 }
 
                 // count how many nodes mismatch
-                if (hd >= split_threshold * a)
+                if (hd >= split_threshold * max(a, b))
                 {
                     mismatch++;
                 }
 
                 // fprintf(stderr, " <%zu,%zu> ", child, hd);
             }
-
 
             //? nothing is close enough, return parent
             if (mismatch == childCounts[node])

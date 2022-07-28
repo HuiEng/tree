@@ -461,14 +461,14 @@ public:
         break;
       case 'L':
         split_threshold_given = true;
-        split_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        split_threshold_arg = conv_double((const char *)optarg, err, false);
         CHECK_ERR(double, optarg, "-t, --split=double")
         // split_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
         // CHECK_ERR(size_t, optarg, "-t, --split=size_t")
         break;
       case 'S':
         stay_threshold_given = true;
-        stay_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        stay_threshold_arg = conv_double((const char *)optarg, err, false);
         CHECK_ERR(double, optarg, "-t, --stay=double")
         break;
       case 'o':
