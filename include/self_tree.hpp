@@ -186,16 +186,33 @@ public:
         return c;
     }
 
+    size_t calcInter(seq_type a, seq_type b) const
+    {
+        size_t c = 0;
+        // treat tail subseq as mismatch
+        for (int w = 0; w < min(a.size(),b.size()); w++)
+        {
+            for (size_t i = 0; i < signatureSize; i++)
+            {
+                c += __builtin_popcountll(a[w][i] & b[w][i]);
+            }
+        }
+        return c;
+    }
+    
+
     size_t calcDistance(seq_type a, seq_type b) const
     {
-        if (a.size() < b.size())
-        {
-            return calcHD(a, b);
-        }
-        else
-        {
-            return calcHD(b, a);
-        }
+        // if (a.size() < b.size())
+        // {
+        //     return calcHD(a, b);
+        // }
+        // else
+        // {
+        //     return calcHD(b, a);
+        // }
+
+        return calcInter(a,b);
     }
 
     /*
@@ -629,7 +646,7 @@ public:
     }
     
     // return if found same, and the destination node
-    inline tuple<bool, size_t> traverse(seq_type signature) const
+    inline tuple<bool, size_t> traverseHD(seq_type signature) const
     {
         size_t node = root;
         size_t a = countBits(signature);
@@ -682,6 +699,65 @@ public:
         return std::make_tuple(false, node);
     }
 
+    
+    // return if found same, and the destination node
+    inline tuple<bool, size_t> traverse(seq_type signature) const
+    {
+        size_t node = root;
+        size_t a = countBits(signature);
+        fprintf(stderr, " \n(%zu, %f, ,%f)", a, split_threshold * a, stay_threshold * a);
+
+        while (isBranchNode[node])
+        {
+            fprintf(stderr, " \n%zu: ", node);
+            size_t maxInter = 0;
+            size_t maxInterchild = childLinks[node][0];
+            size_t mismatch = 0;
+
+            for (size_t i = 0; i < childCounts[node]; i++)
+            {
+                size_t child = childLinks[node][i];
+                size_t inter = calcDistance(matrices[child][0], signature);
+                size_t b = countBits(matrices[child][0]);
+
+                fprintf(stderr, " <%zu,%zu,%zu> ", child, inter, b);
+
+                size_t len = max(a, b);
+
+                // found same, move on with the next seq
+                if (inter >= stay_threshold * len)
+                {
+                    return make_tuple(true, child);
+                }
+                else if (inter < maxInter)
+                {
+                    maxInter = inter;
+                    maxInterchild = child;
+                }
+
+                // count how many nodes mismatch
+                if (inter <= split_threshold * len)
+                {
+                    mismatch++;
+                }
+
+                
+            }
+
+            // nothing is close enough, spawn new child under parent
+            if (mismatch == childCounts[node])
+            {
+                return make_tuple(false, node);
+            }
+
+            node = maxInterchild;
+        }
+
+        return std::make_tuple(false, node);
+    }
+
+    
+    
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         bool stay;
