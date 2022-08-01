@@ -357,14 +357,14 @@ class tree_main_cmdline
 
 public:
   const char *input_arg;
-  size_t order_arg;
+  size_t minimiser_match_arg;
   size_t capacity_arg;
   const char *query_arg;
   double split_threshold_arg;
   double stay_threshold_arg;
 
   bool input_given;
-  bool order_given;
+  bool minimiser_match_given;
   bool capacity_given;
   bool multiple_arg;
   bool intersect_arg;
@@ -379,9 +379,9 @@ public:
   };
 
   tree_main_cmdline() : input_arg(""),
-                        order_arg(0), capacity_arg(0),
+                        minimiser_match_arg(0), capacity_arg(0),
                         input_given(false),
-                        order_given(false), capacity_given(false),
+                        minimiser_match_given(false), capacity_given(false),
                         multiple_arg(false), intersect_arg(false),
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
@@ -390,9 +390,9 @@ public:
   }
 
   tree_main_cmdline(int argc, char *argv[]) : input_arg(""),
-                                              order_arg(0), capacity_arg(0),
+                                              minimiser_match_arg(0), capacity_arg(0),
                                               input_given(false),
-                                              order_given(false), capacity_given(false),
+                                              minimiser_match_given(false), capacity_given(false),
                                               multiple_arg(false), intersect_arg(false),
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
@@ -406,17 +406,17 @@ public:
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
         {"capacity", 1, 0, 'c'},
-        {"order", 1, 0, 'o'},
+        {"minimiser_match", 1, 0, 'm'},
         {"split", 1, 0, 'L'},
         {"stay", 1, 0, 'S'},
-        {"multiple", 0, 0, 'm'},
+        {"multiple", 0, 0, 'M'},
         {"intersect", 0, 0, 'I'},
         {"query", 1, 0, 'q'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:mIq:S:L:";
+    static const char *short_options = "hVi:o:c:MIq:S:L:m:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -472,16 +472,16 @@ public:
         CHECK_ERR(double, optarg, "-t, --stay=double")
         break;
       case 'o':
-        order_given = true;
-        order_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-o, --treeOrder=size_t")
+        minimiser_match_given = true;
+        minimiser_match_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-o, --minimiser_match=size_t")
         break;
       case 'c':
         capacity_given = true;
         capacity_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-w, --treeCapacity=size_t")
         break;
-      case 'm':
+      case 'M':
         multiple_arg = true;
         break;
       case 'I':
@@ -556,7 +556,7 @@ public:
     return "Read minimisers BF and get all-against-all Jaccard tree\n\n"
            "Options (default value in (), *required):\n"
            " -i, --input                              input file or folder\n"
-           " -o,                                      tree order [default=10]\n"
+           " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
            " -c,                                      tree capacity [default=1000000]\n"
            " -q, --query                              query file\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
@@ -579,8 +579,8 @@ public:
   {
     os << " input_given:" << input_given << "\t"
        << " input_arg:" << input_arg << "\n";
-    os << " order_given:" << order_given << "\t"
-       << " order_arg:" << order_arg << "\n";
+    os << " minimiser_match_given:" << minimiser_match_given << "\t"
+       << " minimiser_match_arg:" << minimiser_match_arg << "\n";
     os << " capacity_given:" << capacity_given << "\t"
        << " capacity_arg:" << capacity_arg << "\n";
     os << " multiple_arg:" << multiple_arg << "\n";

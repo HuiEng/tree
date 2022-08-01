@@ -22,6 +22,7 @@
 typedef vector<vector<cell_type>> seq_type;
 double split_threshold = 1;
 double stay_threshold = 0;
+size_t minimiser_match_threshold = 4;
 using namespace std;
 
 // typedef unsigned char cell_type;
@@ -41,7 +42,6 @@ size_t countBits(seq_type seq)
     }
     return c;
 }
-
 
 inline void toBinaryIdx(FILE *stream, vector<cell_type> sig)
 {
@@ -190,7 +190,7 @@ public:
     {
         size_t c = 0;
         // treat tail subseq as mismatch
-        for (int w = 0; w < min(a.size(),b.size()); w++)
+        for (int w = 0; w < min(a.size(), b.size()); w++)
         {
             for (size_t i = 0; i < signatureSize; i++)
             {
@@ -199,7 +199,25 @@ public:
         }
         return c;
     }
-    
+
+    size_t calcMatchingWindows(seq_type a, seq_type b) const
+    {
+        size_t match = 0;
+        // treat tail subseq as mismatch
+        for (int w = 0; w < min(a.size(), b.size()); w++)
+        {
+            size_t c = 0;
+            for (size_t i = 0; i < signatureSize; i++)
+            {
+                c += __builtin_popcountll(a[w][i] & b[w][i]);
+            }
+            if (c >= minimiser_match_threshold)
+            {
+                match++;
+            }
+        }
+        return match;
+    }
 
     size_t calcDistance(seq_type a, seq_type b) const
     {
@@ -212,7 +230,9 @@ public:
         //     return calcHD(b, a);
         // }
 
-        return calcInter(a,b);
+        // return calcInter(a,b);
+
+        return calcMatchingWindows(a, b);
     }
 
     /*
@@ -299,275 +319,16 @@ public:
         return node;
     }
 
-    /*
-        // lock parent while updating matrix, return parent node for unlocking later
-        size_t findParent(size_t node, sig_type *meanSig)
+    size_t findLevel(size_t node)
+    {
+        size_t level = 0;
+        while (node != root)
         {
-            size_t parent = parentLinks[node];
-            // Lock the parent
-            omp_set_lock(&locks[parent]);
-
-            size_t idx = numeric_limits<size_t>::max();
-            for (size_t i = 0; i < childCounts[parent]; i++)
-            {
-                if (childLinks[parent][i] == node)
-                {
-                    idx = i;
-                    break;
-                }
-            }
-
-            // get the wrong parent, try again
-            size_t count = 0;
-            while (idx == numeric_limits<size_t>::max())
-            {
-                // unset old lock
-                omp_unset_lock(&locks[parent]);
-
-                // find and lock new parent
-                parent = parentLinks[node];
-                omp_set_lock(&locks[parent]);
-
-                // find idx
-                for (size_t i = 0; i < childCounts[parent]; i++)
-                {
-                    if (childLinks[parent][i] == node)
-                    {
-                        idx = i;
-                        break;
-                    }
-                }
-                count++;
-                // after 10 trials, skip update, return parent for unlocking
-                if (count > 10)
-                {
-                    return parent;
-                }
-            }
-
-            memcpy(&matri[parent][idx * signatureSize], meanSig, sizeof(sig_type) * signatureSize);
-
-            return parent;
+            node = parentLinks[node];
+            level++;
         }
-
-        void update(size_t node)
-        {
-            for (int i = 0; i < childCounts[node]; i++)
-            {
-                size_t child = childLinks[node][i];
-                memcpy(&matri[node][i * signatureSize], &means[child * signatureSize], sizeof(sig_type) * signatureSize);
-            }
-            if (isBranchNode[parentLinks[node]])
-            {
-                // fprintf(stdout,"again %zu %zu\n",node, parentLinks[node]);
-                update(parentLinks[node]);
-            }
-        }
-
-        template <class RNG>
-        void splitNode(RNG &&rng, size_t node, const sig_type *sig, vector<size_t> &insertionList, size_t link)
-        {
-            size_t nodeSigs = childCounts[node] + 1;
-            vector<sig_type> sigs(nodeSigs * signatureSize);
-            //?
-            copy(matri[node].begin(), matri[node].end(), sigs.begin());
-            memcpy(&sigs[childCounts[node] * signatureSize], sig, sizeof(sig_type) * signatureSize);
-
-            vector<sig_type> meanSigs = createRandomSigs(rng, sigs);
-            vector<size_t> clusters(nodeSigs);
-            vector<vector<size_t>> clusterLists;
-
-            // dbgPrintSignature(&meanSigs[0]);
-            // dbgPrintSignature(&meanSigs[signatureSize]);
-            vector<sig_type> temp(2 * signatureSize);
-
-            for (int iteration = 0; iteration < 4; iteration++)
-            {
-                // fprintf(stderr, "Iteration %d\n", iteration);
-                reclusterSignatures(clusters, meanSigs, sigs);
-                clusterLists = createClusterLists(clusters);
-                memcpy(&temp[0], &meanSigs[0], sizeof(meanSigs));
-                meanSigs = createClusterSigs(clusterLists, sigs, nodeSigs);
-            }
-
-            // Create the sibling node
-            size_t sibling = getNewNodeIdx(insertionList);
-            size_t newlyAddedIdx = childCounts[node];
-
-            childCounts[sibling] = clusterLists[1].size();
-            isBranchNode[sibling] = isBranchNode[node];
-            {
-                size_t siblingIdx = 0;
-                for (size_t seqIdx : clusterLists[1])
-                {
-
-                    // If this is a branch node, relink the child to the new parent
-                    if (isBranchNode[sibling])
-                    {
-                        if (seqIdx < newlyAddedIdx)
-                        {
-                            childLinks[sibling].push_back(childLinks[node][seqIdx]);
-                        }
-                        else
-                        {
-                            childLinks[sibling].push_back(link);
-                        }
-                        parentLinks[childLinks[sibling][siblingIdx]] = sibling;
-                    }
-                    else
-                    {
-                        if (seqIdx < newlyAddedIdx)
-                        {
-                            childLinks[sibling].push_back(childLinks[node][seqIdx]);
-                        }
-                        else
-                        {
-                            childLinks[sibling].push_back(link);
-                        }
-                    }
-                    addSigToMatrix(sibling, &sigs[seqIdx * signatureSize]);
-                    siblingIdx++;
-                }
-            }
-
-            memcpy(&means[node * signatureSize], &meanSigs[0], sizeof(sig_type) * signatureSize);
-            memcpy(&means[sibling * signatureSize], &meanSigs[signatureSize], sizeof(sig_type) * signatureSize);
-
-            childCounts[node] = clusterLists[0].size();
-            // Fill the current node with the other cluster of signatures
-            {
-                matri[node].clear();
-                size_t nodeIdx = 0;
-                for (size_t seqIdx : clusterLists[0])
-                {
-
-                    // If this is a branch node, relink the child to the new parent
-                    if (isBranchNode[node])
-                    {
-                        if (seqIdx < newlyAddedIdx)
-                        {
-                            childLinks[node][nodeIdx] = childLinks[node][seqIdx];
-                        }
-                        else
-                        {
-                            childLinks[node][nodeIdx] = link;
-                        }
-                        parentLinks[childLinks[node][nodeIdx]] = node;
-                    }
-                    else
-                    {
-                        if (seqIdx < newlyAddedIdx)
-                        {
-                            childLinks[node][nodeIdx] = childLinks[node][seqIdx];
-                        }
-                        else
-                        {
-                            childLinks[node][nodeIdx] = link;
-                        }
-                    }
-                    addSigToMatrix(node, &sigs[seqIdx * signatureSize]);
-                    nodeIdx++;
-                }
-                if (isBranchNode[node])
-                {
-                    childLinks[node].resize(childCounts[node]);
-                }
-            }
-
-            if (!isBranchNode[node])
-            {
-                childLinks[node].resize(childCounts[node]);
-                fprintf(stdout, "splitting at %zu\n", node);
-
-                for (size_t child : childLinks[node])
-                {
-                    fprintf(stdout, "%zu,", child);
-                }
-                fprintf(stdout, "\n");
-
-                fprintf(stdout, "sibling %zu\n", sibling);
-
-                for (size_t child : childLinks[sibling])
-                {
-                    fprintf(stdout, "%zu,", child);
-                }
-                fprintf(stdout, "\n");
-
-                // childLinks[node].clear();
-                // childLinks[sibling].clear();
-                // for (size_t i = 0; i < clusters.size(); i++)
-                // {
-                //     fprintf(stderr,"%zu\n", clusters[i]);
-                //     if (clusters[i]==0){
-                //         childLinks[node].push_back(i);
-
-                //     }else{
-                //         childLinks[sibling].push_back(i);
-                //     }
-                // }
-            }
-
-            // Is this the root level?
-            if (node == root)
-            {
-                // Create a new root node
-                size_t newRoot;
-                newRoot = getNewNodeIdx(insertionList);
-
-                // Link this node and the sibling to it
-                parentLinks[node] = newRoot;
-                parentLinks[sibling] = newRoot;
-
-                childCounts[newRoot] = 2;
-                isBranchNode[newRoot] = 1;
-                childLinks[newRoot].push_back(node);
-                childLinks[newRoot].push_back(sibling);
-                addSigToMatrix(newRoot, &meanSigs[0 * signatureSize]);
-                addSigToMatrix(newRoot, &meanSigs[1 * signatureSize]);
-
-                root = newRoot;
-
-                recalculateSig(root);
-            }
-            else
-            {
-                // // First, update the reference to this node in the parent with the new mean
-                // size_t parent = findParent(node, &meanSigs[0]);
-
-                // // Connect sibling node to parent
-                // parentLinks[sibling] = parent;
-
-                // if (childCounts[parent] + 1 < order)
-                // {
-                //     childLinks[parent].push_back(sibling);
-
-                //     childCounts[parent]++;
-                //     addSigToMatrix(parent, &meanSigs[1 * signatureSize]);
-
-                //     // Update signatures (may change?)
-                //     recalculateUp(parent);
-                // }
-                // else
-                // {
-                //     // fprintf(stdout, "after\n");
-                //     splitNode(rng, parent, &meanSigs[1 * signatureSize], insertionList, sibling);
-                // }
-                // update(parent);
-                // // Unlock the parent
-                // omp_unset_lock(&locks[parent]);
-            }
-            // fprintf(stdout, ">>>\n");
-            // for (int i = 0; i < childCounts[root]; i++)
-            // {
-            //     dbgPrintSignature(&matri[root][i * signatureSize]);
-            //     dbgPrintSignature(&means[childLinks[root][i] * signatureSize]);
-            //     fprintf(stdout, "\n");
-            // }
-            // fprintf(stdout, ">>>\n");
-            // printTree();
-        }
-
-    */
+        return level;
+    }
 
     void printNodeJson(FILE *stream, size_t tnode)
     {
@@ -632,19 +393,6 @@ public:
         return node;
     }
 
-    // if there is only 1 path and the input is closer to the parent than the child, rotate them
-    inline void rotate(size_t node, seq_type signature){
-        size_t parent = parentLinks[node];
-        size_t d1 = calcDistance(signature, matrices[node][0]);
-        size_t d2 = calcDistance(signature, matrices[parent][0]);
-
-
-        
-
-
-
-    }
-    
     // return if found same, and the destination node
     inline tuple<bool, size_t> traverseHD(seq_type signature) const
     {
@@ -683,8 +431,6 @@ public:
                 {
                     mismatch++;
                 }
-
-                
             }
 
             // nothing is close enough, spawn new child under parent
@@ -693,15 +439,20 @@ public:
                 return make_tuple(false, node);
             }
 
+            // matching with all, grow on top
+            if (mismatch == 0)
+            {
+                return make_tuple(false, parentLinks[node]);
+            }
+
             node = lowestHDchild;
         }
 
         return std::make_tuple(false, node);
     }
 
-    
     // return if found same, and the destination node
-    inline tuple<bool, size_t> traverse(seq_type signature) const
+    inline tuple<bool, size_t> traverseInter(seq_type signature) const
     {
         size_t node = root;
         size_t a = countBits(signature);
@@ -740,8 +491,6 @@ public:
                 {
                     mismatch++;
                 }
-
-                
             }
 
             // nothing is close enough, spawn new child under parent
@@ -756,13 +505,125 @@ public:
         return std::make_tuple(false, node);
     }
 
-    
-    
+    // if there is only 1 path and the input is closer to the parent than the child, rotate them
+    inline size_t rotate(size_t node, seq_type signature, vector<size_t> &insertionList)
+    {
+        size_t parent = parentLinks[node];
+        size_t old_node = node;
+
+        // find where to insert
+        while (node != root)
+        {
+            size_t match = 0;
+            for (int i = 0; i < childCounts[parent]; i++)
+            {
+                size_t temp = childLinks[parent][i];
+                size_t distance = calcDistance(signature, matrices[temp][0]);
+                //? change length later
+                if (distance > stay_threshold * signature.size() && distance < split_threshold * signature.size())
+                {
+                    match++;
+                }
+            }
+
+            if (match != childCounts[parent])
+            {
+                break;
+            }
+
+            old_node = node;
+            node = parent;
+            parent = parentLinks[node];
+        }
+
+        // insert new node as child of parent and the parent and its siblings are now the children of the new node
+        size_t temp = getNewNodeIdx(insertionList);
+
+        isBranchNode[temp] = 1;
+        parentLinks[temp] = node;
+        childCounts[temp] = 1;
+        childLinks[temp].push_back(old_node);
+        addSigToMatrix(temp, signature);
+
+        // update parent of old_node and siblings
+        for (size_t sibling : childLinks[node])
+        {
+            parentLinks[sibling] = temp;
+        }
+
+        // update parent
+        replace(childLinks[node].begin(), childLinks[node].end(), old_node, temp);
+
+        fprintf(stderr, "***Adding %zu between %zu, %zu, %zu", temp, parent, node, old_node);
+        return temp;
+    }
+
+    // return if found same, and the destination node
+    inline tuple<bool, size_t> traverse(seq_type signature, vector<size_t> &insertionList)
+    {
+        size_t node = root;
+        size_t a = signature.size();
+        fprintf(stderr, " \n(%zu, %f, ,%f)", a, split_threshold * a, stay_threshold * a);
+        double offset = 0;
+
+        while (isBranchNode[node])
+        {
+            fprintf(stderr, " \n%zu: ", node);
+            size_t maxInter = 0;
+            size_t maxInterchild = childLinks[node][0];
+            size_t mismatch = 0;
+
+            for (size_t i = 0; i < childCounts[node]; i++)
+            {
+                size_t child = childLinks[node][i];
+                size_t inter = calcDistance(matrices[child][0], signature);
+                size_t b = matrices[child][0].size();
+
+                size_t len = max(a, b);
+                fprintf(stderr, " <%zu,%zu,%.2f> ", child, inter, (stay_threshold - offset) * len);
+
+
+                // found same, move on with the next seq
+                if (inter >= (stay_threshold - offset) * len)
+                {
+                    return make_tuple(true, child);
+                }
+                else if (inter > maxInter)
+                {
+                    maxInter = inter;
+                    maxInterchild = child;
+                }
+
+                // count how many nodes mismatch
+                if (inter <= (split_threshold)*len)
+                {
+                    mismatch++;
+                }
+            }
+
+            // nothing is close enough, spawn new child under parent
+            if (mismatch == childCounts[node])
+            {
+                return make_tuple(false, node);
+            }
+            // else if (mismatch == 0)
+            // {
+            //     size_t temp = rotate(node, signature, insertionList);
+            //     return make_tuple(true, temp);
+            // }
+
+            node = maxInterchild;
+            offset += 0.1;
+        }
+
+        return std::make_tuple(false, node);
+    }
+
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         bool stay;
         size_t parent;
-        tie(stay, parent) = traverse(signature);
+        tie(stay, parent) = traverse(signature, insertionList);
         // fprintf(stderr, "inserting seq %zu at node %zu; stay: %d\n", idx, parent, stay);
 
         if (!stay) // add new node

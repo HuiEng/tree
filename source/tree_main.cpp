@@ -41,7 +41,7 @@ void compressClusterList(vector<size_t> &clusters)
 vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 {
     size_t seqCount = seqs.size();
-    seqCount = 26;
+    // seqCount = 26;
     vector<tuple<size_t, size_t>> clusters(seqCount);
     tree_type tree(partree_capacity);
 
@@ -129,6 +129,12 @@ int tree_main(int argc, char *argv[])
     {
         stay_threshold = args.stay_threshold_arg;
         fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
+    }
+
+    if (args.minimiser_match_given)
+    {
+        minimiser_match_threshold = args.minimiser_match_arg;
+        fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
     }
 
     string inputFile = args.input_arg;
