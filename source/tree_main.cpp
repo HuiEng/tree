@@ -41,7 +41,7 @@ void compressClusterList(vector<size_t> &clusters)
 vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 {
     size_t seqCount = seqs.size();
-    // seqCount = 26;
+    seqCount = 26;
     vector<tuple<size_t, size_t>> clusters(seqCount);
     tree_type tree(partree_capacity);
 

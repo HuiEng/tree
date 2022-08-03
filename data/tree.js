@@ -57,6 +57,7 @@ function wrap(text, width) {
 					.attr("dy", ++lineNumber * lineHeight + dy + "em")
 					.text(word);
 			}
+			break
 		}
 	});
 }
@@ -124,7 +125,8 @@ function update(source) {
 			//?
 			//return d.node - 1;
 			// return d.childCount;
-			return d.content;
+			// return d.content;
+			return d.priority;
 		}).call(wrap, 1)
 		.style("fill-opacity", 1e-6);
 

@@ -22,7 +22,7 @@
 typedef vector<vector<cell_type>> seq_type;
 double split_threshold = 1;
 double stay_threshold = 0;
-size_t minimiser_match_threshold = 4;
+size_t minimiser_match_threshold = 3;
 using namespace std;
 
 // typedef unsigned char cell_type;
@@ -105,6 +105,7 @@ public:
     vector<vector<size_t>> childLinks; // n * o entries, links to children
     vector<vector<size_t>> seqIDs;     // n * o entries, links to children
     vector<size_t> parentLinks;        // n entries, links to parents
+    vector<size_t> priority;           // n entries, links to parents
     vector<seq_type> means;            // n * signatureSize entries, node signatures
     vector<vector<seq_type>> matrices; // capacity * signatureSize * n
     vector<omp_lock_t> locks;          // n locks
@@ -137,6 +138,10 @@ public:
             //#pragma omp single
             {
                 seqIDs.resize(capacity);
+            }
+            //#pragma omp single
+            {
+                priority.resize(capacity);
             }
             //#pragma omp single
             {
@@ -332,7 +337,7 @@ public:
 
     void printNodeJson(FILE *stream, size_t tnode)
     {
-        fprintf(stream, "{\"node\":\"%zu\",\"childCount\":\"%zu\",\"content\":\"*", tnode, seqIDs[tnode].size());
+        fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%zu\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
         for (size_t seq : seqIDs[tnode])
         {
             fprintf(stream, "%zu,", seq);
@@ -356,7 +361,7 @@ public:
         }
         else
         {
-            fprintf(stream, "{\"node\":\"%zu\",\"childCount\":\"%zu\",\"content\":\"*", tnode, seqIDs[tnode].size());
+            fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%zu\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
             for (size_t seq : seqIDs[tnode])
             {
                 fprintf(stream, "%zu,", seq);
@@ -390,6 +395,7 @@ public:
 
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
+        priority[node] = signature.size();
         return node;
     }
 
@@ -558,6 +564,79 @@ public:
         return temp;
     }
 
+    inline bool isUnipath(size_t node)
+    {
+        size_t parent = parentLinks[node];
+        size_t grandparent = parentLinks[parent];
+
+        // // return the highest node in the unipath
+        // // if output = input node => there is no unipath
+        // // else the highest point is the parent of the output
+        // while (childCounts[parent] == 1 && childCounts[grandparent] == 1)
+        // {
+        //     node = parent;
+        //     parent = grandparent;
+        //     grandparent = parentLinks[parent];
+        // }
+        // return node;
+
+        return childCounts[parent] == 1 && childCounts[grandparent] == 1;
+    }
+
+    // priority = distance to ancestor
+    inline size_t rotateAnc(size_t node, seq_type signature, vector<size_t> &insertionList)
+    {
+        size_t ancestor = findAncestor(node);
+        size_t old_node = node;
+        size_t entry = node;
+
+        // number of matching windows, bigger better
+        size_t a = calcDistance(matrices[ancestor][0], signature);
+
+        while (node != root && isUnipath(node))
+        {
+            if (a <= priority[node])
+            {
+                break;
+            }
+            old_node = node;
+            node = parentLinks[node];
+        }
+
+        // add under 'node'
+        // insert new node as child of parent and the parent and its siblings are now the children of the new node
+        size_t temp = getNewNodeIdx(insertionList);
+
+        parentLinks[temp] = node;
+        addSigToMatrix(temp, signature);
+        priority[temp] = a;
+
+        if (node == entry) // no rotation, add at the bottom
+        {
+            isBranchNode[entry] = 1;
+            childCounts[entry]++;
+            childLinks[entry].push_back(temp);
+            fprintf(stderr, "***Adding %zu after %zu, %zu", temp, entry, a);
+        }
+        else
+        {
+            isBranchNode[temp] = 1;
+            childCounts[temp] = 1;
+            childLinks[temp].push_back(old_node);
+            // update parent of old_node and siblings
+            for (size_t sibling : childLinks[node])
+            {
+                parentLinks[sibling] = temp;
+            }
+
+            // update parent
+            replace(childLinks[node].begin(), childLinks[node].end(), old_node, temp);
+
+            fprintf(stderr, "***Adding %zu between %zu, %zu, %zu, %zu", temp, parentLinks[node], node, old_node, a);
+        }
+        return temp;
+    }
+
     // return if found same, and the destination node
     inline tuple<bool, size_t> traverse(seq_type signature, vector<size_t> &insertionList)
     {
@@ -569,9 +648,9 @@ public:
         while (isBranchNode[node])
         {
             fprintf(stderr, " \n%zu: ", node);
-            size_t maxInter = 0;
             size_t maxInterchild = childLinks[node][0];
             size_t mismatch = 0;
+            vector<size_t> matching_leaves;
 
             for (size_t i = 0; i < childCounts[node]; i++)
             {
@@ -580,24 +659,20 @@ public:
                 size_t b = matrices[child][0].size();
 
                 size_t len = max(a, b);
-                fprintf(stderr, " <%zu,%zu,%.2f> ", child, inter, (stay_threshold - offset) * len);
-
+                fprintf(stderr, " <%zu,%zu,%.2f,%.2f> ", child, inter, (stay_threshold - offset) * len, split_threshold * len);
 
                 // found same, move on with the next seq
                 if (inter >= (stay_threshold - offset) * len)
                 {
                     return make_tuple(true, child);
                 }
-                else if (inter > maxInter)
-                {
-                    maxInter = inter;
-                    maxInterchild = child;
-                }
 
                 // count how many nodes mismatch
                 if (inter <= (split_threshold)*len)
                 {
                     mismatch++;
+                }else if (isBranchNode[child]){
+                    matching_leaves.push_back(child);
                 }
             }
 
@@ -613,10 +688,13 @@ public:
             // }
 
             node = maxInterchild;
-            offset += 0.1;
+            // offset += 0.1;
         }
 
-        return std::make_tuple(false, node);
+        // grow height, should I go on top or bottom
+        // return rotateAnc(node, signature, insertionList);
+        // return std::make_tuple(false, node);
+        return make_tuple(true, rotateAnc(node, signature, insertionList));
     }
 
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
@@ -635,6 +713,7 @@ public:
             childCounts[parent]++;
             addSigToMatrix(node, signature);
             seqIDs[node].push_back(idx);
+            priority[node] = calcDistance(signature, matrices[findAncestor(node)][0]);
             return node;
         }
         else // add seq without adding new node
