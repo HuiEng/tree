@@ -22,7 +22,7 @@
 typedef vector<vector<cell_type>> seq_type;
 double split_threshold = 1;
 double stay_threshold = 0;
-size_t minimiser_match_threshold = 3;
+size_t minimiser_match_threshold = 4;
 using namespace std;
 
 // typedef unsigned char cell_type;
@@ -648,9 +648,9 @@ public:
         while (isBranchNode[node])
         {
             fprintf(stderr, " \n%zu: ", node);
-            size_t maxInterchild = childLinks[node][0];
-            size_t mismatch = 0;
+            vector<size_t> mismatch;
             vector<size_t> matching_leaves;
+            vector<size_t> matching_branch;
 
             for (size_t i = 0; i < childCounts[node]; i++)
             {
@@ -670,15 +670,26 @@ public:
                 // count how many nodes mismatch
                 if (inter <= (split_threshold)*len)
                 {
-                    mismatch++;
-                }else if (isBranchNode[child]){
+                    // mismatch++;
+                    mismatch.push_back(child);
+                }
+                else if (!isBranchNode[child])
+                {
                     matching_leaves.push_back(child);
+                    fprintf(stderr, " -m%zu, ", child);
+                }
+                else
+                {
+                    //? treat matching branch as mismatch for now
+                    matching_branch.push_back(child);
+                    fprintf(stderr, " -b%zu, ", child);
                 }
             }
 
             // nothing is close enough, spawn new child under parent
-            if (mismatch == childCounts[node])
+            if (mismatch.size() == childCounts[node])
             {
+                fprintf(stderr, " -s%zu, ", node);
                 return make_tuple(false, node);
             }
             // else if (mismatch == 0)
@@ -687,14 +698,60 @@ public:
             //     return make_tuple(true, temp);
             // }
 
-            node = maxInterchild;
-            // offset += 0.1;
+            else if (matching_leaves.size() == 1)
+            {
+                node = matching_leaves[0];
+            }
+            else if (matching_branch.size() == 1)
+            {
+                node = matching_branch[0];
+            }
+            else
+            {
+                size_t temp = getNewNodeIdx(insertionList);
+                addSigToMatrix(temp, signature);
+                // priority[temp] = calcDistance(signature, matrices[findAncestor(node)][0]);
+                size_t ancestor = findAncestor(node);
+                if (ancestor == root)
+                {
+                    priority[temp] = signature.size();
+                }
+                else
+                {
+                    priority[temp] = calcDistance(signature, matrices[ancestor][0]);
+                }
+
+                parentLinks[temp] = node;
+                isBranchNode[temp] = 1;
+                childCounts[temp] = matching_leaves.size() + matching_branch.size();
+                childLinks[temp] = matching_branch;
+                childLinks[temp].insert(childLinks[temp].end(), matching_leaves.begin(), matching_leaves.end());
+
+                childCounts[node] = mismatch.size() + 1;
+                childLinks[node].clear();
+                childLinks[node] = mismatch;
+                childLinks[node].push_back(temp);
+
+                for (size_t n : matching_leaves)
+                {
+                    parentLinks[n] = temp;
+                }
+
+                for (size_t n : matching_branch)
+                {
+                    parentLinks[n] = temp;
+                }
+
+                fprintf(stderr, "\nxxx multiple: %zu,%zu,%zu\n", temp, node, childLinks[node][childCounts[node] - 1]);
+
+                return make_tuple(true, temp);
+            }
         }
 
         // grow height, should I go on top or bottom
         // return rotateAnc(node, signature, insertionList);
-        // return std::make_tuple(false, node);
-        return make_tuple(true, rotateAnc(node, signature, insertionList));
+        return std::make_tuple(false, node);
+        // return make_tuple(true, rotateAnc(node, signature, insertionList));
     }
 
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)

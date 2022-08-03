@@ -126,7 +126,8 @@ function update(source) {
 			//return d.node - 1;
 			// return d.childCount;
 			// return d.content;
-			return d.priority;
+			// return d.priority;
+			return d.node + "," + d.priority;
 		}).call(wrap, 1)
 		.style("fill-opacity", 1e-6);
 
