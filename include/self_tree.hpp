@@ -757,7 +757,7 @@ public:
 
                 return make_tuple(true, temp);
             }
-            // offset += 0.1;
+            offset += 0.1;
         }
 
         // grow height, should I go on top or bottom
