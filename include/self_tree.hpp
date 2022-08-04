@@ -324,6 +324,17 @@ public:
         return node;
     }
 
+    tuple<size_t, size_t> findAncestorNlevel(size_t node)
+    {
+        size_t level = 0;
+        while (parentLinks[node] != root)
+        {
+            node = parentLinks[node];
+            level++;
+        }
+        return make_tuple(node, level);
+    }
+
     size_t findLevel(size_t node)
     {
         size_t level = 0;
@@ -746,6 +757,7 @@ public:
 
                 return make_tuple(true, temp);
             }
+            // offset += 0.1;
         }
 
         // grow height, should I go on top or bottom

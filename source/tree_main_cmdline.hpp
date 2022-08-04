@@ -357,6 +357,7 @@ class tree_main_cmdline
 
 public:
   const char *input_arg;
+  const char *tag_arg;
   size_t minimiser_match_arg;
   size_t capacity_arg;
   const char *query_arg;
@@ -364,6 +365,7 @@ public:
   double stay_threshold_arg;
 
   bool input_given;
+  bool tag_given;
   bool minimiser_match_given;
   bool capacity_given;
   bool multiple_arg;
@@ -378,7 +380,7 @@ public:
     USAGE_OPT
   };
 
-  tree_main_cmdline() : input_arg(""),
+  tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false),
                         minimiser_match_arg(0), capacity_arg(0),
                         input_given(false),
                         minimiser_match_given(false), capacity_given(false),
@@ -389,7 +391,7 @@ public:
   {
   }
 
-  tree_main_cmdline(int argc, char *argv[]) : input_arg(""),
+  tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false),
                                               minimiser_match_arg(0), capacity_arg(0),
                                               input_given(false),
                                               minimiser_match_given(false), capacity_given(false),
@@ -405,6 +407,7 @@ public:
   {
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
+        {"tag", 1, 0, 'T'},
         {"capacity", 1, 0, 'c'},
         {"minimiser_match", 1, 0, 'm'},
         {"split", 1, 0, 'L'},
@@ -416,7 +419,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:MIq:S:L:m:";
+    static const char *short_options = "hVi:o:c:MIq:S:L:m:T:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -454,6 +457,10 @@ public:
       case 'i':
         input_given = true;
         input_arg = optarg;
+        break;
+      case 'T':
+        tag_given = true;
+        tag_arg = optarg;
         break;
       case 'q':
         query_given = true;
@@ -556,6 +563,7 @@ public:
     return "Read minimisers BF and get all-against-all Jaccard tree\n\n"
            "Options (default value in (), *required):\n"
            " -i, --input                              input file or folder\n"
+           " -T, --tag                                [optional] tag for output cluster file\n"
            " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
            " -c,                                      tree capacity [default=1000000]\n"
            " -q, --query                              query file\n"
@@ -591,6 +599,8 @@ public:
        << " split_threshold_arg:" << split_threshold_arg << "\n";
     os << " stay_threshold_given:" << stay_threshold_given << "\t"
        << " stay_threshold_arg:" << stay_threshold_arg << "\n";
+    os << " tag_given:" << tag_given << "\t"
+       << " tag_arg:" << tag_arg << "\n";
   }
 };
 #endif // __TREE_MAIN_CMDLINE_HPP__"

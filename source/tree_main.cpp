@@ -2,20 +2,22 @@
 #include "tree_main_cmdline.hpp"
 #include "self_tree.hpp"
 typedef self_tree tree_type;
+typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 
 using namespace std;
 
 static tree_main_cmdline args; // Command line switches and arguments
 
-void outputClusters(FILE *pFile, const vector<tuple<size_t, size_t>> &clusters)
+void outputClusters(FILE *pFile, const output_type &clusters)
 {
-    fprintf(pFile, "seqID,cluster,ancestor\n");
+    fprintf(pFile, "seqID,cluster,ancestor,level\n");
     for (size_t sig = 0; sig < clusters.size(); sig++)
     {
-        fprintf(pFile, "%llu,%llu,%llu\n",
+        fprintf(pFile, "%llu,%llu,%llu,%llu\n",
                 static_cast<unsigned long long>(sig),
                 static_cast<unsigned long long>(get<0>(clusters[sig])),
-                static_cast<unsigned long long>(get<1>(clusters[sig])));
+                static_cast<unsigned long long>(get<0>(get<1>(clusters[sig]))),
+                static_cast<unsigned long long>(get<1>(get<1>(clusters[sig]))));
     }
 }
 
@@ -38,11 +40,12 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
+output_type clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
 {
     size_t seqCount = seqs.size();
-    // seqCount = 1070;
-    vector<tuple<size_t, size_t>> clusters(seqCount);
+    // seqCount = 300;
+    vector<size_t> clusters(seqCount);
+    output_type output(seqCount);
     tree_type tree(partree_capacity);
 
     size_t firstNodes = 1;
@@ -73,7 +76,7 @@ vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_
     for (size_t i = 0; i < firstNodes; i++)
     {
         size_t clus = tree.first_insert(seqs[foo[i]], insertionList, foo[i]);
-        clusters[foo[i]] = make_tuple(clus, clus);
+        clusters[foo[i]] = clus;
         // fprintf(stderr, ">>%zu\n", foo[i]);
         // dbgPrintSignatureIdx(stderr, seqs[foo[i]]);
     }
@@ -83,9 +86,15 @@ vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_
         // fprintf(stdout, "inserting %zu", i);
         size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
         // clusters[foo[i]] = tree.findAncestor(clus);
-        clusters[foo[i]] = make_tuple(clus, tree.findAncestor(clus));
+        clusters[foo[i]] = clus;
         fprintf(stderr, ">>%zu\n", foo[i]);
         // dbgPrintSignatureIdx(stderr, seqs[foo[i]]);
+    }
+
+    // update ancestor after inserting all
+    for (size_t i = 0; i < seqCount; i++)
+    {
+        output[foo[i]] = make_tuple(clusters[foo[i]], tree.findAncestorNlevel(clusters[foo[i]]));
     }
 
     // tree.removeSingleton(clusters, insertionList);
@@ -104,7 +113,7 @@ vector<tuple<size_t, size_t>> clusterSignatures(const vector<vector<vector<cell_
 
     tree.printTreeJson(stdout);
 
-    return clusters;
+    return output;
 }
 
 int tree_main(int argc, char *argv[])
@@ -145,7 +154,7 @@ int tree_main(int argc, char *argv[])
     signatureSize = seqs[0][0].size();
     fprintf(stderr, "Building Signature...\n");
     default_random_engine rng;
-    vector<tuple<size_t, size_t>> clusters = clusterSignatures(seqs);
+    output_type clusters = clusterSignatures(seqs);
 
     fprintf(stderr, "writing output...\n");
 
@@ -154,6 +163,10 @@ int tree_main(int argc, char *argv[])
     string rawname = inputFile.substr(firstindex, lastindex - firstindex);
 
     auto fileName = rawname + "-s" + to_string((int)(stay_threshold * 100)) + "-l" + to_string((int)(split_threshold * 100));
+    if (args.tag_given)
+    {
+        fileName = fileName + "-" + args.tag_arg;
+    }
     FILE *pFile = fopen((fileName + ".txt").c_str(), "w");
     outputClusters(pFile, clusters);
 
