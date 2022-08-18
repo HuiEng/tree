@@ -357,12 +357,12 @@ class similarity_main_cmdline
 
 public:
   const char *bf_input_arg;
-  size_t kmer_arg;
+  size_t threshold_arg;
   size_t window_arg;
   size_t element_arg;
 
   bool bf_input_given;
-  bool kmer_given;
+  bool threshold_given;
   bool window_given;
   bool element_given;
   bool multiple_arg;
@@ -374,19 +374,19 @@ public:
   };
 
   similarity_main_cmdline() : bf_input_arg(""),
-                              kmer_arg(0), window_arg(0),
+                              threshold_arg(0), window_arg(0),
                               element_arg(0),
                               bf_input_given(false),
-                              kmer_given(false), window_given(false),
+                              threshold_given(false), window_given(false),
                               element_given(false), multiple_arg(false)
   {
   }
 
   similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""),
-                                                    kmer_arg(0), window_arg(0),
+                                                    threshold_arg(0), window_arg(0),
                                                     element_arg(0),
                                                     bf_input_given(false),
-                                                    kmer_given(false), window_given(false),
+                                                    threshold_given(false), window_given(false),
                                                     element_given(false), multiple_arg(false)
   {
     parse(argc, argv);
@@ -397,13 +397,14 @@ public:
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
         {"capacity", 1, 0, 'c'},
+        {"threshold", 1, 0, 't'},
         {"element", 1, 0, 's'},
         {"multiple", 0, 0, 'm'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:k:w:s:m";
+    static const char *short_options = "hVi:t:w:s:m";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -442,10 +443,10 @@ public:
         bf_input_given = true;
         bf_input_arg = optarg;
         break;
-      case 'k':
-        kmer_given = true;
-        kmer_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-k, --kmerLength=size_t")
+      case 't':
+        threshold_given = true;
+        threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-t, --threshold=size_t")
         break;
       case 'w':
         window_given = true;
@@ -528,9 +529,8 @@ public:
   {
     return "Read minimisers BF and get all-against-all Jaccard similarity\n\n"
            "Options (default value in (), *required):\n"
-           " -b, --bf-input                           BF input path\n"
-           " -k,                                      kmer length [default=4]\n"
-           " -w,                                      window length [default=8]\n"
+           " -i, --bf-input                           BF input path\n"
+           " -t, --threshold                          matching threshold per window  [default=4]\n"
            " -s, --element                            expected number of element in BF [default=1000]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            "     --usage                              Usage\n"
@@ -549,8 +549,8 @@ public:
   {
     os << " bf_input_given:" << bf_input_given << "\t"
        << " bf_input_arg:" << bf_input_arg << "\n";
-    os << " kmer_given:" << kmer_given << "\t"
-       << " kmer_arg:" << kmer_arg << "\n";
+    os << " threshold_given:" << threshold_given << "\t"
+       << " threshold_arg:" << threshold_arg << "\n";
     os << " window_given:" << window_given << "\t"
        << " window_arg:" << window_arg << "\n";
     os << " element_given:" << element_given << "\t"

@@ -13,6 +13,7 @@ static uint8_t kmerLength = 4;            // Kmer length
 static uint32_t windowLength = 8;         // window length
 size_t minimiser_size = 3;
 size_t bf_element_cnt = 2;
+bool debug = false;
 
 void writeInt(std::ostream &os, unsigned long long int i)
 {
@@ -31,30 +32,67 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
     bloom_filter bf(parameters);
     writeInt(wf, bf.table_size());
 
-    // Retrieve the sequences and ids.
-    for (auto &[seq, id, qual] : file_in)
+    if (debug)
     {
-        // fprintf(stdout, ">\n");
-        for (auto &&hashes : seq | minimiser_view)
+        size_t i = 0;
+
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
         {
-            for (size_t hash : hashes)
+            // fprintf(stdout, ">\n");
+            cout << ">0|" << i << "|0\n";
+            for (auto &&hashes : seq | minimiser_view)
             {
-                bf.insert(hash);
+                for (size_t hash : hashes)
+                {
+                    bf.insert(hash);
+                    cout << hashToMer_str(kmerLength, hash) << ";";
+                }
+                cout << ",";
+                bf.print(wf);
+                // bf.printBFIdx(stderr);
+
+                // ///// debug
+                // bf.print();
+
+                bf.clear();
             }
+            cout << "\n";
+
+            // fprintf(stderr,">s\n");
+
+            // end of seq flag, print empty bf
             bf.print(wf);
-            // bf.printBFIdx(stderr);
-
-            // ///// debug
-            // bf.print();
-
-            bf.clear();
+            i++;
         }
-        
+    }
+    else
+    {
 
-        // fprintf(stderr,">s\n");
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
+        {
+            // fprintf(stdout, ">\n");
+            for (auto &&hashes : seq | minimiser_view)
+            {
+                for (size_t hash : hashes)
+                {
+                    bf.insert(hash);
+                }
+                bf.print(wf);
+                // bf.printBFIdx(stderr);
 
-        // end of seq flag, print empty bf
-        bf.print(wf);
+                // ///// debug
+                // bf.print();
+
+                bf.clear();
+            }
+
+            // fprintf(stderr,">s\n");
+
+            // end of seq flag, print empty bf
+            bf.print(wf);
+        }
     }
     wf.close();
 }
@@ -64,10 +102,10 @@ int build_partition_main(int argc, char *argv[])
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
 
-    string outfile = "minimiser.bin";
+    //
 
-    if (args.output_given)
-        outfile = args.output_arg;
+    debug = args.debug;
+
     if (args.kmer_given)
         kmerLength = args.kmer_arg;
     if (args.window_given)
@@ -103,11 +141,23 @@ int build_partition_main(int argc, char *argv[])
     }
     parameters.compute_optimal_parameters();
 
-    if (args.size_given){
+    if (args.size_given)
+    {
         minimiser_size = args.size_arg;
     }
     fprintf(stderr, "Partition - Generating %zu minimisers per window...\n", minimiser_size);
     fprintf(stderr, "kmerLength = %zu, windowLength = %zu\n", kmerLength, windowLength);
+
+    string inputFile = args.input_arg;
+    size_t firstindex = inputFile.find_last_of("/") + 1;
+    size_t lastindex = inputFile.find_last_of(".");
+    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
+    char buffer[50];
+    sprintf(buffer, "-k%zu-w%zu-s%zu.bin", kmerLength, windowLength, minimiser_size);
+    string outfile = rawname+buffer;
+
+    if (args.output_given)
+        outfile = args.output_arg;
 
     if (args.canonical_arg)
     {

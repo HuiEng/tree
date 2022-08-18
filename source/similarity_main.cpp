@@ -4,11 +4,12 @@
 #include "similarity_main_cmdline.hpp"
 #include "bloom_filter.hpp"
 #include "read.hpp"
+#include "self_tree.hpp"
 
 using namespace std;
 
 static similarity_main_cmdline args; // Command line switches and arguments
-static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
+// static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 
 void toBinary(cell_type letter)
 {
@@ -29,17 +30,29 @@ void printBF(const cell_type *bf)
     fprintf(stdout, "\n");
 }
 
-void calcAllSimilarity(const vector<cell_type> &sigs)
+void calcAllSimilarity(vector<vector<vector<cell_type>>> seqs)
 {
-    size_t seqCount = sigs.size() / signatureSize;
+    size_t seqCount = seqs.size();
+    fprintf(stdout, "i,j,similarity\n");
     for (size_t i = 0; i < seqCount; i++)
     {
-        for (size_t j = i + 1; j < seqCount; j++)
+        // // debug
+        // fprintf(stdout, "\n%zu,%zu", i, seqs[i].size());
+        // for (int w = 0; w < min(seqs[i].size(),seqs[37].size()); w++)
+        // {
+        //     size_t c = 0;
+        //     for (size_t n = 0; n < signatureSize; n++)
+        //     {
+        //         c += __builtin_popcountll(seqs[i][w][n] & seqs[37][w][n]);
+        //     }
+        //     fprintf(stdout, ",%zu", c);
+        // }
+
+        for (size_t j = 0; j < seqCount; j++)
         {
-            fprintf(stdout, "%zu,%zu,%f\n", i, j, calcSimilarity(&sigs[i * signatureSize], &sigs[j * signatureSize], signatureSize));
-            // break;
+            double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]),countBits(seqs[j]));
+            fprintf(stdout, "%zu,%zu,%.2f\n", i, j, dist);
         }
-        // break;
     }
 }
 
@@ -59,32 +72,27 @@ int similarity_main(int argc, char *argv[])
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
 
-    string bfIn = "out.bin";
+    string bfIn = "data.bin";
     size_t bf_element_cnt = 1000;
 
     if (args.bf_input_given)
         bfIn = args.bf_input_arg;
 
-    vector<cell_type> sigs;
-    if (args.multiple_arg)
-    {
-        auto bf_len = readSignaturesMultiple(bfIn, sigs);
-        signatureSize = bf_len;
-    }
-    else
-    {
-        auto bf_len = readSignatures(bfIn, sigs);
-        signatureSize = bf_len;
-    }
-    fprintf(stderr, "Loaded signatures...\n");
+    if (args.threshold_given)
+        minimiser_match_threshold = args.threshold_arg;
 
-    calcAllSetBits(sigs);
-    calcAllSimilarity(sigs);
+    vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn);
+    signatureSize = seqs[0][0].size();
+    size_t seqCount = seqs.size();
+    fprintf(stderr, "Loaded seqs...\n");
 
-    for (int i = 0; i < sigs.size(); i += signatureSize)
-    {
-        printBF(&sigs[i]);
-    }
+    // calcAllSetBits(sigs);
+    calcAllSimilarity(seqs);
+
+    // for (int i = 0; i < sigs.size(); i += signatureSize)
+    // {
+    //     printBF(&sigs[i]);
+    // }
 
     // for (auto sig:sigs){
     //     fprintf(stdout,"%zu\n",sig);

@@ -370,6 +370,7 @@ public:
   bool multiple_arg;
   bool canonical_arg;
   bool size_given;
+  bool debug;
 
   enum
   {
@@ -383,7 +384,7 @@ public:
                                    kmer_given(false), window_given(false),
                                    element_given(false), multiple_arg(false),
                                    canonical_arg(false), size_given(false),
-                                   size_arg(0)
+                                   size_arg(0), debug(false)
   {
   }
 
@@ -393,7 +394,7 @@ public:
                                                          kmer_given(false), window_given(false),
                                                          element_given(false), multiple_arg(false),
                                                          canonical_arg(false), size_given(false),
-                                                         size_arg(0)
+                                                         size_arg(0), debug(false)
   {
     parse(argc, argv);
   }
@@ -410,8 +411,9 @@ public:
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
+        {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:k:w:mCs:";
+    static const char *short_options = "hVi:o:k:w:mCs:d";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -474,6 +476,9 @@ public:
         size_given = true;
         size_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-s, --size=size_t")
+        break;
+      case 'd':
+        debug = true;
         break;
       }
     }
@@ -552,7 +557,8 @@ public:
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
-           " -V, --version                            Version";
+           " -V, --version                            Version\n"
+           " -d, --debug                              print mer in string in stdout";
   }
   static const char *hidden() { return ""; }
   void print_version(::std::ostream &os = std::cout) const

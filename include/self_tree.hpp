@@ -96,6 +96,77 @@ void dbgPrintSignatureIdx(FILE *stream, vector<vector<cell_type>> seq)
     fprintf(stream, "\n");
 }
 
+size_t calcHD(seq_type shorter, seq_type longer)
+{
+    size_t c = 0;
+    // treat tail subseq as mismatch
+    for (int w = 0; w < shorter.size(); w++)
+    {
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(shorter[w][i] ^ longer[w][i]);
+        }
+    }
+    // treat tail subseq as mismatch
+    for (int w = shorter.size(); w < longer.size(); w++)
+    {
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(longer[w][i]);
+        }
+    }
+    return c;
+}
+
+size_t calcInter(seq_type a, seq_type b)
+{
+    size_t c = 0;
+    // treat tail subseq as mismatch
+    for (int w = 0; w < min(a.size(), b.size()); w++)
+    {
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(a[w][i] & b[w][i]);
+        }
+    }
+    return c;
+}
+
+size_t calcMatchingWindows(seq_type a, seq_type b)
+{
+    size_t match = 0;
+    // treat tail subseq as mismatch
+    for (int w = 0; w < min(a.size(), b.size()); w++)
+    {
+        size_t c = 0;
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(a[w][i] & b[w][i]);
+        }
+        if (c >= minimiser_match_threshold)
+        {
+            match++;
+        }
+    }
+    return match;
+}
+
+size_t calcDistance(seq_type a, seq_type b)
+{
+    // if (a.size() < b.size())
+    // {
+    //     return calcHD(a, b);
+    // }
+    // else
+    // {
+    //     return calcHD(b, a);
+    // }
+
+    // return calcInter(a,b);
+
+    return calcMatchingWindows(a, b);
+}
+
 class self_tree
 {
 public:
@@ -167,77 +238,6 @@ public:
         reserve(capacity);
         childCounts[root] = 0;
         isBranchNode[root] = 0;
-    }
-
-    size_t calcHD(seq_type shorter, seq_type longer) const
-    {
-        size_t c = 0;
-        // treat tail subseq as mismatch
-        for (int w = 0; w < shorter.size(); w++)
-        {
-            for (size_t i = 0; i < signatureSize; i++)
-            {
-                c += __builtin_popcountll(shorter[w][i] ^ longer[w][i]);
-            }
-        }
-        // treat tail subseq as mismatch
-        for (int w = shorter.size(); w < longer.size(); w++)
-        {
-            for (size_t i = 0; i < signatureSize; i++)
-            {
-                c += __builtin_popcountll(longer[w][i]);
-            }
-        }
-        return c;
-    }
-
-    size_t calcInter(seq_type a, seq_type b) const
-    {
-        size_t c = 0;
-        // treat tail subseq as mismatch
-        for (int w = 0; w < min(a.size(), b.size()); w++)
-        {
-            for (size_t i = 0; i < signatureSize; i++)
-            {
-                c += __builtin_popcountll(a[w][i] & b[w][i]);
-            }
-        }
-        return c;
-    }
-
-    size_t calcMatchingWindows(seq_type a, seq_type b) const
-    {
-        size_t match = 0;
-        // treat tail subseq as mismatch
-        for (int w = 0; w < min(a.size(), b.size()); w++)
-        {
-            size_t c = 0;
-            for (size_t i = 0; i < signatureSize; i++)
-            {
-                c += __builtin_popcountll(a[w][i] & b[w][i]);
-            }
-            if (c >= minimiser_match_threshold)
-            {
-                match++;
-            }
-        }
-        return match;
-    }
-
-    size_t calcDistance(seq_type a, seq_type b) const
-    {
-        // if (a.size() < b.size())
-        // {
-        //     return calcHD(a, b);
-        // }
-        // else
-        // {
-        //     return calcHD(b, a);
-        // }
-
-        // return calcInter(a,b);
-
-        return calcMatchingWindows(a, b);
     }
 
     /*
@@ -757,7 +757,7 @@ public:
 
                 return make_tuple(true, temp);
             }
-            offset += 0.1;
+            // offset += 0.1;
         }
 
         // grow height, should I go on top or bottom
