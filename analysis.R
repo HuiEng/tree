@@ -1,0 +1,486 @@
+library("dplyr")
+library(DescTools)
+source("C://DataCopied/Research/R/createShiny.R")
+
+formatResult<-function(file){
+  dt<-read.csv(file)
+  ancestors<-unique(dt$ancestor)
+  dt<-dt%>%group_by(cluster)%>%
+    mutate(ancestor=match(ancestor,ancestors),
+           clu_size=length(cluster),
+           species_id=ceiling((seqID+1)/26)-1)
+  dt<-dt%>%group_by(ancestor)%>%
+    mutate(anc_clu_size=length((ancestor)))
+  dt
+}
+
+
+formatResultMeta<-function(file, metafile){
+  meta<-read.csv(metafile, header = F)
+  
+  dt<-read.csv(file)
+  # dt$species_id<-meta$V14
+  dt<-dt%>%mutate(species_id=meta[dt$seqID==meta$V1,"V14"])
+  ancestors<-unique(dt$ancestor)
+  dt<-dt%>%group_by(cluster)%>%
+    mutate(ancestor=match(ancestor,ancestors),
+           clu_size=length(cluster))
+  
+  dt<-dt%>%group_by(ancestor)%>%
+    mutate(anc_clu_size=length((ancestor)))
+  dt
+}
+
+
+# formatResultSigClustMeta<-function(file, metafile){
+#   meta<-read.csv(metafile, header = F)
+#   
+#   dt<-read.csv(file, header = F)
+#   colnames(dt)<-c("seqID","cluster")
+#   dt$species_id<-meta$V14
+#   dt<-dt%>%group_by(cluster)%>%
+#     mutate(clu_size=length(cluster))
+#   dt
+# }
+# 
+# 
+# {
+# sigclust<-formatResultSigClustMeta(r"(C:\DataCopied\Research\tree\data\controlled-silva\sigclust-116.csv)",
+#                                    metafile)
+# ent_clu_sigclust<-sigclust%>%group_by(cluster)%>%
+#   summarise(entropy=Entropy(table(species_id),base=exp(1)),
+#             size=mean(clu_size))
+# mean(ent_clu_sigclust$entropy)
+# 
+# ggplot()+
+#   geom_point(data=ent_clu_sigclust,aes(x=cluster,y=entropy))
+# }
+
+# truth<-read.csv(r"(C:\Users\n9417770\OneDrive - Queensland University of Technology\phd\sourceCode\postKTree\controlled-silva\acgt\needle\AAAA02042586.1650.3157.needle)",
+#                 skip=18)
+# ggplot(truth,aes(x=bseq,y=identity.))+geom_point()
+
+{
+  # file<-gsub('"', "", gsub("\\\\", "/", readClipboard()))
+  # file<-r"(C:\DataCopied\Research\tree\data\controlled-silva\controlled-silva-k9-w50-s5-s80-l10.txt)"
+  # metafile<-r"(C:\DataCopied\Research\tree\data\controlled-silva\controlled-silva-meta.csv)"
+  # tree<-formatResultMeta(file,metafile)
+  
+  # tree<-formatResult("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s50-l30.txt")
+  tree<-formatResult("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s50-l30-random.txt")
+# search<-formatResult("C://DataCopied/Research/tree/data/data-s2-l5-search.txt")
+
+singleton<-tree[tree$clu_size==1,]
+
+ent_clu<-tree%>%group_by(cluster)%>%
+  summarise(entropy=Entropy(table(species_id),base=exp(1)),
+            size=mean(clu_size))
+
+
+ent_anc<-tree%>%group_by(ancestor)%>%
+  summarise(entropy=Entropy(table(species_id),base=exp(1)),
+            size=mean(anc_clu_size),
+            depth=max(level))
+
+(
+  ggplot()+
+    geom_point(data=ent_anc,aes(x=ancestor,y=entropy,size=size))
+  # geom_point(data=ent_mkm,aes(x=cluster,y=entropy,size=size))+
+  #ylim(0,2.5)+ scale_size(limit = c(0,100))
+)
+
+ent<-tree%>%group_by(species_id)%>%
+  summarise(entropy=Entropy(table(ancestor),base=exp(1)),
+            size=length(seqID))
+ggplot()+
+  geom_point(data=ent,aes(x=species_id,y=entropy))
+
+pure<-ent_anc[ent_anc$entropy==0&ent_anc$size==26,]
+mean(ent_anc$entropy)
+# mean(ent_clu$entropy)
+
+}
+
+
+
+formatSim<-function(needleFile,simFile,metaFile,skip=0){
+  needle<-read.csv(needleFile,check.names = F, skip=skip)
+  sim<-read.csv(simFile)
+  temp<-read.csv(metaFile,header=F)
+  colnames(temp)<-c("i","bseq")
+  n<-merge(temp,needle)
+  colnames(temp)<-c("j","aseq")
+  n<-merge(temp,n)
+  sim<-left_join(sim,n)
+  sim
+}
+
+
+
+sim1<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
+               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-k9-w100-s5_sim-global.txt)")
+
+sim2<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
+               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-k9-w100-s5_sim.txt)")
+
+sim3<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
+                r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_k9_sim.txt)")
+
+colnames(sim1)[which(colnames(sim1)=="similarity")]<-"similarity_global"
+colnames(sim2)[which(colnames(sim2)=="similarity")]<-"similarity_windows"
+colnames(sim3)[which(colnames(sim3)=="similarity")]<-"similarity_all"
+allsim<-merge(sim1,sim2)
+allsim<-merge(allsim,sim3)
+
+ggplot(allsim)+
+  geom_point(aes(x=similarity_all,y=similarity_global))+
+  xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
+
+temp<-sim2[sim2$`similarity`>=50&sim2$`similarity`<=51,]
+
+ggplot(temp)+geom_point(aes(x=`gap%`,y=`similarity%`))
+
+sim2[sim2$bseq=="GU120661.1.1496" & sim2$aseq=="AM085476.1.1485",]
+
+(
+ggplot()+
+    # geom_point(data=sim1,aes(x=`similarity%`,y=similarity_global,colour="global minimisers"),alpha=0.5)+
+    # geom_point(data=sim2,aes(x=`similarity%`,y=similarity_windows,colour="windows minimisers"),alpha=0.5)+
+    # geom_point(data=sim3,aes(x=`similarity%`-`gap%`,y=similarity_all,colour="all kmers - gap"),alpha=0.5)+
+    # geom_point(data=sim3,aes(x=`similarity%`,y=similarity_all,colour="all kmers"),alpha=0.5)+
+    
+    
+  # geom_point(data=sim1,aes(x=`similarity%`,y=similarity,colour="windows minimisers, s=5"),alpha=0.5)+
+  # geom_point(data=sim2,aes(x=`similarity%`,y=similarity,colour="windows minimisers, s=10"),alpha=0.5)+
+  # geom_point(data=allkmer,aes(x=`similarity%`,y=similarity,colour="all kmers"),alpha=0.5)+
+    xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)+
+  xlab("NW similarity")+ylab("Jaccard Similarity with MinimiserSet")
+  
+)
+
+p<-ggplot()+xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)+
+  xlab("NW similarity")+ylab("Jaccard Similarity with MinimiserSet")
+
+plot_grid
+####################################################################
+library(stringr)
+formatSimFolder<-function(metaFile,needleFile,skip,folder, pattern){
+  meta<-read.csv(metaFile,header = FALSE)
+  needle<-read.csv(needleFile,check.names = F,skip=skip)
+  files <- list.files(path=folder, pattern=pattern, full.names=TRUE, recursive=FALSE)
+  sim<-NULL
+  for (f in files){
+    temp<-read.csv(f)
+    temp<-temp%>%mutate(k=as.numeric(str_extract(f,"[:digit:]+")))
+    sim<-rbind(sim,temp)
+  }
+  colnames(meta)<-c("i","bseq")
+  n<-merge(meta,needle)
+  colnames(meta)<-c("j","aseq")
+  n<-merge(meta,n)
+  sim<-left_join(sim,n)
+  sim$k<-as.factor(sim$k)
+  sim
+}
+
+
+dt_local<- formatSimFolder(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)",
+                      r"(C:\DataCopied\Research\tree\data\controlled-silva\sample.waterall)",
+                      14,
+                      r"(C:\DataCopied\Research\tree\data\controlled-silva\)",
+                      "sample-.*-all_sim.txt")
+dt_local<-dt_local%>%mutate(tag="local")
+
+dt_global<-formatSimFolder(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)",
+                           r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
+                           0,
+                           r"(C:\DataCopied\Research\tree\data\controlled-silva\)",
+                           "sample-.*-all_sim.txt")
+dt_global<-dt_global%>%mutate(tag="global")
+
+dt<-rbind(dt_global,dt_local)
+
+
+ggplot(dt[dt$`similarity%`==100,])+
+  geom_point(aes(x=length,y=score,colour=tag),alpha=0.5)+
+  facet_wrap(~tag)
+
+
+(
+  # ggplot(dt[dt$i<10,])+
+  ggplot(dt[dt$k==9,])+
+    geom_point(aes(x=score,y=`similarity%`,colour=tag),alpha=0.5)+
+    facet_wrap(~tag) +
+    ylim(0,100)+ 
+    xlab("Alignment Score")+ylab("Jaccard Similarity with all 9-kmers")
+)
+
+
+(
+# ggplot(dt[dt$i<10,])+
+  ggplot(dt)+
+    geom_point(aes(x=`similarity%`,y=similarity,colour=k),alpha=0.5)+
+    facet_wrap(~tag) +
+    # geom_point(aes(x=`similarity%`,y=similarity,colour=k),alpha=0.5)+
+  #   facet_wrap(~k) +
+  # geom_smooth(aes(x=`similarity%`,y=similarity,colour=k),method=loess, se=FALSE, linetype='dashed')+
+  xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)+
+    
+  xlab("NW similarity")+ylab("Jaccard Similarity with all kmers")
+)
+
+#################
+sim_local<-formatSimFolder(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)",
+                           r"(C:\DataCopied\Research\tree\data\controlled-silva\sample.waterall)",
+                           14,
+                           r"(C:\DataCopied\Research\tree\data\controlled-silva\)",
+                           "sample-k9-w100-s5_sim.txt")
+sim_local<-sim_local%>%mutate(tag="local")
+sim_global<-formatSimFolder(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)",
+                           r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
+                           0,
+                           r"(C:\DataCopied\Research\tree\data\controlled-silva\)",
+                           "sample-k9-w100-s5_sim.txt")
+sim_global<-sim_global%>%mutate(tag="global")
+sim<-rbind(sim_local,sim_global)
+ggplot(sim)+
+  geom_point(aes(x=`similarity%`,y=similarity),alpha=0.5)+
+  facet_wrap(~tag)+
+  xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)+
+  xlab("alignment similarity")+ylab("Jaccard Similarity with windows minimiser")
+
+####################################################################
+#############################
+allkmer<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
+                r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_k9_sim.txt)")
+ggplot(allkmer)+
+  geom_point(aes(x=`similarity%`,y=similarity))+
+  xlab("NW similarity")+ylab("Jaccard Similarity with MinimiserSet")+
+  xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
+
+#############################
+
+
+
+
+##########################################################
+silva<-read.csv(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample.histo)",
+             header = FALSE, sep=" ")
+colnames(silva)<-c("kmerCount","freq")
+silva<-silva%>%mutate(scaledkmerCount=kmerCount/max(kmerCount),
+                      freq=freq/sum(freq))
+
+
+staph<-read.csv(r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample.histo)",
+                header = FALSE, sep=" ")
+colnames(staph)<-c("kmerCount","freq")
+staph<-staph%>%mutate(scaledkmerCount=kmerCount/max(kmerCount),
+                      freq=freq/sum(freq))
+
+shiny(
+ggplot()+
+  geom_bar(data=silva,aes(kmerCount,y=freq,fill="silva"),stat="identity",alpha=0.5)+
+  geom_bar(data=staph,aes(kmerCount,y=freq,fill="staph"),stat="identity",alpha=0.5)
+)
+
+
+shiny(
+  ggplot()+
+    geom_bar(data=silva,aes(scaledkmerCount,y=freq,fill="silva"),stat="identity",alpha=0.5)+
+    geom_bar(data=staph,aes(scaledkmerCount,y=freq,fill="staph"),stat="identity",alpha=0.5)
+)
+##########################################################
+
+
+
+sim<-formatSim(r"(C:\DataCopied\Research\tree\data\toy\toy_needle.csv)",
+               r"(C:\DataCopied\Research\tree\data\toy\toy-k9-w100-s5_sim.txt)")
+
+
+sim<-sim%>%mutate(g_i=floor(i/26),
+                  g_j=floor(j/26))
+
+g<-0
+temp<-sim_local[sim_local$g_i==g&sim_local$g_j==g,]
+
+shiny(
+  ggplot(temp)+
+  geom_point(aes(x=`similarity%`,y=similarity,colour=as.factor(floor(i/5))))+
+  facet_wrap(~as.factor(floor(j/5)))+
+  # facet_wrap(~g_i)+
+  # facet_wrap(~paste(g_i,g_j))+
+  # xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)+
+  xlab("NW similarity")+ylab("Jaccard Similarity with BF")
+)
+formatSim<-function(needleFile,simFile,metaFile,skip=0){
+  needle<-read.csv(needleFile,check.names = F, skip=skip)
+  needle<-unique(needle)
+  sim<-read.csv(simFile)
+  temp<-read.csv(metaFile,header=F)
+  colnames(temp)<-c("i","bseq")
+  n<-merge(temp,needle)
+  colnames(temp)<-c("j","aseq")
+  n<-merge(temp,n)
+  sim<-left_join(sim,n)
+  sim
+}
+
+sim_local<-formatSim(r"(C:\DataCopied\Research\tree\data\toy\toy.waterall)",
+                     r"(C:\DataCopied\Research\tree\data\toy\toy-k9-w100-s5_sim.txt)",
+                     r"(C:\DataCopied\Research\tree\data\toy\toy-meta.csv)",
+                     14)
+sim_local<-sim_local%>%mutate(g_i=floor(i/26),
+                  g_j=floor(j/26))
+
+
+
+
+
+temp_local<-sim_local[sim_local$g_i<1&sim_local$g_j<9,]
+ggplot(sim_local)+
+  geom_point(aes(x=`similarity%`,y=similarity,colour=g_i==g_j))+
+  # facet_wrap(~g_i)+
+  # facet_wrap(~paste(g_i,g_j))+
+  xlab("Water similarity")+ylab("Jaccard Similarity with BF")+
+  xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
+
+
+
+
+
+
+formatSimMeta<-function(needleFile,simFile, metaFile,skip=0){
+  needle<-read.csv(needleFile,check.names = F,skip = skip)
+  sim<-read.csv(simFile)
+  meta<-read.csv(metaFile)
+  tempCols<-colnames(meta)
+  # temp<-data.frame(i=seq(0,max(sim$i)),aseq=needle$bseq[1:(max(sim$i)+1)])
+  # n<-merge(temp,needle)
+  # colnames(temp)<-c("j","bseq")
+  # n<-merge(temp,n)
+  # sim<-left_join(sim,n)
+  colnames(meta)<-paste(tempCols, "i", sep = "_")
+  sim<-merge(sim,meta,by.x = "i", by.y = "seqID_i");
+  
+  colnames(meta)<-paste(tempCols, "j", sep = "_")
+  sim<-merge(sim,meta,by.x = "j", by.y = "seqID_j");
+  colnames(sim)[which(colnames(sim)=="name_i")]<-"bseq"
+  colnames(sim)[which(colnames(sim)=="name_j")]<-"aseq"
+
+  left_join(needle,sim)
+  
+}
+
+allsim<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample_needle.txt)",
+                    r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample-k9-all-all_sim.txt)",
+                    r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample_meta.csv)",
+                    15)
+
+
+ggplot(allsim,aes(x=`similarity%`,y=similarity,colour=((mlst_i==mlst_j))))+
+  geom_point()+
+  xlab("NW similarity")+ylab("Jaccard Similarity with all 9mers")+
+  xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
+
+sim<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample_needle.txt)",
+               r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample-k9-w100-s5_sim.txt)",
+               r"(C:\DataCopied\Research\tree\data\staphopia-contigs\sample_meta.csv)",
+               15)
+
+
+
+(
+  # ggplot(sim,aes(x=`similarity%`,y=similarity,colour=(paste(mlst_i,mlst_j))))+
+
+  ggplot(sim,aes(x=`similarity%`,y=similarity,colour=((mlst_i==mlst_j))))+
+    geom_point()+
+  xlab("NW similarity")+ylab("Jaccard Similarity with BF")+
+    xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
+  # geom_smooth(method=loess, se=FALSE, col='purple', linetype='dashed')
+)
+
+sim<-read.csv("C://DataCopied/Research/tree/data/sim-short.txt")
+colnames(sim)<-c("aseq","bseq","window_similarity")
+nw<-read.csv("C://DataCopied/Research/tree/data/short/short.csv",check.names = F)
+dt<-merge(nw,sim)
+ggplot(dt,aes(x=`similarity%`,y=window_similarity))+
+  geom_point()+
+  geom_smooth(method=loess, se=FALSE, col='purple', linetype='dashed')
+
+############################################################
+# Ecoli
+
+formatSimMeta<-function(needleFile,simFile, metaFile,skip=0){
+  needle<-read.csv(needleFile,check.names = F,skip = skip)
+  sim<-read.csv(simFile)
+  meta<-read.csv(metaFile)
+  tempCols<-colnames(meta)
+  # temp<-data.frame(i=seq(0,max(sim$i)),aseq=needle$bseq[1:(max(sim$i)+1)])
+  # n<-merge(temp,needle)
+  # colnames(temp)<-c("j","bseq")
+  # n<-merge(temp,n)
+  # sim<-left_join(sim,n)
+  colnames(meta)<-paste(tempCols, "i", sep = "_")
+  sim<-merge(sim,meta,by.x = "i", by.y = "seqID_i");
+  
+  colnames(meta)<-paste(tempCols, "j", sep = "_")
+  sim<-merge(sim,meta,by.x = "j", by.y = "seqID_j");
+  colnames(sim)[which(colnames(sim)=="name_i")]<-"bseq"
+  colnames(sim)[which(colnames(sim)=="name_j")]<-"aseq"
+  
+  ecoli<-left_join(needle,sim)
+}
+
+geneLength<-read.csv(r"(C:\DataCopied\Research\tree\data\ecoli\gene-length.csv)",
+                     header = F)
+
+
+hist(geneLength$V1)
+
+ggplot(geneLength, aes(x=V1)) + 
+  geom_histogram(binwidth=50,color="black", fill="white")+xlab("Ecoli geneLength")
+
+ecoli<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\ecoli\gene.needleall)",
+                       r"(C:\DataCopied\Research\tree\data\ecoli\gene-all-k9_sim.txt)",
+                       r"(C:\DataCopied\Research\tree\data\ecoli\gene-meta.csv)",
+                       14)
+
+ecoli_local<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\ecoli\gene.waterall)",
+                      r"(C:\DataCopied\Research\tree\data\ecoli\gene-all-k9_sim.txt)",
+                      r"(C:\DataCopied\Research\tree\data\ecoli\gene-meta.csv)",
+                      14)
+
+
+ecoli_local_short<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\ecoli\gene-2500-5000.waterall)",
+                           r"(C:\DataCopied\Research\tree\data\ecoli\gene-all-k9_sim.txt)",
+                           r"(C:\DataCopied\Research\tree\data\ecoli\gene-meta.csv)",
+                           0)
+
+temp<-ecoli[ecoli$score>5000&ecoli$score<6000,]
+
+# ggplot(ecoli_local,aes(x=`similarity%`,y=similarity))+
+ggplot(ecoli_local,aes(x=score,y=similarity))+
+  geom_point()+
+  # xlim(0,100)+ coord_fixed(ratio = 1)+
+  ylim(0,100)+
+  xlab("Water Score")+ylab("Jaccard Similarity with all 9mers")
+  # xlab("NW similarity")+ylab("Jaccard Simil arity with MinimiserSet")
+  # xlab("NW similarity")+ylab("Jaccard Similarity with windowsBF")
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

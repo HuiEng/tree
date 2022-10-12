@@ -12,22 +12,16 @@
 #define INCLUDE_self_tree_HPP
 
 #include <omp.h>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
-#include "bloom_filter.hpp"
 #include "read.hpp"
+#include "distance.hpp"
 
-typedef vector<vector<cell_type>> seq_type;
-double split_threshold = 1;
-double stay_threshold = 0;
-size_t minimiser_match_threshold = 4;
 using namespace std;
 
 // typedef unsigned char cell_type;
 bloom_parameters parameters;
-size_t signatureSize; // Signature size (depends on element in BF, obtained while read binary)
 size_t partree_capacity = 100;
 
 size_t countBits(seq_type seq)
@@ -96,76 +90,8 @@ void dbgPrintSignatureIdx(FILE *stream, vector<vector<cell_type>> seq)
     fprintf(stream, "\n");
 }
 
-size_t calcHD(seq_type shorter, seq_type longer)
-{
-    size_t c = 0;
-    // treat tail subseq as mismatch
-    for (int w = 0; w < shorter.size(); w++)
-    {
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            c += __builtin_popcountll(shorter[w][i] ^ longer[w][i]);
-        }
-    }
-    // treat tail subseq as mismatch
-    for (int w = shorter.size(); w < longer.size(); w++)
-    {
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            c += __builtin_popcountll(longer[w][i]);
-        }
-    }
-    return c;
-}
 
-size_t calcInter(seq_type a, seq_type b)
-{
-    size_t c = 0;
-    // treat tail subseq as mismatch
-    for (int w = 0; w < min(a.size(), b.size()); w++)
-    {
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            c += __builtin_popcountll(a[w][i] & b[w][i]);
-        }
-    }
-    return c;
-}
 
-size_t calcMatchingWindows(seq_type a, seq_type b)
-{
-    size_t match = 0;
-    // treat tail subseq as mismatch
-    for (int w = 0; w < min(a.size(), b.size()); w++)
-    {
-        size_t c = 0;
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            c += __builtin_popcountll(a[w][i] & b[w][i]);
-        }
-        if (c >= minimiser_match_threshold)
-        {
-            match++;
-        }
-    }
-    return match;
-}
-
-size_t calcDistance(seq_type a, seq_type b)
-{
-    // if (a.size() < b.size())
-    // {
-    //     return calcHD(a, b);
-    // }
-    // else
-    // {
-    //     return calcHD(b, a);
-    // }
-
-    // return calcInter(a,b);
-
-    return calcMatchingWindows(a, b);
-}
 
 class self_tree
 {
@@ -176,7 +102,7 @@ public:
     vector<vector<size_t>> childLinks; // n * o entries, links to children
     vector<vector<size_t>> seqIDs;     // n * o entries, links to children
     vector<size_t> parentLinks;        // n entries, links to parents
-    vector<size_t> priority;           // n entries, links to parents
+    vector<distance_type> priority;           // n entries, links to parents
     vector<seq_type> means;            // n * signatureSize entries, node signatures
     vector<vector<seq_type>> matrices; // capacity * signatureSize * n
     vector<omp_lock_t> locks;          // n locks
@@ -348,7 +274,7 @@ public:
 
     void printNodeJson(FILE *stream, size_t tnode)
     {
-        fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%zu\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
+        fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
         for (size_t seq : seqIDs[tnode])
         {
             fprintf(stream, "%zu,", seq);
@@ -372,7 +298,7 @@ public:
         }
         else
         {
-            fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%zu\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
+            fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
             for (size_t seq : seqIDs[tnode])
             {
                 fprintf(stream, "%zu,", seq);
@@ -604,10 +530,12 @@ public:
         // number of matching windows, bigger better
         size_t a = calcDistance(matrices[ancestor][0], signature);
 
-        while (node != root && isUnipath(node))
+        // while (node != root && isUnipath(node))
+        while (node != root)
         {
             if (a <= priority[node])
             {
+                fprintf(stderr, "rotate: %zu, %.2f\n", old_node, a);
                 break;
             }
             old_node = node;
@@ -650,6 +578,125 @@ public:
 
     // return if found same, and the destination node
     inline tuple<bool, size_t> traverse(seq_type signature, vector<size_t> &insertionList)
+    {
+        size_t node = root;
+        size_t a = signature.size();
+        fprintf(stderr, " \n(%zu, %f, ,%f)", a, split_threshold * a, stay_threshold * a);
+        double offset = 0;
+
+        while (isBranchNode[node])
+        {
+            fprintf(stderr, " \n%zu: ", node);
+            vector<size_t> mismatch;
+            vector<size_t> matching_leaves;
+            vector<size_t> matching_branch;
+
+            for (size_t i = 0; i < childCounts[node]; i++)
+            {
+                size_t child = childLinks[node][i];
+                double sim = calcDistance(matrices[child][0], signature);
+                size_t b = matrices[child][0].size();
+
+                size_t len = max(a, b);
+                fprintf(stderr, " <%zu,%.2f> ", child, sim);
+
+                // found same, move on with the next seq
+                if (sim >= (stay_threshold - offset))
+                {
+                    return make_tuple(true, child);
+                }
+
+                // count how many nodes mismatch
+                if (sim <= (split_threshold))
+                {
+                    // mismatch++;
+                    mismatch.push_back(child);
+                }
+                else if (!isBranchNode[child])
+                {
+                    // matching with leaf
+                    matching_leaves.push_back(child);
+                    fprintf(stderr, " -m%zu, ", child);
+                }
+                else
+                {
+                    //? treat matching branch as mismatch for now
+                    matching_branch.push_back(child);
+                    fprintf(stderr, " -b%zu, ", child);
+                }
+            }
+
+            // nothing is close enough, spawn new child under parent
+            if (mismatch.size() == childCounts[node])
+            {
+                fprintf(stderr, " -s%zu, ", node);
+                return make_tuple(false, node);
+            }
+            // else if (mismatch == 0)
+            // {
+            //     size_t temp = rotate(node, signature, insertionList);
+            //     return make_tuple(true, temp);
+            // }
+
+            else if (matching_leaves.size() == 1)
+            {
+                node = matching_leaves[0];
+            }
+            else if (matching_branch.size() == 1)
+            {
+                node = matching_branch[0];
+            }
+            else
+            {
+                size_t temp = getNewNodeIdx(insertionList);
+                addSigToMatrix(temp, signature);
+                // priority[temp] = calcDistance(signature, matrices[findAncestor(node)][0]);
+                size_t ancestor = findAncestor(node);
+                if (ancestor == root)
+                {
+                    priority[temp] = signature.size();
+                }
+                else
+                {
+                    priority[temp] = calcDistance(signature, matrices[ancestor][0]);
+                }
+
+                parentLinks[temp] = node;
+                isBranchNode[temp] = 1;
+                childCounts[temp] = matching_leaves.size() + matching_branch.size();
+                childLinks[temp] = matching_branch;
+                childLinks[temp].insert(childLinks[temp].end(), matching_leaves.begin(), matching_leaves.end());
+
+                childCounts[node] = mismatch.size() + 1;
+                childLinks[node].clear();
+                childLinks[node] = mismatch;
+                childLinks[node].push_back(temp);
+
+                for (size_t n : matching_leaves)
+                {
+                    parentLinks[n] = temp;
+                }
+
+                for (size_t n : matching_branch)
+                {
+                    parentLinks[n] = temp;
+                }
+
+                fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
+
+                return make_tuple(true, temp);
+            }
+            // offset += 0.1;
+        }
+
+        // grow height, should I go on top or bottom
+        // return rotateAnc(node, signature, insertionList);
+        return std::make_tuple(false, node);
+        // return make_tuple(true, rotateAnc(node, signature, insertionList));
+    }
+
+    // return if found same, and the destination node
+    inline tuple<bool, size_t> traverseMatching(seq_type signature, vector<size_t> &insertionList)
     {
         size_t node = root;
         size_t a = signature.size();
@@ -783,6 +830,7 @@ public:
             addSigToMatrix(node, signature);
             seqIDs[node].push_back(idx);
             priority[node] = calcDistance(signature, matrices[findAncestor(node)][0]);
+            // priority[node] = calcJaccard(signature, matrices[findAncestor(node)][0]);
             return node;
         }
         else // add seq without adding new node

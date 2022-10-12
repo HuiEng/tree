@@ -63,6 +63,7 @@ CMAKE_BINARY_DIR = /mnt/c/DataCopied/Research/tree/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
+all: CMakeFiles/count_main.dir/all
 all: CMakeFiles/build_partition_main.dir/all
 all: CMakeFiles/similarity_main.dir/all
 all: CMakeFiles/tree.dir/all
@@ -79,6 +80,7 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
+clean: CMakeFiles/count_main.dir/clean
 clean: CMakeFiles/build_partition_main.dir/clean
 clean: CMakeFiles/similarity_main.dir/clean
 clean: CMakeFiles/tree.dir/clean
@@ -89,6 +91,32 @@ clean: CMakeFiles/partree_multi_main.dir/clean
 clean: CMakeFiles/build_main.dir/clean
 clean: CMakeFiles/tree_main.dir/clean
 .PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/count_main.dir
+
+# All Build rule for target.
+CMakeFiles/count_main.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=5,6 "Built target count_main"
+.PHONY : CMakeFiles/count_main.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/count_main.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/DataCopied/Research/tree/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/count_main.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/DataCopied/Research/tree/build/CMakeFiles 0
+.PHONY : CMakeFiles/count_main.dir/rule
+
+# Convenience name for target.
+count_main: CMakeFiles/count_main.dir/rule
+.PHONY : count_main
+
+# clean rule for target.
+CMakeFiles/count_main.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/clean
+.PHONY : CMakeFiles/count_main.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/build_partition_main.dir
@@ -123,7 +151,7 @@ CMakeFiles/build_partition_main.dir/clean:
 CMakeFiles/similarity_main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=13,14 "Built target similarity_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=15,16 "Built target similarity_main"
 .PHONY : CMakeFiles/similarity_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -146,22 +174,23 @@ CMakeFiles/similarity_main.dir/clean:
 # Target rules for target CMakeFiles/tree.dir
 
 # All Build rule for target.
-CMakeFiles/tree.dir/all: CMakeFiles/partree_multi_main.dir/all
-CMakeFiles/tree.dir/all: CMakeFiles/minimiser_main.dir/all
-CMakeFiles/tree.dir/all: CMakeFiles/tree_main.dir/all
-CMakeFiles/tree.dir/all: CMakeFiles/build_main.dir/all
-CMakeFiles/tree.dir/all: CMakeFiles/similarity_main.dir/all
 CMakeFiles/tree.dir/all: CMakeFiles/partree_main.dir/all
 CMakeFiles/tree.dir/all: CMakeFiles/build_partition_main.dir/all
+CMakeFiles/tree.dir/all: CMakeFiles/minimiser_main.dir/all
+CMakeFiles/tree.dir/all: CMakeFiles/count_main.dir/all
 CMakeFiles/tree.dir/all: CMakeFiles/ktree_main.dir/all
+CMakeFiles/tree.dir/all: CMakeFiles/similarity_main.dir/all
+CMakeFiles/tree.dir/all: CMakeFiles/tree_main.dir/all
+CMakeFiles/tree.dir/all: CMakeFiles/partree_multi_main.dir/all
+CMakeFiles/tree.dir/all: CMakeFiles/build_main.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree.dir/build.make CMakeFiles/tree.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree.dir/build.make CMakeFiles/tree.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=15,16 "Built target tree"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=17,18 "Built target tree"
 .PHONY : CMakeFiles/tree.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/tree.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/DataCopied/Research/tree/build/CMakeFiles 18
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/DataCopied/Research/tree/build/CMakeFiles 20
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/tree.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/DataCopied/Research/tree/build/CMakeFiles 0
 .PHONY : CMakeFiles/tree.dir/rule
@@ -182,7 +211,7 @@ CMakeFiles/tree.dir/clean:
 CMakeFiles/ktree_main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ktree_main.dir/build.make CMakeFiles/ktree_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ktree_main.dir/build.make CMakeFiles/ktree_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=5,6 "Built target ktree_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=7,8 "Built target ktree_main"
 .PHONY : CMakeFiles/ktree_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -208,7 +237,7 @@ CMakeFiles/ktree_main.dir/clean:
 CMakeFiles/minimiser_main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/minimiser_main.dir/build.make CMakeFiles/minimiser_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/minimiser_main.dir/build.make CMakeFiles/minimiser_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=7,8 "Built target minimiser_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=9,10 "Built target minimiser_main"
 .PHONY : CMakeFiles/minimiser_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -234,7 +263,7 @@ CMakeFiles/minimiser_main.dir/clean:
 CMakeFiles/partree_main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_main.dir/build.make CMakeFiles/partree_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_main.dir/build.make CMakeFiles/partree_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=9,10 "Built target partree_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=11,12 "Built target partree_main"
 .PHONY : CMakeFiles/partree_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -260,7 +289,7 @@ CMakeFiles/partree_main.dir/clean:
 CMakeFiles/partree_multi_main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_multi_main.dir/build.make CMakeFiles/partree_multi_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_multi_main.dir/build.make CMakeFiles/partree_multi_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=11,12 "Built target partree_multi_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=13,14 "Built target partree_multi_main"
 .PHONY : CMakeFiles/partree_multi_main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -312,7 +341,7 @@ CMakeFiles/build_main.dir/clean:
 CMakeFiles/tree_main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree_main.dir/build.make CMakeFiles/tree_main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree_main.dir/build.make CMakeFiles/tree_main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=17,18 "Built target tree_main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/mnt/c/DataCopied/Research/tree/build/CMakeFiles --progress-num=19,20 "Built target tree_main"
 .PHONY : CMakeFiles/tree_main.dir/all
 
 # Build rule for subdir invocation for target.

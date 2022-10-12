@@ -363,7 +363,6 @@ public:
   size_t element_arg;
   uint64_t seed_arg;
 
-  bool input_given;
   bool bf_output_given;
   bool kmer_given;
   bool window_given;
@@ -381,7 +380,7 @@ public:
   build_main_cmdline() : input_arg(""), bf_output_arg(""),
                          kmer_arg(0), window_arg(0),
                          element_arg(0),
-                         input_given(false), bf_output_given(false),
+                         bf_output_given(false),
                          kmer_given(false), window_given(false),
                          element_given(false), multiple_arg(false),
                          canonical_arg(false),
@@ -392,7 +391,7 @@ public:
   build_main_cmdline(int argc, char *argv[]) : input_arg(""), bf_output_arg(""),
                                                kmer_arg(0), window_arg(0),
                                                element_arg(0),
-                                               input_given(false), bf_output_given(false),
+                                               bf_output_given(false),
                                                kmer_given(false), window_given(false),
                                                element_given(false), multiple_arg(false),
                                                canonical_arg(false),
@@ -404,7 +403,6 @@ public:
   void parse(int argc, char *argv[])
   {
     static struct option long_options[] = {
-        {"input", 1, 0, 'i'},
         {"bf-output", 1, 0, 'b'},
         {"capacity", 1, 0, 'c'},
         {"element", 1, 0, 's'},
@@ -415,7 +413,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:b:k:w:s:mCS:";
+    static const char *short_options = "hVb:k:w:s:mCS:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -450,10 +448,6 @@ public:
       case '?':
         ::std::cerr << "Use --usage or --help for some help\n";
         exit(1);
-      case 'i':
-        input_given = true;
-        input_arg = optarg;
-        break;
       case 'b':
         bf_output_given = true;
         bf_output_arg = optarg;
@@ -487,11 +481,12 @@ public:
       }
     }
 
-    // // Parse arguments
-    // if(argc - optind < 1)
-    //   error("Requires at least 1 argument.");
+    // Parse arguments
+    if (argc - optind < 1)
+      error("Requires at least 1 argument.");
+    input_arg = argv[optind];
   }
-  static const char *usage() { return "Usage: bftree build [options] "; }
+  static const char *usage() { return "Usage: bftree build {input_fasta_file} [options] "; }
   class error
   {
     int code_;
@@ -552,7 +547,6 @@ public:
   {
     return "Build BF based on k-mer/minimiser counts\n\n"
            "Options (default value in (), *required):\n"
-           " -i, --input                              input fasta file\n"
            " -b, --bf-output                          BF output path\n"
            " -C, --canonical                          canonical [default=FALSE]\n"
            " -S, --seed                               seed for random ordering minimiser [default=0x8F3F73B5CF1C9ADE], set 0 for lexical order\n"
@@ -574,8 +568,7 @@ public:
   }
   void build(::std::ostream &os = std::cout)
   {
-    os << " input_given:" << input_given << "\t"
-       << " input_arg:" << input_arg << "\n";
+    os << " input_arg:" << input_arg << "\n";
     os << " bf_output_given:" << bf_output_given << "\t"
        << " bf_output_arg:" << bf_output_arg << "\n";
     os << " kmer_given:" << kmer_given << "\t"

@@ -65,6 +65,18 @@ CMAKE_BINARY_DIR = /mnt/c/DataCopied/Research/tree/build
 #=============================================================================
 # Targets provided globally by CMake.
 
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
 # Special rule for the target install/strip
 install/strip: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
@@ -118,18 +130,6 @@ list_install_components:
 list_install_components/fast: list_install_components
 .PHONY : list_install_components/fast
 
-# Special rule for the target install/local
-install/local: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local
-
-# Special rule for the target install/local
-install/local/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local/fast
-
 # The main all target
 all: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/DataCopied/Research/tree/build/CMakeFiles /mnt/c/DataCopied/Research/tree/build//CMakeFiles/progress.marks
@@ -160,6 +160,19 @@ preinstall/fast:
 depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
+
+#=============================================================================
+# Target rules for targets named count_main
+
+# Build rule for target.
+count_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 count_main
+.PHONY : count_main
+
+# fast build rule for target.
+count_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/build
+.PHONY : count_main/fast
 
 #=============================================================================
 # Target rules for targets named build_partition_main
@@ -325,6 +338,30 @@ build_partition_main.s: build_partition_main.cpp.s
 build_partition_main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/build_partition_main.dir/build.make CMakeFiles/build_partition_main.dir/build_partition_main.cpp.s
 .PHONY : build_partition_main.cpp.s
+
+count_main.o: count_main.cpp.o
+.PHONY : count_main.o
+
+# target to build an object file
+count_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/count_main.cpp.o
+.PHONY : count_main.cpp.o
+
+count_main.i: count_main.cpp.i
+.PHONY : count_main.i
+
+# target to preprocess a source file
+count_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/count_main.cpp.i
+.PHONY : count_main.cpp.i
+
+count_main.s: count_main.cpp.s
+.PHONY : count_main.s
+
+# target to generate assembly for a file
+count_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/count_main.cpp.s
+.PHONY : count_main.cpp.s
 
 ktree_main.o: ktree_main.cpp.o
 .PHONY : ktree_main.o
@@ -508,6 +545,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... build_main"
 	@echo "... build_partition_main"
+	@echo "... count_main"
 	@echo "... ktree_main"
 	@echo "... minimiser_main"
 	@echo "... partree_main"
@@ -521,6 +559,9 @@ help:
 	@echo "... build_partition_main.o"
 	@echo "... build_partition_main.i"
 	@echo "... build_partition_main.s"
+	@echo "... count_main.o"
+	@echo "... count_main.i"
+	@echo "... count_main.s"
 	@echo "... ktree_main.o"
 	@echo "... ktree_main.i"
 	@echo "... ktree_main.s"

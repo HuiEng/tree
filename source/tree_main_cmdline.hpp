@@ -368,7 +368,7 @@ public:
   bool tag_given;
   bool minimiser_match_given;
   bool capacity_given;
-  bool multiple_arg;
+  bool random_arg;
   bool intersect_arg;
   bool query_given;
   bool split_threshold_given;
@@ -384,7 +384,7 @@ public:
                         minimiser_match_arg(0), capacity_arg(0),
                         input_given(false),
                         minimiser_match_given(false), capacity_given(false),
-                        multiple_arg(false), intersect_arg(false),
+                        random_arg(false), intersect_arg(false),
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
                         stay_threshold_given(false), stay_threshold_arg(0)
@@ -395,7 +395,7 @@ public:
                                               minimiser_match_arg(0), capacity_arg(0),
                                               input_given(false),
                                               minimiser_match_given(false), capacity_given(false),
-                                              multiple_arg(false), intersect_arg(false),
+                                              random_arg(false), intersect_arg(false),
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
                                               stay_threshold_given(false), stay_threshold_arg(0)
@@ -412,14 +412,14 @@ public:
         {"minimiser_match", 1, 0, 'm'},
         {"split", 1, 0, 'L'},
         {"stay", 1, 0, 'S'},
-        {"multiple", 0, 0, 'M'},
+        {"random", 0, 0, 'R'},
         {"intersect", 0, 0, 'I'},
         {"query", 1, 0, 'q'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:MIq:S:L:m:T:";
+    static const char *short_options = "hVi:o:c:RIq:S:L:m:T:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -488,8 +488,8 @@ public:
         capacity_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-w, --treeCapacity=size_t")
         break;
-      case 'M':
-        multiple_arg = true;
+      case 'R':
+        random_arg = true;
         break;
       case 'I':
         intersect_arg = true;
@@ -569,7 +569,7 @@ public:
            " -q, --query                              query file\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
-           " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
+           " -R,                                      inserting seqs in random order\n"
            " -I, --intersect                          compare BF by intersecting bits [default=FALSE, calc by HD]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
@@ -591,7 +591,7 @@ public:
        << " minimiser_match_arg:" << minimiser_match_arg << "\n";
     os << " capacity_given:" << capacity_given << "\t"
        << " capacity_arg:" << capacity_arg << "\n";
-    os << " multiple_arg:" << multiple_arg << "\n";
+    os << " random_arg:" << random_arg << "\n";
     os << " intersect_arg:" << intersect_arg << "\n";
     os << " query_given:" << query_given << "\t"
        << " query_arg:" << query_arg << "\n";

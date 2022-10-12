@@ -11,6 +11,7 @@ using namespace std;
 static build_partition_main_cmdline args; // Command line switches and arguments
 static uint8_t kmerLength = 4;            // Kmer length
 static uint32_t windowLength = 8;         // window length
+static uint32_t step_size = windowLength;         // window length
 size_t minimiser_size = 3;
 size_t bf_element_cnt = 2;
 bool debug = false;
@@ -111,6 +112,12 @@ int build_partition_main(int argc, char *argv[])
     if (args.window_given)
         windowLength = args.window_arg;
 
+    if (args.step_given){
+        step_size = args.step_arg;
+    }else{
+        step_size = windowLength;
+    }
+
     if (kmerLength > windowLength)
     {
         fprintf(stderr, "Error: kmer length must be smaller or equal to window length\n");
@@ -164,6 +171,7 @@ int build_partition_main(int argc, char *argv[])
         auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
                                                                   seqan3::window_size{windowLength},
                                                                   seqan3::minimiser_size{minimiser_size},
+                                                                  seqan3::step_size{step_size},
                                                                   seqan3::seed{0});
         getPartitionMinimisers(partition_view, parameters, args.input_arg, outfile);
     }
@@ -172,7 +180,7 @@ int build_partition_main(int argc, char *argv[])
         // to get minimisers with w=8,k=4
         // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
         size_t temp = windowLength - kmerLength + 1;
-        auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size);
+        auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
 
         getPartitionMinimisers(partition_view, parameters, args.input_arg, outfile);
     }

@@ -94,6 +94,7 @@ tree: CMakeFiles/tree.dir/main.cpp.o
 tree: CMakeFiles/tree.dir/build.make
 tree: libbuild_main.so
 tree: libbuild_partition_main.so
+tree: libcount_main.so
 tree: libktree_main.so
 tree: libminimiser_main.so
 tree: libpartree_main.so

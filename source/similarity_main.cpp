@@ -30,10 +30,10 @@ void printBF(const cell_type *bf)
     fprintf(stdout, "\n");
 }
 
-void calcAllSimilarity(vector<vector<vector<cell_type>>> seqs)
+void calcAllSimilarity(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
 {
     size_t seqCount = seqs.size();
-    fprintf(stdout, "i,j,similarity\n");
+    fprintf(pFile, "i,j,similarity\n");
     for (size_t i = 0; i < seqCount; i++)
     {
         // // debug
@@ -48,10 +48,43 @@ void calcAllSimilarity(vector<vector<vector<cell_type>>> seqs)
         //     fprintf(stdout, ",%zu", c);
         // }
 
-        for (size_t j = 0; j < seqCount; j++)
+        for (size_t j = i; j < seqCount; j++)
         {
-            double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]),countBits(seqs[j]));
-            fprintf(stdout, "%zu,%zu,%.2f\n", i, j, dist);
+            // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
+            double dist = calcJaccardLocal(seqs[i], seqs[j]) * 100.0;
+            fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+        }
+    }
+}
+
+void calcAllSimilarityGlobal(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
+{
+    size_t seqCount = seqs.size();
+    fprintf(pFile, "i,j,similarity\n");
+    for (size_t i = 0; i < seqCount; i++)
+    {
+        for (size_t j = i; j < seqCount; j++)
+        {
+            double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
+            fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+        }
+    }
+}
+
+// Jaccard similarity
+void calcAllSimilarityKmers(FILE *pFile, vector<cell_type> seqs)
+{
+    size_t seqCount = seqs.size() / signatureSize;
+    fprintf(pFile, "i,j,similarity\n");
+    for (size_t i = 0; i < seqCount; i++)
+    {
+        size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
+        for (size_t j = i; j < seqCount; j++)
+        {
+            // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
+            // fprintf(stdout, "%zu,%zu,%zu\n", i, j, bits);
+            double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
+            fprintf(pFile, "%zu,%zu,%.2f\n", i, j, sim * 100);
         }
     }
 }
@@ -81,13 +114,57 @@ int similarity_main(int argc, char *argv[])
     if (args.threshold_given)
         minimiser_match_threshold = args.threshold_arg;
 
-    vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn);
-    signatureSize = seqs[0][0].size();
-    size_t seqCount = seqs.size();
-    fprintf(stderr, "Loaded seqs...\n");
+    size_t firstindex = bfIn.find_last_of("/") + 1;
+    size_t lastindex = bfIn.find_last_of(".");
+    string rawname = bfIn.substr(firstindex, lastindex - firstindex);
 
-    // calcAllSetBits(sigs);
-    calcAllSimilarity(seqs);
+    if (args.output_given)
+    {
+        rawname = rawname + "-" + args.output_arg;
+    }
+
+    if (args.all_kmer_arg)
+    {
+        FILE *pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
+        vector<cell_type> seqs;
+        signatureSize = readSignatures(bfIn, seqs);
+
+        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
+        calcAllSimilarityKmers(pFile, seqs);
+    }
+    else
+    {
+        vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn);
+        // dummy code, assume there is at least 10 input seqs
+        for (int i = 0; i < 10; i++)
+        {
+            if (seqs[i].size() > 0)
+            {
+                signatureSize = seqs[i][0].size();
+                break;
+            }
+        }
+        if (signatureSize == 0)
+        {
+            fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+            return 0;
+        }
+
+        // fprintf(stderr,"done\n" );
+        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+
+        // calcAllSetBits(sigs);
+        if (args.global_arg)
+        {
+            FILE *pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
+            calcAllSimilarityGlobal(pFile, seqs);
+        }
+        else
+        {
+            FILE *pFile = fopen((rawname + "_sim.txt").c_str(), "w");
+            calcAllSimilarity(pFile, seqs);
+        }
+    }
 
     // for (int i = 0; i < sigs.size(); i += signatureSize)
     // {

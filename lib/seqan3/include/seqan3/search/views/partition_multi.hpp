@@ -83,6 +83,9 @@ namespace seqan3::detail
         //!\brief The number of minimiser per window
         size_t minimiser_size{};
 
+        //!\brief The step size of the sliding window
+        size_t step_size{};
+
         template <bool const_range>
         class basic_iterator;
 
@@ -106,8 +109,9 @@ namespace seqan3::detail
          * \param[in] window_size The number of values in one window.
          * \param[in] kmerLength  The length of kmers.
          * \param[in] minimiser_size  The number of minimisers per window.
+         * \param[in] step_size   The sliding step
          */
-        partition_multi_view(urng1_t urange1, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) : partition_multi_view{std::move(urange1), default_urng2_t{}, window_size, kmerLength, minimiser_size}
+        partition_multi_view(urng1_t urange1, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) : partition_multi_view{std::move(urange1), default_urng2_t{}, window_size, kmerLength, minimiser_size, step_size}
         {
         }
 
@@ -119,17 +123,19 @@ namespace seqan3::detail
         * \param[in] window_size The number of values in one window.
         * \param[in] kmerLength  The length of kmers.
         * \param[in] minimiser_size  The number of minimisers per window.
+        * \param[in] step_size   The sliding step
         */
         template <typename other_urng1_t>
         //!\cond
         requires(std::ranges::viewable_range<other_urng1_t> &&
                      std::constructible_from<urng1_t, ranges::ref_view<std::remove_reference_t<other_urng1_t>>>)
             //!\endcond
-            partition_multi_view(other_urng1_t &&urange1, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) : urange1{std::views::all(std::forward<other_urng1_t>(urange1))},
-                                                                                                                                            urange2{default_urng2_t{}},
-                                                                                                                                            window_size{window_size},
-                                                                                                                                            kmerLength{kmerLength},
-                                                                                                                                            minimiser_size{minimiser_size}
+            partition_multi_view(other_urng1_t &&urange1, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) : urange1{std::views::all(std::forward<other_urng1_t>(urange1))},
+                                                                                                                                                                    urange2{default_urng2_t{}},
+                                                                                                                                                                    window_size{window_size},
+                                                                                                                                                                    kmerLength{kmerLength},
+                                                                                                                                                                    minimiser_size{minimiser_size},
+                                                                                                                                                                    step_size{step_size}
         {
         }
 
@@ -141,12 +147,14 @@ namespace seqan3::detail
          * \param[in] window_size The number of values in one window.
          * \param[in] kmerLength  The length of kmers.
          * \param[in] minimiser_size  The number of minimisers per window.
+         * \param[in] step_size   The sliding step.
          */
-        partition_multi_view(urng1_t urange1, urng2_t urange2, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) : urange1{std::move(urange1)},
-                                                                                                                                                 urange2{std::move(urange2)},
-                                                                                                                                                 window_size{window_size},
-                                                                                                                                                 kmerLength{kmerLength},
-                                                                                                                                                 minimiser_size{minimiser_size}
+        partition_multi_view(urng1_t urange1, urng2_t urange2, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) : urange1{std::move(urange1)},
+                                                                                                                                                                         urange2{std::move(urange2)},
+                                                                                                                                                                         window_size{window_size},
+                                                                                                                                                                         kmerLength{kmerLength},
+                                                                                                                                                                         minimiser_size{minimiser_size},
+                                                                                                                                                                         step_size{step_size}
         {
             if constexpr (second_range_is_given)
             {
@@ -167,6 +175,7 @@ namespace seqan3::detail
         * \param[in] window_size The number of values in one window.
         * \param[in] kmerLength  The length of kmers.
         * \param[in] minimiser_size  The number of minimisers per window.
+        * \param[in] step_size  The sliding step
         */
         template <typename other_urng1_t, typename other_urng2_t>
         //!\cond
@@ -175,11 +184,12 @@ namespace seqan3::detail
                          std::ranges::viewable_range<other_urng2_t> &&
                              std::constructible_from<urng2_t, std::views::all_t<other_urng2_t>>)
             //!\endcond
-            partition_multi_view(other_urng1_t &&urange1, other_urng2_t &&urange2, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) : urange1{std::views::all(std::forward<other_urng1_t>(urange1))},
+            partition_multi_view(other_urng1_t &&urange1, other_urng2_t &&urange2, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) : urange1{std::views::all(std::forward<other_urng1_t>(urange1))},
                                                                                                                                                                      urange2{std::views::all(std::forward<other_urng2_t>(urange2))},
                                                                                                                                                                      window_size{window_size},
                                                                                                                                                                      kmerLength{kmerLength},
-                                                                                                                                                                     minimiser_size{minimiser_size}
+                                                                                                                                                                     minimiser_size{minimiser_size},
+                                                                                                                                                                     step_size{step_size}
         {
             if constexpr (second_range_is_given)
             {
@@ -212,7 +222,8 @@ namespace seqan3::detail
                     std::ranges::begin(urange2),
                     window_size,
                     kmerLength,
-                    minimiser_size};
+                    minimiser_size,
+                    step_size};
         }
 
         //!\copydoc begin()
@@ -226,7 +237,8 @@ namespace seqan3::detail
                     std::ranges::cbegin(urange2),
                     window_size,
                     kmerLength,
-                    minimiser_size};
+                    minimiser_size,
+                    step_size};
         }
 
         /*!\brief Returns an iterator to the element following the last element of the range.
@@ -316,6 +328,7 @@ namespace seqan3::detail
         * \param[in] window_size The number of values in one window.
         * \param[in] kmerLength  The length of kmers.
         * \param[in] minimiser_size  The number of minimisers per window.
+        * \param[in] step_size   The sliding step
         *
         * \details
         *
@@ -328,14 +341,16 @@ namespace seqan3::detail
                        urng2_iterator_t urng2_iterator,
                        size_t window_size,
                        size_t kmerLength,
-                       size_t minimiser_size) : urng1_iterator{std::move(urng1_iterator)},
-                                                urng1_sentinel{std::move(urng1_sentinel)},
-                                                urng2_iterator{std::move(urng2_iterator)}
+                       size_t minimiser_size,
+                       size_t step_size) : urng1_iterator{std::move(urng1_iterator)},
+                                           urng1_sentinel{std::move(urng1_sentinel)},
+                                           urng2_iterator{std::move(urng2_iterator)}
         {
             size_t size = std::ranges::distance(urng1_iterator, urng1_sentinel);
             window_size = std::min<size_t>(window_size, size);
             w_size = window_size;
             k_len = kmerLength;
+            s_size = step_size;
             minimiser_count = minimiser_size;
             window_first(window_size);
         }
@@ -412,6 +427,7 @@ namespace seqan3::detail
 
         size_t w_size{};
         size_t k_len{};
+        size_t s_size{};
 
         // number of minimiser per window
         size_t minimiser_count{};
@@ -429,7 +445,7 @@ namespace seqan3::detail
         //!\brief Increments iterator by 1.
         void next_unique_minimiser()
         {
-            while (!window_next(w_size, k_len))
+            while (!window_next(w_size, k_len, s_size))
             {
             }
         }
@@ -466,9 +482,9 @@ namespace seqan3::detail
             auto minimiser_it = std::ranges::min_element(window_values, std::less_equal<value_type>{});
             minimiser_value = *minimiser_it;
 
-            // take the first {minimiser_size} window values 
+            // take the first {minimiser_size} window values
             sort(window_values.begin(), window_values.end());
-            window_values.erase( unique( window_values.begin(), window_values.end() ), window_values.end() );
+            window_values.erase(unique(window_values.begin(), window_values.end()), window_values.end());
             minimiser_set.assign(window_values.begin(), window_values.begin() + minimiser_count);
 
             advance_window();
@@ -480,7 +496,7 @@ namespace seqan3::detail
          * For the following windows, we remove the first window value (is now not in window_values) and add the new
          * value that results from the window shifting.
          */
-        bool window_next(size_t const window_size, size_t const kmer_length)
+        bool window_next(size_t const window_size, size_t const kmer_length, size_t const step_size)
         {
             if (window_size == 0u)
                 return true;
@@ -495,7 +511,7 @@ namespace seqan3::detail
 
             window_values.clear();
 
-            for (size_t i = 0u; i < window_size; ++i)
+            for (size_t i = 0u; i < step_size; ++i)
             {
                 window_values.push_back(window_value());
                 advance_window();
@@ -506,9 +522,9 @@ namespace seqan3::detail
             auto minimiser_it = std::ranges::min_element(window_values, std::less_equal<value_type>{});
             minimiser_value = *minimiser_it;
 
-            // take the first {minimiser_size} window values 
+            // take the first {minimiser_size} window values
             sort(window_values.begin(), window_values.end());
-            window_values.erase( unique( window_values.begin(), window_values.end() ), window_values.end() );
+            window_values.erase(unique(window_values.begin(), window_values.end()), window_values.end());
             minimiser_set.assign(window_values.begin(), window_values.begin() + minimiser_count);
 
             /*** debug
@@ -526,11 +542,11 @@ namespace seqan3::detail
 
     //!\brief A deduction guide for the view class template.
     template <std::ranges::viewable_range rng1_t>
-    partition_multi_view(rng1_t &&, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) -> partition_multi_view<std::views::all_t<rng1_t>>;
+    partition_multi_view(rng1_t &&, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) -> partition_multi_view<std::views::all_t<rng1_t>>;
 
     //!\brief A deduction guide for the view class template.
     template <std::ranges::viewable_range rng1_t, std::ranges::viewable_range rng2_t>
-    partition_multi_view(rng1_t &&, rng2_t &&, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) -> partition_multi_view<std::views::all_t<rng1_t>,
+    partition_multi_view(rng1_t &&, rng2_t &&, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) -> partition_multi_view<std::views::all_t<rng1_t>,
                                                                                                                                                        std::views::all_t<rng2_t>>;
 
     // ---------------------------------------------------------------------------------------------------------------------
@@ -543,9 +559,9 @@ namespace seqan3::detail
     struct partition_multi_fn
     {
         //!\brief Store the number of values in one window and return a range adaptor closure object.
-        constexpr auto operator()(size_t const window_size, size_t const kmerLength, size_t const minimiser_size) const
+        constexpr auto operator()(size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) const
         {
-            return adaptor_from_functor{*this, window_size, kmerLength, minimiser_size};
+            return adaptor_from_functor{*this, window_size, kmerLength, minimiser_size, step_size};
         }
 
         /*!\brief Call the view's constructor with two arguments: the underlying view and an integer indicating how many
@@ -556,10 +572,11 @@ namespace seqan3::detail
          * \param[in] window_size The number of values in one window.
          * \param[in] kmerLength  The length of kmers.
          * \param[in] minimiser_size  The number of minimisers per window.
+         * \param[in] step_size   The sliding step
          * \returns  A range of converted values.
          */
         template <std::ranges::range urng1_t>
-        constexpr auto operator()(urng1_t &&urange1, size_t const window_size, size_t const kmerLength, size_t const minimiser_size) const
+        constexpr auto operator()(urng1_t &&urange1, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) const
         {
             static_assert(std::ranges::viewable_range<urng1_t>,
                           "The range parameter to views::minimiser cannot be a temporary of a non-view range.");
@@ -574,7 +591,7 @@ namespace seqan3::detail
                 throw std::invalid_argument{"The chosen kmerLength is not valid. "
                                             "Please choose a value greater than 0."};
 
-            return partition_multi_view{urange1, window_size, kmerLength, minimiser_size};
+            return partition_multi_view{urange1, window_size, kmerLength, minimiser_size, step_size};
         }
     };
     //![adaptor_def]
@@ -590,6 +607,7 @@ namespace seqan3::views
      * \param[in] window_size The number of values in one window.
      * \param[in] kmerLength  The length of kmers.
      * \param[in] minimiser_size  The number of minimisers per window.
+     * \param[in] step_size   The sliding step
      * \returns A range of std::totally_ordered where each value is the minimal value for one window. See below for the
      *          properties of the returned range.
      * \ingroup search_views

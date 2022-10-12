@@ -357,15 +357,19 @@ class similarity_main_cmdline
 
 public:
   const char *bf_input_arg;
+  const char *output_arg;
   size_t threshold_arg;
   size_t window_arg;
   size_t element_arg;
 
   bool bf_input_given;
+  bool output_given;
   bool threshold_given;
   bool window_given;
   bool element_given;
   bool multiple_arg;
+  bool all_kmer_arg;
+  bool global_arg;
 
   enum
   {
@@ -373,21 +377,23 @@ public:
     USAGE_OPT
   };
 
-  similarity_main_cmdline() : bf_input_arg(""),
+  similarity_main_cmdline() : bf_input_arg(""), output_arg(""),
                               threshold_arg(0), window_arg(0),
                               element_arg(0),
-                              bf_input_given(false),
+                              bf_input_given(false), output_given(false),
                               threshold_given(false), window_given(false),
-                              element_given(false), multiple_arg(false)
+                              element_given(false), multiple_arg(false),
+                              all_kmer_arg(false), global_arg(false)
   {
   }
 
-  similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""),
+  similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""),
                                                     threshold_arg(0), window_arg(0),
                                                     element_arg(0),
-                                                    bf_input_given(false),
+                                                    bf_input_given(false), output_given(false),
                                                     threshold_given(false), window_given(false),
-                                                    element_given(false), multiple_arg(false)
+                                                    element_given(false), multiple_arg(false),
+                                                    all_kmer_arg(false), global_arg(false)
   {
     parse(argc, argv);
   }
@@ -396,15 +402,18 @@ public:
   {
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
+        {"output", 1, 0, 'o'},
         {"capacity", 1, 0, 'c'},
         {"threshold", 1, 0, 't'},
         {"element", 1, 0, 's'},
         {"multiple", 0, 0, 'm'},
+        {"all", 0, 0, 'A'},
+        {"global", 0, 0, 'G'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:t:w:s:m";
+    static const char *short_options = "hVi:o:t:w:s:mAG";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -443,6 +452,10 @@ public:
         bf_input_given = true;
         bf_input_arg = optarg;
         break;
+      case 'o':
+        output_given = true;
+        output_arg = optarg;
+        break;
       case 't':
         threshold_given = true;
         threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
@@ -460,6 +473,12 @@ public:
         break;
       case 'm':
         multiple_arg = true;
+        break;
+      case 'A':
+        all_kmer_arg = true;
+        break;
+      case 'G':
+        global_arg = true;
         break;
       }
     }
@@ -529,10 +548,13 @@ public:
   {
     return "Read minimisers BF and get all-against-all Jaccard similarity\n\n"
            "Options (default value in (), *required):\n"
-           " -i, --bf-input                           BF input path\n"
+           " -i, --input                              BF input path\n"
+           " -o, --output                             output path is {input}{-output}_sim.txt\n"
            " -t, --threshold                          matching threshold per window  [default=4]\n"
            " -s, --element                            expected number of element in BF [default=1000]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
+           " -A, --all                                input is all kmers\n"
+           " -G, --global                             count with global minimiserset\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
            " -V, --version                            Version";
@@ -549,6 +571,8 @@ public:
   {
     os << " bf_input_given:" << bf_input_given << "\t"
        << " bf_input_arg:" << bf_input_arg << "\n";
+    os << " output_given:" << output_given << "\t"
+       << " output_arg:" << output_arg << "\n";
     os << " threshold_given:" << threshold_given << "\t"
        << " threshold_arg:" << threshold_arg << "\n";
     os << " window_given:" << window_given << "\t"

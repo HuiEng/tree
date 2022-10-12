@@ -16,14 +16,20 @@
 #include <string>
 #include <experimental/filesystem>
 #include <fstream>
+#include "bloom_filter.hpp"
 
 using namespace std;
 namespace fs = std::experimental::filesystem;
 typedef size_t sig_type;
 
+
 unsigned long long int readSignatures(const string file, vector<cell_type> &sigs)
 {
     ifstream rf(file, ios::out | ios::binary);
+    if(!rf.is_open()){
+        fprintf(stderr,"Invalid File. Please try again\n");
+        exit(0);
+    }
 
     // get length of file:
     rf.seekg(0, rf.end);
@@ -166,6 +172,10 @@ bool isEmpty(vector<cell_type> bf)
 vector<vector<vector<cell_type>>> readPartitionBF(const string file_path)
 {
     ifstream rf(file_path, ios::out | ios::binary);
+    if(!rf.is_open()){
+        fprintf(stderr,"Invalid File. Please try again\n");
+        exit(0);
+    }
 
     // get length of file:
     rf.seekg(0, rf.end);

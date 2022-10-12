@@ -26,6 +26,13 @@ namespace seqan3
     {
         using seqan3::detail::strong_type<size_t, minimiser_size>::strong_type;
     };
+
+    //!\brief strong_type for the step_size.
+    //!\ingroup search_views
+    struct step_size : seqan3::detail::strong_type<size_t, step_size>
+    {
+        using seqan3::detail::strong_type<size_t, step_size>::strong_type;
+    };
 } // namespace seqan3
 
 namespace seqan3::detail
@@ -38,25 +45,27 @@ namespace seqan3::detail
          * \param[in] shape       The seqan3::shape to use for hashing.
          * \param[in] window_size The windows size to use.
          * \param[in] minimiser_size The number of minimiser per window to use.
+         * \param[in] step_size   The sliding step
          * \throws std::invalid_argument if the size of the shape is greater than the `window_size`.
          * \returns               A range of converted elements.
          */
-        constexpr auto operator()(shape const &shape, window_size const window_size, minimiser_size const minimiser_size) const
+        constexpr auto operator()(shape const &shape, window_size const window_size, minimiser_size const minimiser_size, step_size const step_size) const
         {
-            return seqan3::detail::adaptor_from_functor{*this, shape, window_size, minimiser_size};
+            return seqan3::detail::adaptor_from_functor{*this, shape, window_size, minimiser_size, step_size};
         }
 
         /*!\brief Store the shape, the window size and the seed and return a range adaptor closure object.
          * \param[in] shape       The seqan3::shape to use for hashing.
          * \param[in] window_size The size of the window.
          * \param[in] minimiser_size The number of minimiser per window to use.
+         * \param[in] step_size   The sliding step
          * \param[in] seed        The seed to use.
          * \throws std::invalid_argument if the size of the shape is greater than the `window_size`.
          * \returns               A range of converted elements.
          */
-        constexpr auto operator()(shape const &shape, window_size const window_size, minimiser_size const minimiser_size, seed const seed) const
+        constexpr auto operator()(shape const &shape, window_size const window_size, minimiser_size const minimiser_size, step_size const step_size, seed const seed) const
         {
-            return seqan3::detail::adaptor_from_functor{*this, shape, window_size, minimiser_size, seed};
+            return seqan3::detail::adaptor_from_functor{*this, shape, window_size, minimiser_size, step_size, seed};
         }
 
         /*!\brief Call the view's constructor with the underlying view, a seqan3::shape and a window size as argument.
@@ -65,6 +74,7 @@ namespace seqan3::detail
          * \param[in] shape       The seqan3::shape to use for hashing.
          * \param[in] window_size The size of the window.
          * \param[in] minimiser_size The number of minimiser per window to use.
+         * \param[in] step_size   The sliding step
          * \param[in] seed        The seed to use.
          * \throws std::invalid_argument if the size of the shape is greater than the `window_size`.
          * \returns               A range of converted elements.
@@ -73,7 +83,8 @@ namespace seqan3::detail
         constexpr auto operator()(urng_t &&urange,
                                   shape const &shape,
                                   window_size const window_size,
-                                  minimiser_size const minimiser_size,
+                                  minimiser_size const minimiser_size, 
+                                  step_size const step_size,
                                   seed const seed = seqan3::seed{0x8F3F73B5CF1C9ADE}) const
         {
             static_assert(std::ranges::viewable_range<urng_t>,
@@ -93,7 +104,7 @@ namespace seqan3::detail
                                                                                                                                                                            { return i ^ seed.get(); }) |
                                   std::views::reverse;
 
-            return seqan3::detail::partition_multi_view(forward_strand, reverse_strand, window_size.get() - shape.size() + 1, shape.size(), minimiser_size.get());
+            return seqan3::detail::partition_multi_view(forward_strand, reverse_strand, window_size.get() - shape.size() + 1, shape.size(), minimiser_size.get(), step_size.get());
         }
     };
 
@@ -113,6 +124,7 @@ namespace seqan3::views
      * \param[in] shape          The seqan3::shape that determines how to compute the hash value.
      * \param[in] window_size    The window size to use.
      * \param[in] minimiser_size    The number of minimiser per window to use.
+     * \param[in] step_size   The sliding step
      * \param[in] seed           The seed used to skew the hash values. Default: 0x8F3F73B5CF1C9ADE.
      * \returns                  A range of `size_t` where each value is the minimiser of the resp. window.
      *                           See below for the properties of the returned range.

@@ -360,12 +360,13 @@ public:
   const char *output_arg;
   uint8_t kmer_arg;
   uint32_t window_arg;
+  uint32_t step_arg;
   size_t size_arg;
 
-  bool input_given;
   bool output_given;
   bool kmer_given;
   bool window_given;
+  bool step_given;
   bool element_given;
   bool multiple_arg;
   bool canonical_arg;
@@ -375,13 +376,14 @@ public:
   enum
   {
     START_OPT = 1000,
-    USAGE_OPT
+    USAGE_OPT,
+    STEP_OPT = 'l'
   };
 
   build_partition_main_cmdline() : input_arg(""), output_arg(""),
-                                   kmer_arg(0), window_arg(0),
-                                   input_given(false), output_given(false),
-                                   kmer_given(false), window_given(false),
+                                   kmer_arg(0), window_arg(0),step_arg(0),
+                                   output_given(false),
+                                   kmer_given(false), window_given(false),step_given(false),
                                    element_given(false), multiple_arg(false),
                                    canonical_arg(false), size_given(false),
                                    size_arg(0), debug(false)
@@ -389,9 +391,9 @@ public:
   }
 
   build_partition_main_cmdline(int argc, char *argv[]) : input_arg(""), output_arg(""),
-                                                         kmer_arg(0), window_arg(0),
-                                                         input_given(false), output_given(false),
-                                                         kmer_given(false), window_given(false),
+                                                         kmer_arg(0), window_arg(0),step_arg(0),
+                                                         output_given(false),
+                                                         kmer_given(false), window_given(false),step_given(false),
                                                          element_given(false), multiple_arg(false),
                                                          canonical_arg(false), size_given(false),
                                                          size_arg(0), debug(false)
@@ -402,18 +404,18 @@ public:
   void parse(int argc, char *argv[])
   {
     static struct option long_options[] = {
-        {"input", 1, 0, 'i'},
         {"output", 1, 0, 'o'},
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
         {"partition", 0, 0, 'p'},
         {"size", 0, 0, 's'},
+        {"step", 0, 0, STEP_OPT},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:k:w:mCs:d";
+    static const char *short_options = "hVo:k:w:mCs:d";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -448,10 +450,6 @@ public:
       case '?':
         ::std::cerr << "Use --usage or --help for some help\n";
         exit(1);
-      case 'i':
-        input_given = true;
-        input_arg = optarg;
-        break;
       case 'o':
         output_given = true;
         output_arg = optarg;
@@ -465,6 +463,11 @@ public:
         window_given = true;
         window_arg = conv_uint<uint32_t>((const char *)optarg, err, false);
         CHECK_ERR(uint8_t, optarg, "-w, --windowLength=uint32_t")
+        break;
+      case STEP_OPT:
+        step_given = true;
+        step_arg = conv_uint<uint32_t>((const char *)optarg, err, false);
+        CHECK_ERR(uint8_t, optarg, "--step=uint32_t")
         break;
       case 'm':
         multiple_arg = true;
@@ -483,11 +486,12 @@ public:
       }
     }
 
-    // // Parse arguments
-    // if(argc - optind < 1)
-    //   error("Requires at least 1 argument.");
+    // Parse arguments
+    if(argc - optind < 1)
+      error("Requires at least 1 argument.");
+    input_arg = argv[optind];
   }
-  static const char *usage() { return "Usage: sm pbuild [options] "; }
+  static const char *usage() { return "Usage: sm pbuild {input_fasta_file} [options] "; }
   class error
   {
     int code_;
@@ -548,12 +552,12 @@ public:
   {
     return "partition input seq(s) into window of length w and select s minimisers per window and store in a bf\n\n"
            "Options (default value in (), *required):\n"
-           " -i, --input                              input fasta file\n"
            " -o, --output                             output path\n"
            " -C, --canonical                          canonical [default=FALSE]\n"
            " -s, --size                               number of minimiser per window [default=3]\n"
            " -k,                                      kmer length [default=4]\n"
            " -w,                                      window length [default=8]\n"
+           " --step,                                  step size for winnowing [default=window length]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
@@ -570,14 +574,15 @@ public:
   }
   void build_partition(::std::ostream &os = std::cout)
   {
-    os << " input_given:" << input_given << "\t"
-       << " input_arg:" << input_arg << "\n";
+    os << " input_arg:" << input_arg << "\n";
     os << " output_given:" << output_given << "\t"
        << " output_arg:" << output_arg << "\n";
     os << " kmer_given:" << kmer_given << "\t"
        << " kmer_arg:" << kmer_arg << "\n";
     os << " window_given:" << window_given << "\t"
        << " window_arg:" << window_arg << "\n";
+    os << " step_given:" << step_given << "\t"
+       << " step_arg:" << step_arg << "\n";
     os << " multiple_arg:" << multiple_arg << "\n";
     os << " canonical_arg:" << canonical_arg << "\n";
     os << " size_given:" << size_given << "\n";

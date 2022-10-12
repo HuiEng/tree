@@ -49,6 +49,7 @@ size_t BFunion(const cell_type *a, const cell_type *b, size_t signatureSize)
    return c;
 }
 
+// Jaccard similarity
 double calcSimilarity(const cell_type *a, const cell_type *b, size_t signatureSize)
 {
    double i = BFintersect(a, b, signatureSize);
