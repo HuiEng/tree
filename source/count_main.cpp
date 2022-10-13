@@ -66,7 +66,7 @@ int count_main(int argc, char *argv[])
 
     if (args.output_given)
     {
-        rawname = rawname + "-" + args.output_arg;
+        rawname = args.output_arg;
     }
 
     if (!args.chunk_arg)

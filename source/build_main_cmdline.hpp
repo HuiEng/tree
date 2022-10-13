@@ -486,7 +486,7 @@ public:
       error("Requires at least 1 argument.");
     input_arg = argv[optind];
   }
-  static const char *usage() { return "Usage: bftree build {input_fasta_file} [options] "; }
+  static const char *usage() { return "Usage: tree build {input_fasta_file} [options] "; }
   class error
   {
     int code_;

@@ -487,7 +487,7 @@ public:
     // if(argc - optind < 1)
     //   error("Requires at least 1 argument.");
   }
-  static const char *usage() { return "Usage: bftree sim [options] "; }
+  static const char *usage() { return "Usage: tree sim [options] "; }
   class error
   {
     int code_;

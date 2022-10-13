@@ -482,7 +482,7 @@ public:
     // if(argc - optind < 1)
     //   error("Requires at least 1 argument.");
   }
-  static const char *usage() { return "Usage: bftree ktree [options] "; }
+  static const char *usage() { return "Usage: tree ktree [options] "; }
   class error
   {
     int code_;

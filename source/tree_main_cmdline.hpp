@@ -501,7 +501,7 @@ public:
     // if(argc - optind < 1)
     //   error("Requires at least 1 argument.");
   }
-  static const char *usage() { return "Usage: bftree tree [options] "; }
+  static const char *usage() { return "Usage: tree tree [options] "; }
   class error
   {
     int code_;

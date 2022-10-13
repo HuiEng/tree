@@ -11,7 +11,7 @@ using namespace std;
 static build_partition_main_cmdline args; // Command line switches and arguments
 static uint8_t kmerLength = 4;            // Kmer length
 static uint32_t windowLength = 8;         // window length
-static uint32_t step_size = windowLength;         // window length
+static uint32_t step_size = windowLength; // window length
 size_t minimiser_size = 3;
 size_t bf_element_cnt = 2;
 bool debug = false;
@@ -112,12 +112,6 @@ int build_partition_main(int argc, char *argv[])
     if (args.window_given)
         windowLength = args.window_arg;
 
-    if (args.step_given){
-        step_size = args.step_arg;
-    }else{
-        step_size = windowLength;
-    }
-
     if (kmerLength > windowLength)
     {
         fprintf(stderr, "Error: kmer length must be smaller or equal to window length\n");
@@ -160,8 +154,19 @@ int build_partition_main(int argc, char *argv[])
     size_t lastindex = inputFile.find_last_of(".");
     string rawname = inputFile.substr(firstindex, lastindex - firstindex);
     char buffer[50];
-    sprintf(buffer, "-k%zu-w%zu-s%zu.bin", kmerLength, windowLength, minimiser_size);
-    string outfile = rawname+buffer;
+
+    if (args.step_given)
+    {
+        step_size = args.step_arg;
+        sprintf(buffer, "-k%zu-w%zu-s%zu--step%zu.bin", kmerLength, windowLength, minimiser_size, step_size);
+    }
+    else
+    {
+        step_size = windowLength;
+        sprintf(buffer, "-k%zu-w%zu-s%zu.bin", kmerLength, windowLength, minimiser_size);
+    }
+
+    string outfile = rawname + buffer;
 
     if (args.output_given)
         outfile = args.output_arg;

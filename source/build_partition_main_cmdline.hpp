@@ -408,8 +408,8 @@ public:
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
         {"partition", 0, 0, 'p'},
-        {"size", 0, 0, 's'},
-        {"step", 0, 0, STEP_OPT},
+        {"size", 1, 0, 's'},
+        {"step", 1, 0, STEP_OPT},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
@@ -491,7 +491,7 @@ public:
       error("Requires at least 1 argument.");
     input_arg = argv[optind];
   }
-  static const char *usage() { return "Usage: sm pbuild {input_fasta_file} [options] "; }
+  static const char *usage() { return "Usage: tree pbuild {input_fasta_file} [options] "; }
   class error
   {
     int code_;

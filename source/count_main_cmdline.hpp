@@ -437,7 +437,7 @@ public:
       error("Requires at least 1 argument.");
     bf_input_arg=argv[optind];
   }
-  static const char *usage() { return "Usage: bftree count [options] "; }
+  static const char *usage() { return "Usage: tree count [options] "; }
   class error
   {
     int code_;
