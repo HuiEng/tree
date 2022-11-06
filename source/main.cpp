@@ -17,6 +17,7 @@ main_func_t build_main;
 main_func_t build_partition_main;
 main_func_t similarity_main;
 main_func_t count_main;
+main_func_t merge_main;
 main_func_t ktree_main;
 main_func_t minimiser_main;
 main_func_t partree_main;
@@ -34,6 +35,7 @@ cmd_func cmd_list[] = {
     {"build", &build_main},
     {"sim", &similarity_main},
     {"count", &count_main},
+    {"merge", &merge_main},
     {"ktree", &ktree_main},
     {"minimiser", &minimiser_main},
     {"pbuild", &build_partition_main},

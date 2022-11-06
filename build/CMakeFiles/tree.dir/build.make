@@ -96,6 +96,7 @@ tree: libbuild_main.so
 tree: libbuild_partition_main.so
 tree: libcount_main.so
 tree: libktree_main.so
+tree: libmerge_main.so
 tree: libminimiser_main.so
 tree: libpartree_main.so
 tree: libpartree_multi_main.so

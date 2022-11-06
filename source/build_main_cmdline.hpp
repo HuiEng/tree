@@ -370,11 +370,13 @@ public:
   bool multiple_arg;
   bool canonical_arg;
   bool seed_given;
+  bool debug;
 
   enum
   {
     START_OPT = 1000,
-    USAGE_OPT
+    USAGE_OPT,
+    DEBUG_OPT = 'd'
   };
 
   build_main_cmdline() : input_arg(""), bf_output_arg(""),
@@ -384,7 +386,7 @@ public:
                          kmer_given(false), window_given(false),
                          element_given(false), multiple_arg(false),
                          canonical_arg(false),
-                         seed_given(false), seed_arg(0)
+                         seed_given(false), seed_arg(0),debug(false)
   {
   }
 
@@ -395,7 +397,7 @@ public:
                                                kmer_given(false), window_given(false),
                                                element_given(false), multiple_arg(false),
                                                canonical_arg(false),
-                                               seed_given(false), seed_arg(0)
+                                               seed_given(false), seed_arg(0),debug(false)
   {
     parse(argc, argv);
   }
@@ -405,15 +407,16 @@ public:
     static struct option long_options[] = {
         {"bf-output", 1, 0, 'b'},
         {"capacity", 1, 0, 'c'},
-        {"element", 1, 0, 's'},
+        {"element", 1, 0, 'e'},
         {"seed", 1, 0, 'S'},
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'c'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
+        {"debug", 0, 0, DEBUG_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVb:k:w:s:mCS:";
+    static const char *short_options = "hVb:k:w:e:mCS:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -462,10 +465,10 @@ public:
         window_arg = conv_uint<uint32_t>((const char *)optarg, err, false);
         CHECK_ERR(uint8_t, optarg, "-w, --windowLength=uint32_t")
         break;
-      case 's':
+      case 'e':
         element_given = true;
         element_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-s, --BF-elementCount=size_t")
+        CHECK_ERR(size_t, optarg, "-e, --element=size_t")
         break;
       case 'm':
         multiple_arg = true;
@@ -477,6 +480,9 @@ public:
         seed_given = true;
         seed_arg = conv_uint<uint64_t>((const char *)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "-S, --seed=uint64_t")
+        break;
+      case DEBUG_OPT:
+        debug = true;
         break;
       }
     }
@@ -552,8 +558,9 @@ public:
            " -S, --seed                               seed for random ordering minimiser [default=0x8F3F73B5CF1C9ADE], set 0 for lexical order\n"
            " -k,                                      kmer length [default=4]\n"
            " -w,                                      window length [default=8]\n"
-           " -s, --element                            expected number of element in BF [default=1000]\n"
+           " -e, --element                            expected number of element in BF [default=1000]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
+           "     --debug                              Debug\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
            " -V, --version                            Version";
@@ -581,6 +588,7 @@ public:
     os << " canonical_arg:" << canonical_arg << "\n";
     os << " seed_given:" << seed_given << "\t"
        << " seed_arg:" << seed_arg << "\n";
+    os << " debug_arg:" << debug << "\n";
   }
 };
 #endif // __BUILD_MAIN_CMDLINE_HPP__"

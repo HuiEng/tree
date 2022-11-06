@@ -118,23 +118,37 @@ formatSim<-function(needleFile,simFile,metaFile,skip=0){
 
 
 sim1<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
-               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-k9-w100-s5_sim-global.txt)")
+               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-k9-w100-s5_sim-global.txt)",
+               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)")
 
 sim2<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
-               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-k9-w100-s5_sim.txt)")
+               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-k9-w100-s5_sim.txt)",
+               r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)")
 
 sim3<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
-                r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_k9_sim.txt)")
+                r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_k9_sim.txt)",
+                r"(C:\DataCopied\Research\tree\data\controlled-silva\sample-meta.csv)")
 
-colnames(sim1)[which(colnames(sim1)=="similarity")]<-"similarity_global"
-colnames(sim2)[which(colnames(sim2)=="similarity")]<-"similarity_windows"
-colnames(sim3)[which(colnames(sim3)=="similarity")]<-"similarity_all"
-allsim<-merge(sim1,sim2)
-allsim<-merge(allsim,sim3)
+# colnames(sim1)[which(colnames(sim1)=="similarity")]<-"similarity_global"
+# colnames(sim2)[which(colnames(sim2)=="similarity")]<-"similarity_windows"
+# colnames(sim3)[which(colnames(sim3)=="similarity")]<-"similarity_all"
+# allsim<-merge(sim1,sim2)
+# allsim<-merge(allsim,sim3)
+# ggplot(allsim)+
+#   geom_point(aes(x=similarity_all,y=similarity_global))+
+#   xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
 
-ggplot(allsim)+
-  geom_point(aes(x=similarity_all,y=similarity_global))+
+
+sim<-NULL
+sim<-rbind(sim,sim1%>%mutate(tag="global"))
+sim<-rbind(sim,sim2%>%mutate(tag="window"))
+sim<-rbind(sim,sim3%>%mutate(tag="all"))
+ggplot(sim)+
+  geom_point(aes(x=`similarity%`,y=similarity,colour=tag))+
+  facet_wrap(~tag)+
   xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
+
+temp<-sim3[sim3$`similarity%`>=98,]
 
 temp<-sim2[sim2$`similarity`>=50&sim2$`similarity`<=51,]
 
@@ -428,7 +442,7 @@ formatSimMeta<-function(needleFile,simFile, metaFile,skip=0){
   colnames(sim)[which(colnames(sim)=="name_i")]<-"bseq"
   colnames(sim)[which(colnames(sim)=="name_j")]<-"aseq"
   
-  ecoli<-left_join(needle,sim)
+  left_join(needle,sim)
 }
 
 geneLength<-read.csv(r"(C:\DataCopied\Research\tree\data\ecoli\gene-length.csv)",
@@ -451,27 +465,25 @@ ecoli_local<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\ecoli\gene.watera
                       14)
 
 
+
 ecoli_local_short<-formatSimMeta(r"(C:\DataCopied\Research\tree\data\ecoli\gene-2500-5000.waterall)",
-                           r"(C:\DataCopied\Research\tree\data\ecoli\gene-all-k9_sim.txt)",
+                           r"(C:\DataCopied\Research\tree\data\ecoli\gene-all-k9_sim-2500-5000.txt)",
                            r"(C:\DataCopied\Research\tree\data\ecoli\gene-meta.csv)",
                            0)
 
 temp<-ecoli[ecoli$score>5000&ecoli$score<6000,]
 
-# ggplot(ecoli_local,aes(x=`similarity%`,y=similarity))+
-ggplot(ecoli_local,aes(x=score,y=similarity))+
+# ggplot(ecoli_local_short,aes(x=`similarity%`,y=similarity))+
+ggplot(ecoli_local_short,aes(x=score,y=similarity))+
   geom_point()+
   # xlim(0,100)+ coord_fixed(ratio = 1)+
-  ylim(0,100)+
-  xlab("Water Score")+ylab("Jaccard Similarity with all 9mers")
+  ylim(0,100)+xlim(0,43500)+
+  ggtitle("geneLength btw 2500-5000")+
+  xlab("Water score")+ylab("Water Similarity")
   # xlab("NW similarity")+ylab("Jaccard Simil arity with MinimiserSet")
   # xlab("NW similarity")+ylab("Jaccard Similarity with windowsBF")
   
-
-
-
-
-
+####################################################
 
 
 

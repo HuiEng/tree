@@ -185,11 +185,11 @@ namespace seqan3::detail
                              std::constructible_from<urng2_t, std::views::all_t<other_urng2_t>>)
             //!\endcond
             partition_multi_view(other_urng1_t &&urange1, other_urng2_t &&urange2, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) : urange1{std::views::all(std::forward<other_urng1_t>(urange1))},
-                                                                                                                                                                     urange2{std::views::all(std::forward<other_urng2_t>(urange2))},
-                                                                                                                                                                     window_size{window_size},
-                                                                                                                                                                     kmerLength{kmerLength},
-                                                                                                                                                                     minimiser_size{minimiser_size},
-                                                                                                                                                                     step_size{step_size}
+                                                                                                                                                                                             urange2{std::views::all(std::forward<other_urng2_t>(urange2))},
+                                                                                                                                                                                             window_size{window_size},
+                                                                                                                                                                                             kmerLength{kmerLength},
+                                                                                                                                                                                             minimiser_size{minimiser_size},
+                                                                                                                                                                                             step_size{step_size}
         {
             if constexpr (second_range_is_given)
             {
@@ -352,6 +352,7 @@ namespace seqan3::detail
             k_len = kmerLength;
             s_size = step_size;
             minimiser_count = minimiser_size;
+            minimiser_set.resize(minimiser_count);
             window_first(window_size);
         }
         //!\}
@@ -482,10 +483,12 @@ namespace seqan3::detail
             auto minimiser_it = std::ranges::min_element(window_values, std::less_equal<value_type>{});
             minimiser_value = *minimiser_it;
 
-            // take the first {minimiser_size} window values
-            sort(window_values.begin(), window_values.end());
-            window_values.erase(unique(window_values.begin(), window_values.end()), window_values.end());
-            minimiser_set.assign(window_values.begin(), window_values.begin() + minimiser_count);
+            // // take the first {minimiser_size} window values
+            // sort(window_values.begin(), window_values.end());
+            // window_values.erase(unique(window_values.begin(), window_values.end()), window_values.end());
+            // minimiser_set.assign(window_values.begin(), window_values.begin() + minimiser_count);
+
+            partial_sort_copy(window_values.begin(), window_values.end(), minimiser_set.begin(), minimiser_set.end());
 
             advance_window();
         }
@@ -501,31 +504,40 @@ namespace seqan3::detail
             if (window_size == 0u)
                 return true;
 
-            // skip tail k-mers from previous window
-            for (size_t i = 0u; i < kmer_length - 1u; ++i)
-            {
-                advance_window();
-                if (urng1_iterator == urng1_sentinel)
-                    return true;
-            }
-
-            window_values.clear();
+            // // skip tail k-mers from previous window
+            // for (size_t i = 0u; i < kmer_length - 1u; ++i)
+            // {
+            //     advance_window();
+            //     if (urng1_iterator == urng1_sentinel)
+            //         return true;
+            // }
+            // window_values.clear();
 
             for (size_t i = 0u; i < step_size; ++i)
             {
+                window_values.pop_front();
                 window_values.push_back(window_value());
                 advance_window();
                 if (urng1_iterator == urng1_sentinel)
                     return true;
             }
 
+            // for (size_t i = 0u; i < window_size - 1u; ++i)
+            // {
+            //     window_values.push_back(window_value());
+            //     advance_window();
+            //     if (urng1_iterator == urng1_sentinel)
+            //         return true;
+            // }
+
             auto minimiser_it = std::ranges::min_element(window_values, std::less_equal<value_type>{});
             minimiser_value = *minimiser_it;
 
-            // take the first {minimiser_size} window values
-            sort(window_values.begin(), window_values.end());
-            window_values.erase(unique(window_values.begin(), window_values.end()), window_values.end());
-            minimiser_set.assign(window_values.begin(), window_values.begin() + minimiser_count);
+            // // take the first {minimiser_size} window values
+            // sort(window_values.begin(), window_values.end());
+            // window_values.erase(unique(window_values.begin(), window_values.end()), window_values.end());
+            // minimiser_set.assign(window_values.begin(), window_values.begin() + minimiser_count);
+            partial_sort_copy(window_values.begin(), window_values.end(), minimiser_set.begin(), minimiser_set.end());
 
             /*** debug
             std::cout << "\n";
@@ -547,7 +559,7 @@ namespace seqan3::detail
     //!\brief A deduction guide for the view class template.
     template <std::ranges::viewable_range rng1_t, std::ranges::viewable_range rng2_t>
     partition_multi_view(rng1_t &&, rng2_t &&, size_t const window_size, size_t const kmerLength, size_t const minimiser_size, size_t const step_size) -> partition_multi_view<std::views::all_t<rng1_t>,
-                                                                                                                                                       std::views::all_t<rng2_t>>;
+                                                                                                                                                                               std::views::all_t<rng2_t>>;
 
     // ---------------------------------------------------------------------------------------------------------------------
     // partition_multi_fn (adaptor definition)

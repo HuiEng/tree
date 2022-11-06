@@ -77,18 +77,6 @@ install/local/fast: preinstall/fast
 	/usr/local/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
 
-# Special rule for the target install/strip
-install/strip: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip
-
-# Special rule for the target install/strip
-install/strip/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip/fast
-
 # Special rule for the target install
 install: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
@@ -100,6 +88,18 @@ install/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
 	/usr/local/bin/cmake -P cmake_install.cmake
 .PHONY : install/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
+	/usr/local/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
 
 # Special rule for the target edit_cache
 edit_cache:
@@ -225,6 +225,19 @@ ktree_main: cmake_check_build_system
 ktree_main/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ktree_main.dir/build.make CMakeFiles/ktree_main.dir/build
 .PHONY : ktree_main/fast
+
+#=============================================================================
+# Target rules for targets named merge_main
+
+# Build rule for target.
+merge_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 merge_main
+.PHONY : merge_main
+
+# fast build rule for target.
+merge_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/merge_main.dir/build.make CMakeFiles/merge_main.dir/build
+.PHONY : merge_main/fast
 
 #=============================================================================
 # Target rules for targets named minimiser_main
@@ -411,6 +424,30 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tree.dir/build.make CMakeFiles/tree.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+merge_main.o: merge_main.cpp.o
+.PHONY : merge_main.o
+
+# target to build an object file
+merge_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/merge_main.dir/build.make CMakeFiles/merge_main.dir/merge_main.cpp.o
+.PHONY : merge_main.cpp.o
+
+merge_main.i: merge_main.cpp.i
+.PHONY : merge_main.i
+
+# target to preprocess a source file
+merge_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/merge_main.dir/build.make CMakeFiles/merge_main.dir/merge_main.cpp.i
+.PHONY : merge_main.cpp.i
+
+merge_main.s: merge_main.cpp.s
+.PHONY : merge_main.s
+
+# target to generate assembly for a file
+merge_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/merge_main.dir/build.make CMakeFiles/merge_main.dir/merge_main.cpp.s
+.PHONY : merge_main.cpp.s
+
 minimiser_main.o: minimiser_main.cpp.o
 .PHONY : minimiser_main.o
 
@@ -547,6 +584,7 @@ help:
 	@echo "... build_partition_main"
 	@echo "... count_main"
 	@echo "... ktree_main"
+	@echo "... merge_main"
 	@echo "... minimiser_main"
 	@echo "... partree_main"
 	@echo "... partree_multi_main"
@@ -568,6 +606,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... merge_main.o"
+	@echo "... merge_main.i"
+	@echo "... merge_main.s"
 	@echo "... minimiser_main.o"
 	@echo "... minimiser_main.i"
 	@echo "... minimiser_main.s"

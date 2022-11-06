@@ -362,6 +362,7 @@ public:
   uint32_t window_arg;
   uint32_t step_arg;
   size_t size_arg;
+  size_t element_arg;
 
   bool output_given;
   bool kmer_given;
@@ -372,31 +373,33 @@ public:
   bool canonical_arg;
   bool size_given;
   bool debug;
+  bool set_arg;
 
   enum
   {
     START_OPT = 1000,
     USAGE_OPT,
-    STEP_OPT = 'l'
+    STEP_OPT = 'l',
+    SET_OPT = 'x'
   };
 
   build_partition_main_cmdline() : input_arg(""), output_arg(""),
-                                   kmer_arg(0), window_arg(0),step_arg(0),
+                                   kmer_arg(0), window_arg(0),step_arg(0),element_arg(0),
                                    output_given(false),
                                    kmer_given(false), window_given(false),step_given(false),
                                    element_given(false), multiple_arg(false),
                                    canonical_arg(false), size_given(false),
-                                   size_arg(0), debug(false)
+                                   size_arg(0), debug(false), set_arg(false)
   {
   }
 
   build_partition_main_cmdline(int argc, char *argv[]) : input_arg(""), output_arg(""),
-                                                         kmer_arg(0), window_arg(0),step_arg(0),
+                                                         kmer_arg(0), window_arg(0),step_arg(0),element_arg(0),
                                                          output_given(false),
                                                          kmer_given(false), window_given(false),step_given(false),
                                                          element_given(false), multiple_arg(false),
                                                          canonical_arg(false), size_given(false),
-                                                         size_arg(0), debug(false)
+                                                         size_arg(0), debug(false), set_arg(false)
   {
     parse(argc, argv);
   }
@@ -405,6 +408,7 @@ public:
   {
     static struct option long_options[] = {
         {"output", 1, 0, 'o'},
+        {"element", 1, 0, 'e'},
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
         {"partition", 0, 0, 'p'},
@@ -412,10 +416,11 @@ public:
         {"step", 1, 0, STEP_OPT},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
+        {"set", 0, 0, SET_OPT},
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVo:k:w:mCs:d";
+    static const char *short_options = "hVo:k:w:mCs:de:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -453,6 +458,14 @@ public:
       case 'o':
         output_given = true;
         output_arg = optarg;
+        break;
+      case 'e':
+        element_given = true;
+        element_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-e, --element=size_t")
+        break;
+      case SET_OPT:
+        set_arg = true;
         break;
       case 'k':
         kmer_given = true;
@@ -553,6 +566,8 @@ public:
     return "partition input seq(s) into window of length w and select s minimisers per window and store in a bf\n\n"
            "Options (default value in (), *required):\n"
            " -o, --output                             output path\n"
+           "     --output                             print as minimiser set\n"
+           " -e, --element                            expected number of element in BF [default=1000]\n"
            " -C, --canonical                          canonical [default=FALSE]\n"
            " -s, --size                               number of minimiser per window [default=3]\n"
            " -k,                                      kmer length [default=4]\n"
@@ -587,6 +602,10 @@ public:
     os << " canonical_arg:" << canonical_arg << "\n";
     os << " size_given:" << size_given << "\n";
     os << " size_arg:" << size_arg << "\n";
+    os << " set_arg:" << set_arg << "\n";
+    os << " element_given:" << element_given << "\t"
+       << " element_arg:" << element_arg << "\n";
+
   }
 };
 #endif // __BUILD_PARTITION_MAIN_CMDLINE_HPP__"

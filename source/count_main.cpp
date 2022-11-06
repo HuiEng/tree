@@ -4,31 +4,13 @@
 #include "count_main_cmdline.hpp"
 #include "bloom_filter.hpp"
 #include "read.hpp"
-#include "self_tree.hpp"
+#include "distance.hpp"
 
 using namespace std;
 
 static count_main_cmdline args; // Command line switches and arguments
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 
-void toBinary(cell_type letter)
-{
-    int binary[8];
-    for (int n = 0; n < 8; n++)
-        binary[7 - n] = (letter >> n) & 1;
-
-    for (int n = 0; n < 8; n++)
-        fprintf(stdout, "%d", binary[n]);
-}
-
-void printBF(const cell_type *bf)
-{
-    for (std::size_t i = 0; i < signatureSize; ++i)
-    {
-        toBinary(bf[i * sizeof(cell_type)]);
-    }
-    fprintf(stdout, "\n");
-}
 
 // count set bits per seq
 void countWinnow(FILE *pFile, vector<cell_type> seqs)
@@ -45,6 +27,7 @@ void countWinnow(FILE *pFile, vector<cell_type> seqs)
 void countChunk(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
 {
     size_t seqCount = seqs.size();
+    fprintf(pFile, "i,count\n");
     for (size_t i = 0; i < seqCount; i++)
     {
         vector<cell_type> temp = getMinimiseSet(seqs[i])[0];
@@ -59,14 +42,17 @@ int count_main(int argc, char *argv[])
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
 
     string bfIn = args.bf_input_arg;
-
-    size_t firstindex = bfIn.find_last_of("/") + 1;
-    size_t lastindex = bfIn.find_last_of(".");
-    string rawname = bfIn.substr(firstindex, lastindex - firstindex);
+    string rawname;
 
     if (args.output_given)
     {
         rawname = args.output_arg;
+    }
+    else
+    {
+        size_t firstindex = bfIn.find_last_of("/") + 1;
+        size_t lastindex = bfIn.find_last_of(".");
+        rawname = bfIn.substr(firstindex, lastindex - firstindex) + "-all_cnt.txt";
     }
 
     if (!args.chunk_arg)
@@ -75,7 +61,7 @@ int count_main(int argc, char *argv[])
         signatureSize = readSignatures(bfIn, seqs);
 
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
-        FILE *pFile = fopen((rawname + "-all_cnt.txt").c_str(), "w");
+        FILE *pFile = fopen(rawname.c_str(), "w");
         countWinnow(pFile, seqs);
     }
     else
@@ -98,7 +84,7 @@ int count_main(int argc, char *argv[])
 
         // fprintf(stderr,"done\n" );
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
-        FILE *pFile = fopen((rawname + "-all_cnt.txt").c_str(), "w");
+        FILE *pFile = fopen(rawname.c_str(), "w");
         countChunk(pFile, seqs);
     }
 

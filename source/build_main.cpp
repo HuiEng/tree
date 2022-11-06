@@ -13,7 +13,8 @@ static build_main_cmdline args;   // Command line switches and arguments
 static uint8_t kmerLength = 4;    // Kmer length
 static uint32_t windowLength = 8; // Kmer length
 size_t bf_element_cnt = 1000;
-uint64_t seed = 0; //0x8F3F73B5CF1C9ADE; // The default seed from minimiser_hash
+uint64_t seed = 0; // 0x8F3F73B5CF1C9ADE; // The default seed from minimiser_hash
+bool debug = false;
 
 void writeInt(std::ostream &os, unsigned long long int i)
 {
@@ -77,18 +78,18 @@ void generateSig(bloom_parameters parameters, string filename, string outname, b
     // to get minimisers with w=8,k=4
     // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
     size_t temp = windowLength - kmerLength + 1;
-    // auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::minimiser(temp);
+    auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::minimiser(temp);
 
     // random ordering
 
-    // Use XOR on all minimiser values
-    auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | std::views::transform([seed](uint64_t i)
-                                                                                                                        { return i ^ seed; }) |
-                          seqan3::views::minimiser(temp);
+    // // Use XOR on all minimiser values
+    // auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | std::views::transform([seed](uint64_t i)
+    //                                                                                                                     { return i ^ seed; }) |
+    //                       seqan3::views::minimiser(temp);
 
     std::random_device dev;
     std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(1, numeric_limits<size_t>::max()/2); // distribution in range [1, 6]
+    std::uniform_int_distribution<std::mt19937::result_type> dist(1, numeric_limits<size_t>::max() / 2); // distribution in range [1, 6]
     seed = dist(rng);
 
     auto minimiser_view_rand = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | std::views::transform([seed](uint64_t i)
@@ -123,6 +124,32 @@ void generateSig(bloom_parameters parameters, string filename, string outname, b
             wf.close();
         }
     }
+    else if (debug)
+    {
+
+        ofstream wf(outname, ios::out | ios::binary);
+        writeInt(wf, bf.table_size());
+        std::cout << "bf size: " << bf.table_size() * bits_per_char << "\n";
+        size_t i = 0;
+
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
+        {
+            cout << ">0|" << i << "|0\n";
+            // for each seq, Instantiate Bloom Filter
+            for (auto &&hash : seq | minimiser_view)
+            {
+                bf.insert(hash);
+                cout << hashToMer_str(kmerLength, hash) << ",";
+            }
+            cout << "\n";
+            i++;
+
+            bf.print(wf);
+            bf.clear();
+        }
+        wf.close();
+    }
     else
     {
         // auto &&hashes = seq | kmer_view | seqan3::views::minimiser(temp);
@@ -148,13 +175,12 @@ void generateSig(bloom_parameters parameters, string filename, string outname, b
 
         ofstream wf(outname, ios::out | ios::binary);
         writeInt(wf, bf.table_size());
-        std::cout<< "bf size: " << bf.table_size() * bits_per_char <<"\n";
+        std::cout << "bf size: " << bf.table_size() * bits_per_char << "\n";
 
         // Retrieve the sequences and ids.
         for (auto &[seq, id, qual] : file_in)
         {
 
-            
             // for each seq, Instantiate Bloom Filter
             for (auto &&hash : seq | minimiser_view)
             {
@@ -196,6 +222,7 @@ int build_main(int argc, char *argv[])
         fprintf(stderr, "Error: kmer length must be smaller or equal to window length\n");
         return 1;
     }
+    debug = args.debug;
 
     bloom_parameters parameters;
     // How many elements roughly do we expect to insert?
@@ -208,17 +235,13 @@ int build_main(int argc, char *argv[])
     parameters.random_seed = 0xA5A5A5A5;
     parameters.maximum_number_of_hashes = 1;
 
-
     if (!parameters)
     {
         std::cout << "Error - Invalid set of bloom filter parameters!" << std::endl;
         return 1;
     }
-    
 
     parameters.compute_optimal_parameters();
-
-    
 
     std::cout << "done setting bf param" << std::endl;
 
