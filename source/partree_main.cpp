@@ -114,7 +114,7 @@ int partree_main(int argc, char *argv[])
     //     std::cout << "\n";
     // }
 
-    fprintf(stderr, "Loaded signatures...\n");
+    fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
 
     fprintf(stderr, "Building Signature...\n");
     default_random_engine rng;

@@ -190,7 +190,7 @@ CMakeFiles/tree_main.dir/tree_main.cpp.o: \
  /usr/include/c++/7/bits/atomic_base.h \
  /usr/include/c++/7/bits/atomic_lockfree_defines.h \
  /usr/include/c++/7/backward/auto_ptr.h \
- /mnt/c/DataCopied/Research/tree/source/../include/self_tree.hpp \
+ /mnt/c/DataCopied/Research/tree/source/../include/temp_tree.hpp \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/omp.h \
  /usr/include/c++/7/unordered_map /usr/include/c++/7/bits/hashtable.h \
  /usr/include/c++/7/bits/hashtable_policy.h \
