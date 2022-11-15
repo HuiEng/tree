@@ -46,7 +46,7 @@ vector<cell_type> createMeanSig(const vector<seq_type> clusterSigs)
 
     for (int i = 0; i < counter.size(); i++)
     {
-        if (counter[i] > clusterSigs.size() / 2)
+        if (counter[i] >= clusterSigs.size() / 2)
         {
             meanSig[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
         }
@@ -232,220 +232,25 @@ public:
         // printMatrix(stderr, node);
     }
 
-    // calculate mean form a vector of sigs
-    inline vector<cell_type> createMeanSig(const vector<seq_type> clusterSigs)
+    // union mean of children
+    inline void updateNodeMean(size_t node)
     {
-        vector<cell_type> meanSig(signatureSize * bits_per_char);
-        vector<size_t> counter(signatureSize * bits_per_char);
-
-        for (seq_type signature : clusterSigs)
+        if (childCounts[node] > 1)
         {
-            seq_type signatureData = getMinimiseSet(signature);
-            for (size_t i = 0; i < signatureSize; i++)
+            size_t size = signatureSize * bits_per_char;
+            vector<cell_type> meanSig(size);
+            fill(&meanSig[0], &meanSig[0] + size, 0);
+
+            for (size_t child : childLinks[node])
             {
-                for (int n = 0; n < bits_per_char; n++)
+                for (size_t i = 0; i < size; i++)
                 {
-                    if ((signatureData[0][i] >> n) & 1)
-                    {
-                        counter[i * bits_per_char + n]++;
-                    }
+                    meanSig[i] |= means[child][i];
                 }
             }
+            means[node] = meanSig;
+            priority[node] = countSingleSetBits(means[node]);
         }
-
-        for (int i = 0; i < counter.size(); i++)
-        {
-            if (counter[i] > clusterSigs.size() / 2)
-            {
-                meanSig[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-            }
-        }
-
-        return meanSig;
-    }
-
-    // return if found same, and the destination node
-    inline tuple<bool, size_t> traverseHD(seq_type signature) const
-    {
-        size_t node = root;
-        size_t a = countSetBits(signature);
-        fprintf(stderr, " \n(%zu,%f )", a, split_threshold * (a + a));
-
-        while (isBranchNode[node])
-        {
-            fprintf(stderr, " \n%zu: ", node);
-            size_t lowestHD = numeric_limits<size_t>::max();
-            size_t lowestHDchild = childLinks[node][0];
-            size_t mismatch = 0;
-
-            for (size_t i = 0; i < childCounts[node]; i++)
-            {
-                size_t child = childLinks[node][i];
-                size_t hd = calcDistance(matrices[child][0], signature);
-                size_t b = countSetBits(matrices[child][0]);
-
-                fprintf(stderr, " <%zu,%zu,%zu> ", child, hd, b);
-
-                // found same, move on with the next seq
-                if (hd <= stay_threshold * (a + b))
-                {
-                    return make_tuple(true, child);
-                }
-                else if (hd < lowestHD)
-                {
-                    lowestHD = hd;
-                    lowestHDchild = child;
-                }
-
-                // count how many nodes mismatch
-                if (hd >= split_threshold * (a + b))
-                {
-                    mismatch++;
-                }
-            }
-
-            // nothing is close enough, spawn new child under parent
-            if (mismatch == childCounts[node])
-            {
-                return make_tuple(false, node);
-            }
-
-            // matching with all, grow on top
-            if (mismatch == 0)
-            {
-                return make_tuple(false, parentLinks[node]);
-            }
-
-            node = lowestHDchild;
-        }
-
-        return std::make_tuple(false, node);
-    }
-
-    // return if found same, and the destination node
-    inline tuple<bool, size_t> traverseInter(seq_type signature) const
-    {
-        size_t node = root;
-        size_t a = countSetBits(signature);
-        fprintf(stderr, " \n(%zu, %f, ,%f)", a, split_threshold * a, stay_threshold * a);
-
-        while (isBranchNode[node])
-        {
-            fprintf(stderr, " \n%zu: ", node);
-            size_t maxInter = 0;
-            size_t maxInterchild = childLinks[node][0];
-            size_t mismatch = 0;
-
-            for (size_t i = 0; i < childCounts[node]; i++)
-            {
-                size_t child = childLinks[node][i];
-                size_t inter = calcDistance(matrices[child][0], signature);
-                size_t b = countSetBits(matrices[child][0]);
-
-                fprintf(stderr, " <%zu,%zu,%zu> ", child, inter, b);
-
-                size_t len = max(a, b);
-
-                // found same, move on with the next seq
-                if (inter >= stay_threshold * len)
-                {
-                    return make_tuple(true, child);
-                }
-                else if (inter < maxInter)
-                {
-                    maxInter = inter;
-                    maxInterchild = child;
-                }
-
-                // count how many nodes mismatch
-                if (inter <= split_threshold * len)
-                {
-                    mismatch++;
-                }
-            }
-
-            // nothing is close enough, spawn new child under parent
-            if (mismatch == childCounts[node])
-            {
-                return make_tuple(false, node);
-            }
-
-            node = maxInterchild;
-        }
-
-        return std::make_tuple(false, node);
-    }
-
-    // if there is only 1 path and the input is closer to the parent than the child, rotate them
-    inline size_t rotate(size_t node, seq_type signature, vector<size_t> &insertionList)
-    {
-        size_t parent = parentLinks[node];
-        size_t old_node = node;
-
-        // find where to insert
-        while (node != root)
-        {
-            size_t match = 0;
-            for (int i = 0; i < childCounts[parent]; i++)
-            {
-                size_t temp = childLinks[parent][i];
-                size_t distance = calcDistance(signature, matrices[temp][0]);
-                //? change length later
-                if (distance > stay_threshold * signature.size() && distance < split_threshold * signature.size())
-                {
-                    match++;
-                }
-            }
-
-            if (match != childCounts[parent])
-            {
-                break;
-            }
-
-            old_node = node;
-            node = parent;
-            parent = parentLinks[node];
-        }
-
-        // insert new node as child of parent and the parent and its siblings are now the children of the new node
-        size_t temp = getNewNodeIdx(insertionList);
-
-        isBranchNode[temp] = 1;
-        parentLinks[temp] = node;
-        childCounts[temp] = 1;
-        childLinks[temp].push_back(old_node);
-        addSigToMatrix(temp, signature);
-
-        // update parent of old_node and siblings
-        for (size_t sibling : childLinks[node])
-        {
-            parentLinks[sibling] = temp;
-        }
-
-        // update parent
-        replace(childLinks[node].begin(), childLinks[node].end(), old_node, temp);
-
-        fprintf(stderr, "***Adding %zu between %zu, %zu, %zu", temp, parent, node, old_node);
-        return temp;
-    }
-
-    inline bool isUnipath(size_t node)
-    {
-        size_t parent = parentLinks[node];
-        size_t grandparent = parentLinks[parent];
-
-        // // return the highest node in the unipath
-        // // if output = input node => there is no unipath
-        // // else the highest point is the parent of the output
-        // while (childCounts[parent] == 1 && childCounts[grandparent] == 1)
-        // {
-        //     node = parent;
-        //     parent = grandparent;
-        //     grandparent = parentLinks[parent];
-        // }
-        // return node;
-
-        return childCounts[parent] == 1 && childCounts[grandparent] == 1;
     }
 
     // priority = distance to ancestor
@@ -594,128 +399,11 @@ public:
 
                 return make_tuple(true, temp);
             }
+            updateNodeMean(node);
             node = matching[0]; // choose the first matching for now, may change to best
         }
 
         return std::make_tuple(false, node);
-    }
-
-    // return if found same, and the destination node
-    inline tuple<bool, size_t> traverseMatching(seq_type signature, vector<size_t> &insertionList)
-    {
-        size_t node = root;
-        size_t a = signature.size();
-        fprintf(stderr, " \n(%zu, %f, ,%f)", a, split_threshold * a, stay_threshold * a);
-        double offset = 0;
-
-        while (isBranchNode[node])
-        {
-            fprintf(stderr, " \n%zu: ", node);
-            vector<size_t> mismatch;
-            vector<size_t> matching_leaves;
-            vector<size_t> matching_branch;
-
-            for (size_t i = 0; i < childCounts[node]; i++)
-            {
-                size_t child = childLinks[node][i];
-                size_t inter = calcDistance(matrices[child][0], signature);
-                size_t b = matrices[child][0].size();
-
-                size_t len = max(a, b);
-                fprintf(stderr, " <%zu,%zu,%.2f,%.2f> ", child, inter, (stay_threshold - offset) * len, split_threshold * len);
-
-                // found same, move on with the next seq
-                if (inter >= (stay_threshold - offset) * len)
-                {
-                    return make_tuple(true, child);
-                }
-
-                // count how many nodes mismatch
-                if (inter <= (split_threshold)*len)
-                {
-                    // mismatch++;
-                    mismatch.push_back(child);
-                }
-                else if (!isBranchNode[child])
-                {
-                    matching_leaves.push_back(child);
-                    fprintf(stderr, " -m%zu, ", child);
-                }
-                else
-                {
-                    //? treat matching branch as mismatch for now
-                    matching_branch.push_back(child);
-                    fprintf(stderr, " -b%zu, ", child);
-                }
-            }
-
-            // nothing is close enough, spawn new child under parent
-            if (mismatch.size() == childCounts[node])
-            {
-                fprintf(stderr, " -s%zu, ", node);
-                return make_tuple(false, node);
-            }
-            // else if (mismatch == 0)
-            // {
-            //     size_t temp = rotate(node, signature, insertionList);
-            //     return make_tuple(true, temp);
-            // }
-
-            else if (matching_leaves.size() == 1)
-            {
-                node = matching_leaves[0];
-            }
-            else if (matching_branch.size() == 1)
-            {
-                node = matching_branch[0];
-            }
-            else
-            {
-                size_t temp = getNewNodeIdx(insertionList);
-                addSigToMatrix(temp, signature);
-                // priority[temp] = calcDistance(signature, matrices[findAncestor(node)][0]);
-                size_t ancestor = findAncestor(node);
-                if (ancestor == root)
-                {
-                    priority[temp] = signature.size();
-                }
-                else
-                {
-                    priority[temp] = calcDistance(signature, matrices[ancestor][0]);
-                }
-
-                parentLinks[temp] = node;
-                isBranchNode[temp] = 1;
-                childCounts[temp] = matching_leaves.size() + matching_branch.size();
-                childLinks[temp] = matching_branch;
-                childLinks[temp].insert(childLinks[temp].end(), matching_leaves.begin(), matching_leaves.end());
-
-                childCounts[node] = mismatch.size() + 1;
-                childLinks[node].clear();
-                childLinks[node] = mismatch;
-                childLinks[node].push_back(temp);
-
-                for (size_t n : matching_leaves)
-                {
-                    parentLinks[n] = temp;
-                }
-
-                for (size_t n : matching_branch)
-                {
-                    parentLinks[n] = temp;
-                }
-
-                fprintf(stderr, "\nxxx multiple: %zu,%zu,%zu\n", temp, node, childLinks[node][childCounts[node] - 1]);
-
-                return make_tuple(true, temp);
-            }
-            // offset += 0.1;
-        }
-
-        // grow height, should I go on top or bottom
-        // return rotateAnc(node, signature, insertionList);
-        return std::make_tuple(false, node);
-        // return make_tuple(true, rotateAnc(node, signature, insertionList));
     }
 
     inline size_t createNode(seq_type signature, vector<size_t> &insertionList, size_t parent)
