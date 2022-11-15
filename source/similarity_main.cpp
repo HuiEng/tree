@@ -11,24 +11,24 @@ using namespace std;
 static similarity_main_cmdline args; // Command line switches and arguments
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 
-void toBinary(cell_type letter)
-{
-    int binary[8];
-    for (int n = 0; n < 8; n++)
-        binary[7 - n] = (letter >> n) & 1;
+// void toBinary(cell_type letter)
+// {
+//     int binary[8];
+//     for (int n = 0; n < 8; n++)
+//         binary[7 - n] = (letter >> n) & 1;
 
-    for (int n = 0; n < 8; n++)
-        fprintf(stdout, "%d", binary[n]);
-}
+//     for (int n = 0; n < 8; n++)
+//         fprintf(stdout, "%d", binary[n]);
+// }
 
-void printBF(const cell_type *bf)
-{
-    for (std::size_t i = 0; i < signatureSize; ++i)
-    {
-        toBinary(bf[i * sizeof(cell_type)]);
-    }
-    fprintf(stdout, "\n");
-}
+// void printBF(const cell_type *bf)
+// {
+//     for (std::size_t i = 0; i < signatureSize; ++i)
+//     {
+//         toBinary(bf[i * sizeof(cell_type)]);
+//     }
+//     fprintf(stdout, "\n");
+// }
 
 void calcAllSimilarity(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
 {

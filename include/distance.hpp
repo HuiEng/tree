@@ -15,6 +15,85 @@ using namespace std;
 
 size_t signatureSize = 0; // Signature size (depends on element in BF, obtained while read binary)
 
+
+void toBinaryIdx(FILE *stream, vector<cell_type> sig)
+{
+    for (int i = 0; i < signatureSize; i++)
+    {
+        int binary[bits_per_char];
+        for (int n = 0; n < bits_per_char; n++)
+            binary[bits_per_char - 1 - n] = (sig[i] >> n) & 1;
+
+        for (int n = 0; n < bits_per_char; n++)
+        {
+            if (binary[n] > 0)
+            {
+                fprintf(stream, "%zu,", n + i * bits_per_char);
+            }
+        }
+    }
+    fprintf(stream, "\n");
+}
+
+void toBinary(FILE *stream, vector<cell_type> sig)
+{
+    //   fprintf(stderr, "%p: ", sig);
+    for (size_t i = 0; i < signatureSize; i++)
+    {
+        int binary[bits_per_char];
+        for (int n = 0; n < bits_per_char; n++)
+            binary[bits_per_char - 1 - n] = (sig[i] >> n) & 1;
+
+        for (int n = 0; n < bits_per_char; n++)
+            fprintf(stream, "%d", binary[n]);
+    }
+    fprintf(stream, "\n");
+}
+
+// print each window in one line
+void dbgPrintSignature(FILE *stream, vector<vector<cell_type>> seq)
+{
+    for (auto window : seq)
+    {
+        toBinary(stream, window);
+    }
+    fprintf(stream, "\n");
+}
+
+void dbgPrintSignatureIdx(FILE *stream, vector<vector<cell_type>> seq)
+{
+    for (auto window : seq)
+    {
+        toBinaryIdx(stream, window);
+    }
+    fprintf(stream, "\n");
+}
+
+
+size_t countSingleSetBits(vector<cell_type> seq)
+{
+    size_t c = 0;
+    for (size_t i = 0; i < signatureSize; i++)
+    {
+        c += __builtin_popcountll(seq[i]);
+    }
+    return c;
+}
+
+size_t countSetBits(seq_type seq)
+{
+    size_t c = 0;
+    // treat tail subseq as mismatch
+    for (int w = 0; w < seq.size(); w++)
+    {
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(seq[w][i]);
+        }
+    }
+    return c;
+}
+
 size_t calcHD(seq_type shorter, seq_type longer)
 {
     size_t c = 0;
@@ -114,8 +193,6 @@ size_t calcMatchingWindows(seq_type a, seq_type b)
     return match;
 }
 
-
-
 double calcJaccard(seq_type a, seq_type b)
 {
     // return calcInter(a, b) * 1.0 / calcUnion(a, b);
@@ -170,8 +247,6 @@ double calcJaccardLocal(seq_type a, seq_type b)
     }
 }
 
-
-
 seq_type getMinimiseSet(seq_type a)
 {
     seq_type output;
@@ -196,13 +271,17 @@ double calcJaccardGlobal(seq_type a, seq_type b)
     return calcInter(x, y) * 1.0 / calcUnion(x, y);
 }
 
+double calcJaccardGlobal(vector<cell_type> a, vector<cell_type> b)
+{
+    return calcSingleInter(a, b) * 1.0 / calcSingleUnion(a, b);
+}
+
 size_t calcPartitionBitsGlobal(seq_type a, seq_type b)
 {
     seq_type x = getMinimiseSet(a);
     seq_type y = getMinimiseSet(b);
     return calcInter(x, y);
 }
-
 
 distance_type calcDistance(seq_type a, seq_type b)
 {
@@ -217,10 +296,9 @@ distance_type calcDistance(seq_type a, seq_type b)
 
     // return calcInter(a, b);
     // return calcJaccard(a,b);
-    return calcJaccardGlobal(a,b);
+    return calcJaccardGlobal(a, b);
 
     // return calcMatchingWindows(a, b);
 }
-
 
 #endif
