@@ -504,10 +504,13 @@ public:
         }
     }
 
+    inline double compareSigToMean(size_t node, seq_type signature){
+        return calcJaccardGlobal(means[node], getMinimiseSet(signature)[0]);
+    }
+
     inline size_t search(seq_type signature, size_t idx)
     {
         size_t node = root;
-        double local_stay = stay_threshold;
 
         size_t best_child = node;
         double best_sim = 0;
@@ -520,22 +523,14 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                double sim = calcDistance(matrices[child][0], signature);
+                double sim = compareSigToMean(child, signature);
 
                 fprintf(stderr, " <%zu,%.2f> ", child, sim);
 
                 // found same, move on with the next seq
-                if (sim >= (local_stay))
+                if (sim >= (stay_threshold))
                 {
-                    fprintf(stderr, "\n found %zu at %zu\n>", idx, child);
-
-                    for (size_t id : seqIDs[child])
-                    {
-                        if (id == idx)
-                        {
-                            fprintf(stderr, "***match\n");
-                        }
-                    }
+                    seqIDs[child].push_back(idx);
                     return child;
                 }
 
@@ -553,70 +548,18 @@ public:
 
             node = local_best_child;
         }
-
-        fprintf(stderr, "\n found %zu at %zu\n>", idx, best_child);
-
-        for (size_t id : seqIDs[best_child])
-        {
-            if (id == idx)
-            {
-                fprintf(stderr, "***match\n");
-            }
-        }
+        
+        seqIDs[best_child].push_back(idx);
         return best_child;
     }
 
-    // // return if found same, and the destination node
-    // inline size_t search(seq_type signature, size_t idx) const
-    // {
-    //     size_t node = root;
-    //     size_t a = countSetBits(signature);
-
-    //     while (isBranchNode[node])
-    //     {
-    //         // fprintf(stderr, " \n%zu: ", node);
-    //         size_t lowestHD = numeric_limits<size_t>::max();
-    //         size_t lowestHDchild = childLinks[node][0];
-    //         size_t mismatch = 0;
-
-    //         for (size_t i = 0; i < childCounts[node]; i++)
-    //         {
-    //             size_t child = childLinks[node][i];
-    //             size_t hd = calcDistance(matrices[child][0], signature);
-    //             size_t b = countSetBits(matrices[child][0]);
-
-    //             // found same, move on with the next seq
-    //             if (hd <= stay_threshold * max(a, b))
-    //             {
-    //                 return child;
-    //             }
-    //             else if (hd < lowestHD)
-    //             {
-    //                 lowestHD = hd;
-    //                 lowestHDchild = child;
-    //             }
-
-    //             // count how many nodes mismatch
-    //             if (hd >= split_threshold * max(a, b))
-    //             {
-    //                 mismatch++;
-    //             }
-
-    //             // fprintf(stderr, " <%zu,%zu> ", child, hd);
-    //         }
-
-    //         //? nothing is close enough, return parent
-    //         if (mismatch == childCounts[node])
-    //         {
-    //             fprintf(stderr, ">%zu mismatch\n", idx);
-    //             return parentLinks[node];
-    //         }
-
-    //         node = lowestHDchild;
-    //     }
-
-    //     return node;
-    // }
+    void clearSeqId(size_t lastNode)
+    {
+        for (size_t i = 0; i < lastNode; i++)
+        {
+            seqIDs[i].clear();
+        }
+    }
 
     void destroyLocks(size_t node)
     {

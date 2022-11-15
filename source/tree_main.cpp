@@ -96,12 +96,14 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     fprintf(stderr, "\n\n\n\n");
 
-    // for (size_t i = 0; i <cap; i++)
-    // {
-    //     size_t clus = tree.search(seqs[foo[i]], foo[i]);
-    //     // clusters[foo[i]] = tree.findAncestor(clus);
-    //     clusters[foo[i]] = clus;
-    // }
+    tree.clearSeqId(insertionList[0]);
+
+    for (size_t i = 0; i <cap; i++)
+    {
+        size_t clus = tree.search(seqs[foo[i]], foo[i]);
+        // clusters[foo[i]] = tree.findAncestor(clus);
+        clusters[foo[i]] = clus;
+    }
 
     // // Insert first 1 nodes single-threaded
     // for (size_t i = 0; i < firstNodes; i++)
