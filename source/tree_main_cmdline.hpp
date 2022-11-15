@@ -486,7 +486,7 @@ public:
       case 'c':
         capacity_given = true;
         capacity_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-w, --treeCapacity=size_t")
+        CHECK_ERR(size_t, optarg, "-c, --treeCapacity=size_t")
         break;
       case 'R':
         random_arg = true;

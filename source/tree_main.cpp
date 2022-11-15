@@ -4,6 +4,7 @@
 typedef temp_tree tree_type;
 typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 bool random_ = false;
+size_t cap = 0;
 using namespace std;
 
 static tree_main_cmdline args; // Command line switches and arguments
@@ -70,7 +71,6 @@ vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
     }
 
 
-    size_t cap = 26; 
     // vector<size_t> foo;
     // for (int i = 0; i < cap; i++)
     // {
@@ -93,7 +93,7 @@ vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
     
     for (size_t i = 0; i <cap; i++)
     {
-        fprintf(stderr, "inserting %zu\n", foo[i]);
+        // fprintf(stderr, "inserting %zu\n", foo[i]);
         size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
         // clusters[foo[i]] = tree.findAncestor(clus);
         clusters[foo[i]] = clus;
@@ -101,12 +101,12 @@ vector<size_t> clusterSignatures(const vector<vector<vector<cell_type>>> &seqs)
     fprintf(stderr, "\n\n\n\n");
 
 
-    for (size_t i = 0; i <cap; i++)
-    {
-        size_t clus = tree.search(seqs[foo[i]], foo[i]);
-        // clusters[foo[i]] = tree.findAncestor(clus);
-        clusters[foo[i]] = clus;
-    }
+    // for (size_t i = 0; i <cap; i++)
+    // {
+    //     size_t clus = tree.search(seqs[foo[i]], foo[i]);
+    //     // clusters[foo[i]] = tree.findAncestor(clus);
+    //     clusters[foo[i]] = clus;
+    // }
     
 
     // // Insert first 1 nodes single-threaded
@@ -187,6 +187,8 @@ int tree_main(int argc, char *argv[])
         minimiser_match_threshold = args.minimiser_match_arg;
         fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
     }
+
+    cap = args.capacity_arg;
 
     string inputFile = args.input_arg;
 

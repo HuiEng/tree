@@ -518,179 +518,80 @@ public:
     }
 
     // priority = distance to ancestor
-    inline size_t rotateAnc(size_t node, seq_type signature, vector<size_t> &insertionList)
+    inline size_t rotateAnc(size_t node)
     {
-        size_t ancestor = findAncestor(node);
-        size_t old_node = node;
-        size_t entry = node;
-
-        // number of matching windows, bigger better
-        size_t a = calcDistance(matrices[ancestor][0], signature);
-
-        // while (node != root && isUnipath(node))
-        while (node != root)
+        if (node == root)
         {
-            if (a <= priority[node])
+            return 0;
+        }
+        size_t parent = parentLinks[node];
+
+        if (parent == root)
+        {
+            return 0;
+        }
+
+        if (priority[parent] < priority[node])
+        {
+            return 0; // heap order, larger priority on top
+        }
+
+        fprintf(stderr, ">%zu; priority: %.1f,%.1f\n", parent, priority[parent], priority[node]);
+
+        size_t grandparent = parentLinks[parent];
+        vector<size_t> &siblings = childLinks[parent];
+        fprintf(stderr, "\nrotate: %zu,%zu,%zu\n", grandparent, parent, node);
+
+        // remove(siblings.begin(), siblings.end(), node);
+        siblings.erase(remove(siblings.begin(), siblings.end(), node), siblings.end());
+
+        vector<size_t> &uncles = childLinks[grandparent];
+        uncles.erase(remove(uncles.begin(), uncles.end(), parent), uncles.end());
+
+        childLinks[grandparent].push_back(node);
+        childCounts[grandparent] += siblings.size();
+        for (size_t sibling : siblings)
+        {
+            fprintf(stderr, "\nSibling: %zu\n", sibling);
+            childLinks[grandparent].push_back(sibling);
+            parentLinks[sibling] = grandparent;
+        }
+
+        parentLinks[node] = grandparent;
+        childCounts[node]++;
+
+        for (size_t grand : childLinks[node])
+        {
+            fprintf(stderr, "%zu,", grand);
+        }
+        fprintf(stderr, "\n");
+        childLinks[node].push_back(parent);
+        for (size_t grand : childLinks[node])
+        {
+            fprintf(stderr, "%zu,", grand);
+        }
+        fprintf(stderr, "\n");
+
+        parentLinks[parent] = node;
+
+        int temp = isBranchNode[parent];
+        isBranchNode[parent] = isBranchNode[node];
+        isBranchNode[node] = temp;
+
+        fprintf(stderr, "finish: %zu\n", grandparent);
+
+        for (size_t child : childLinks[grandparent])
+        {
+            fprintf(stderr, "%zu>", child);
+            for (size_t grand : childLinks[child])
             {
-                fprintf(stderr, "rotate: %zu, %.2f\n", old_node, a);
-                break;
+                fprintf(stderr, "%zu,", grand);
             }
-            old_node = node;
-            node = parentLinks[node];
+            fprintf(stderr, "\n");
         }
 
-        // add under 'node'
-        // insert new node as child of parent and the parent and its siblings are now the children of the new node
-        size_t temp = getNewNodeIdx(insertionList);
-
-        parentLinks[temp] = node;
-        addSigToMatrix(temp, signature);
-        priority[temp] = a;
-
-        if (node == entry) // no rotation, add at the bottom
-        {
-            isBranchNode[entry] = 1;
-            childCounts[entry]++;
-            childLinks[entry].push_back(temp);
-            fprintf(stderr, "***Adding %zu after %zu, %zu", temp, entry, a);
-        }
-        else
-        {
-            isBranchNode[temp] = 1;
-            childCounts[temp] = 1;
-            childLinks[temp].push_back(old_node);
-            // update parent of old_node and siblings
-            for (size_t sibling : childLinks[node])
-            {
-                parentLinks[sibling] = temp;
-            }
-
-            // update parent
-            replace(childLinks[node].begin(), childLinks[node].end(), old_node, temp);
-
-            fprintf(stderr, "***Adding %zu between %zu, %zu, %zu, %zu", temp, parentLinks[node], node, old_node, a);
-        }
-        return temp;
+        return parent;
     }
-
-    // // return if found same, and the destination node
-    // inline tuple<bool, size_t> traverse(seq_type signature, vector<size_t> &insertionList)
-    // {
-    //     size_t node = root;
-    //     size_t a = signature.size();
-    //     fprintf(stderr, " \n(%zu, %f, ,%f)", a, split_threshold * a, stay_threshold * a);
-    //     double offset = 0;
-
-    //     while (isBranchNode[node])
-    //     {
-    //         fprintf(stderr, " \n%zu: ", node);
-    //         vector<size_t> mismatch;
-    //         vector<size_t> matching_leaves;
-    //         vector<size_t> matching_branch;
-
-    //         for (size_t i = 0; i < childCounts[node]; i++)
-    //         {
-    //             size_t child = childLinks[node][i];
-    //             double sim = calcDistance(matrices[child][0], signature);
-    //             size_t b = matrices[child][0].size();
-
-    //             size_t len = max(a, b);
-    //             fprintf(stderr, " <%zu,%.2f> ", child, sim);
-
-    //             // found same, move on with the next seq
-    //             if (sim >= (stay_threshold - offset))
-    //             {
-    //                 return make_tuple(true, child);
-    //             }
-
-    //             // count how many nodes mismatch
-    //             if (sim <= (split_threshold))
-    //             {
-    //                 // mismatch++;
-    //                 mismatch.push_back(child);
-    //             }
-    //             else if (!isBranchNode[child])
-    //             {
-    //                 // matching with leaf
-    //                 matching_leaves.push_back(child);
-    //                 fprintf(stderr, " -m%zu, ", child);
-    //             }
-    //             else
-    //             {
-    //                 //? treat matching branch as mismatch for now
-    //                 matching_branch.push_back(child);
-    //                 fprintf(stderr, " -b%zu, ", child);
-    //             }
-    //         }
-
-    //         // nothing is close enough, spawn new child under parent
-    //         if (mismatch.size() == childCounts[node])
-    //         {
-    //             fprintf(stderr, " -s%zu, ", node);
-    //             return make_tuple(false, node);
-    //         }
-    //         // else if (mismatch == 0)
-    //         // {
-    //         //     size_t temp = rotate(node, signature, insertionList);
-    //         //     return make_tuple(true, temp);
-    //         // }
-
-    //         else if (matching_leaves.size() == 1)
-    //         {
-    //             node = matching_leaves[0];
-    //         }
-    //         else if (matching_branch.size() == 1)
-    //         {
-    //             node = matching_branch[0];
-    //         }
-    //         else
-    //         {
-    //             size_t temp = getNewNodeIdx(insertionList);
-    //             addSigToMatrix(temp, signature);
-    //             // priority[temp] = calcDistance(signature, matrices[findAncestor(node)][0]);
-    //             size_t ancestor = findAncestor(node);
-    //             if (ancestor == root)
-    //             {
-    //                 priority[temp] = signature.size();
-    //             }
-    //             else
-    //             {
-    //                 priority[temp] = calcDistance(signature, matrices[ancestor][0]);
-    //             }
-
-    //             parentLinks[temp] = node;
-    //             isBranchNode[temp] = 1;
-    //             childCounts[temp] = matching_leaves.size() + matching_branch.size();
-    //             childLinks[temp] = matching_branch;
-    //             childLinks[temp].insert(childLinks[temp].end(), matching_leaves.begin(), matching_leaves.end());
-
-    //             childCounts[node] = mismatch.size() + 1;
-    //             childLinks[node].clear();
-    //             childLinks[node] = mismatch;
-    //             childLinks[node].push_back(temp);
-
-    //             for (size_t n : matching_leaves)
-    //             {
-    //                 parentLinks[n] = temp;
-    //             }
-
-    //             for (size_t n : matching_branch)
-    //             {
-    //                 parentLinks[n] = temp;
-    //             }
-
-    //             fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
-
-    //             return make_tuple(true, temp);
-    //         }
-    //         // offset += 0.1;
-    //     }
-
-    //     // grow height, should I go on top or bottom
-    //     // return rotateAnc(node, signature, insertionList);
-    //     return std::make_tuple(false, node);
-    //     // return make_tuple(true, rotateAnc(node, signature, insertionList));
-    // }
 
     // return if found same, and the destination node
     inline tuple<bool, size_t> traverse(seq_type signature, vector<size_t> &insertionList)
@@ -704,6 +605,7 @@ public:
             vector<size_t> mismatch;
             vector<size_t> matching_leaves;
             vector<size_t> matching_branch;
+            fprintf(stderr, "\n ");
 
             for (size_t i = 0; i < childCounts[node]; i++)
             {
@@ -716,6 +618,7 @@ public:
                 if (sim >= (local_stay))
                 {
                     priority[child]++;
+                    rotateAnc(child);
                     return make_tuple(true, child);
                 }
 
@@ -744,20 +647,45 @@ public:
             // nothing is close enough, spawn new child under parent
             if (mismatch.size() == childCounts[node])
             {
-                // fprintf(stderr, " -s%zu, ", node);
+                fprintf(stderr, " -no match:%zu, ", node);
+                node = rotateAnc(node);
                 return make_tuple(false, node);
             }
-            // else if (mismatch == 0)
-            // {
-            //     size_t temp = rotate(node, signature, insertionList);
-            //     return make_tuple(true, temp);
-            // }
+            else if (mismatch.size() == 0) // somewhat matching with all branches.
+            {
+                size_t temp = getNewNodeIdx(insertionList);
+                addSigToMatrix(temp, signature);
+                priority[temp] = 1;
+                parentLinks[temp] = node;
+                isBranchNode[temp] = 1;
 
-            else if (matching_leaves.size() == 1)
+                childLinks[temp] = childLinks[node];
+                childCounts[temp] = childCounts[node];
+
+                for (size_t child : childLinks[temp])
+                {
+                    parentLinks[child] = temp;
+                }
+
+                childLinks[node].clear();
+                childLinks[node].push_back(temp);
+                childCounts[node] = 1;
+
+                fprintf(stderr, "\nxxx all: %zu,%zu\n", temp, node);
+
+                // only rotate if unipath
+                if (childCounts[temp] == 1)
+                {
+                    rotateAnc(childLinks[temp][0]);
+                }
+                return make_tuple(true, temp);
+            }
+
+            else if (matching_leaves.size() == 1 && matching_branch.size() == 0)
             {
                 node = matching_leaves[0];
             }
-            else if (matching_branch.size() == 1)
+            else if (matching_branch.size() == 1 && matching_leaves.size() == 0)
             {
                 node = matching_branch[0];
             }
@@ -766,6 +694,7 @@ public:
                 size_t temp = getNewNodeIdx(insertionList);
                 addSigToMatrix(temp, signature);
                 priority[temp] = 1;
+
                 size_t ancestor = findAncestor(node);
 
                 parentLinks[temp] = node;
@@ -779,18 +708,22 @@ public:
                 childLinks[node] = mismatch;
                 childLinks[node].push_back(temp);
 
+                fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
+
                 for (size_t n : matching_leaves)
                 {
                     parentLinks[n] = temp;
+                    fprintf(stderr, "leaves: %zu\n", n);
                 }
 
                 for (size_t n : matching_branch)
                 {
                     parentLinks[n] = temp;
+                    fprintf(stderr, "branch: %zu\n", n);
                 }
 
-                // fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
 
+                rotateAnc(temp);
                 return make_tuple(true, temp);
             }
             // offset += 0.1;
@@ -798,10 +731,11 @@ public:
             local_stay = local_stay - offset;
         }
 
+        fprintf(stderr, "here\n");
+
         // grow height, should I go on top or bottom
-        // return rotateAnc(node, signature, insertionList);
+        rotateAnc(node);
         return std::make_tuple(false, node);
-        // return make_tuple(true, rotateAnc(node, signature, insertionList));
     }
 
     // return if found same, and the destination node
@@ -940,14 +874,18 @@ public:
             seqIDs[node].push_back(idx);
             priority[node] = 1;
             // priority[node] = calcJaccard(signature, matrices[findAncestor(node)][0]);
-            return node;
+            // return node;
+            parent = node;
         }
         else // add seq without adding new node
         {
             seqIDs[parent].push_back(idx);
-            priority[parent]++;
-            return parent;
+            // priority[parent]++;
+            // return parent;
         }
+
+        fprintf(stderr, "\ninserting %zu at %zu\n", idx, parent);
+        return parent;
 
         // size_t insertionPoint = traverse(signature);
 
