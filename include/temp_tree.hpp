@@ -55,6 +55,21 @@ vector<cell_type> createMeanSig(const vector<seq_type> clusterSigs)
     return meanSig;
 }
 
+// RMSD
+double calcDistortion(const vector<seq_type> clusterSigs)
+{
+    vector<cell_type> meanSig = createMeanSig(clusterSigs);
+    double sumSquareDistance = 0;
+
+    for (seq_type signature : clusterSigs)
+    {
+        vector<cell_type> signatureData = getMinimiseSet(signature)[0];
+        double distance = calcJaccardGlobal(meanSig, signatureData);
+        sumSquareDistance += distance * distance;
+    }
+    return sqrt(sumSquareDistance / clusterSigs.size());
+}
+
 class temp_tree
 {
 public:
@@ -235,22 +250,24 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
-        if (childCounts[node] > 1)
-        {
-            size_t size = signatureSize * bits_per_char;
-            vector<cell_type> meanSig(size);
-            fill(&meanSig[0], &meanSig[0] + size, 0);
+        // if (childCounts[node] > 1)
+        // {
+        //     size_t size = signatureSize * bits_per_char;
+        //     vector<cell_type> meanSig(size);
+        //     fill(&meanSig[0], &meanSig[0] + size, 0);
 
-            for (size_t child : childLinks[node])
-            {
-                for (size_t i = 0; i < size; i++)
-                {
-                    meanSig[i] |= means[child][i];
-                }
-            }
-            means[node] = meanSig;
-            priority[node] = countSingleSetBits(means[node]);
-        }
+        //     for (size_t child : childLinks[node])
+        //     {
+        //         for (size_t i = 0; i < size; i++)
+        //         {
+        //             meanSig[i] |= means[child][i];
+        //         }
+        //     }
+        //     means[node] = meanSig;
+        //     priority[node] = countSingleSetBits(means[node]);
+        // }
+        means[node] = createMeanSig(matrices[node]);
+        // priority[node] = calcDistortion(matrices[node]);
     }
 
     // priority = distance to ancestor
@@ -375,7 +392,7 @@ public:
                 // node = rotateAnc(node);
                 return make_tuple(false, node);
             }
-            else if (matching.size() > 1)
+            else if (matching.size() > 1) // matching with multiple
             {
                 size_t temp = createNode(signature, insertionList, node);
 
@@ -397,9 +414,12 @@ public:
                     fprintf(stderr, "leaves: %zu\n", n);
                 }
 
+                //?
+                priority[temp]--;
+
                 return make_tuple(true, temp);
             }
-            updateNodeMean(node);
+            // updateNodeMean(node);
             node = matching[0]; // choose the first matching for now, may change to best
         }
 
@@ -417,7 +437,8 @@ public:
         // priority[node] = 1;
         addSigToMatrix(node, signature);
         means[node] = getMinimiseSet(signature)[0];
-        priority[node] = countSingleSetBits(means[node]);
+        // priority[node] = countSingleSetBits(means[node]);
+        priority[node] = 1;
         return node;
     }
 
@@ -445,7 +466,11 @@ public:
             seqIDs[parent].push_back(idx);
             addSigToMatrix(parent, signature);
             means[parent] = createMeanSig(matrices[parent]);
-            priority[parent] = countSingleSetBits(means[parent]);
+            // priority[parent] = countSingleSetBits(means[parent]);
+            // priority[parent] = calcDistortion(matrices[parent]);
+            priority[parent]++;
+
+            
             // priority[parent]++;
             // return parent;
         }
@@ -504,7 +529,8 @@ public:
         }
     }
 
-    inline double compareSigToMean(size_t node, seq_type signature){
+    inline double compareSigToMean(size_t node, seq_type signature)
+    {
         return calcJaccardGlobal(means[node], getMinimiseSet(signature)[0]);
     }
 
@@ -548,7 +574,7 @@ public:
 
             node = local_best_child;
         }
-        
+
         seqIDs[best_child].push_back(idx);
         return best_child;
     }

@@ -70,13 +70,13 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         insertionList.push_back(partree_capacity - i);
     }
 
-    // vector<size_t> foo;
-    // for (int i = 0; i < cap; i++)
-    // {
-    //     foo.push_back(i);
-    // }
+    vector<size_t> foo;
+    for (int i = 0; i < cap; i++)
+    {
+        foo.push_back(i);
+    }
 
-    vector<size_t> foo = {4, 7, 25, 20, 24, 16, 10, 9, 17, 8, 11, 5, 22, 23, 0, 2, 13, 21, 19, 1, 18, 3, 6, 15, 14, 12};
+    // vector<size_t> foo = {4, 7, 25, 20, 24, 16, 10, 9, 17, 8, 11, 5, 22, 23, 0, 2, 13, 21, 19, 1, 18, 3, 6, 15, 14, 12};
 
     if (random_)
     {
@@ -96,14 +96,14 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     fprintf(stderr, "\n\n\n\n");
 
-    tree.clearSeqId(insertionList[0]);
+    // tree.clearSeqId(insertionList[0]);
 
-    for (size_t i = 0; i <cap; i++)
-    {
-        size_t clus = tree.search(seqs[foo[i]], foo[i]);
-        // clusters[foo[i]] = tree.findAncestor(clus);
-        clusters[foo[i]] = clus;
-    }
+    // for (size_t i = 0; i <cap; i++)
+    // {
+    //     size_t clus = tree.search(seqs[foo[i]], foo[i]);
+    //     // clusters[foo[i]] = tree.findAncestor(clus);
+    //     clusters[foo[i]] = clus;
+    // }
 
     // // Insert first 1 nodes single-threaded
     // for (size_t i = 0; i < firstNodes; i++)
