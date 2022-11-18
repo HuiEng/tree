@@ -5,6 +5,7 @@ typedef temp_tree tree_type;
 typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 bool random_ = false;
 size_t cap = 0;
+size_t iteration = 0;
 using namespace std;
 
 static tree_main_cmdline args; // Command line switches and arguments
@@ -96,15 +97,33 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     fprintf(stderr, "\n\n\n\n");
 
-    // tree.clearSeqId(insertionList[0]);
+    for (size_t run = 0; run < iteration; run++)
+    {
+        fprintf(stderr, "Iteration %zu\n", run);
+        tree.prepReinsert(insertionList[0]);
+        for (size_t i = 0; i < cap; i++)
+        {
+            size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
 
-    // for (size_t i = 0; i <cap; i++)
-    // {
-    //     size_t clus = tree.search(seqs[foo[i]], foo[i]);
-    //     // clusters[foo[i]] = tree.findAncestor(clus);
-    //     clusters[foo[i]] = clus;
-    // }
+            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+            // clusters[foo[i]] = tree.findAncestor(clus);
+            clusters[foo[i]] = clus;
+        }
+    }
+    if (iteration == 0)
+    {
+        tree.clearSeqId(insertionList[0]);
 
+        for (size_t i = 0; i < cap; i++)
+        {
+            size_t clus = tree.search(seqs[foo[i]], foo[i]);
+            tree.seqIDs[clus].push_back(foo[i]);
+
+            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+            // clusters[foo[i]] = tree.findAncestor(clus);
+            clusters[foo[i]] = clus;
+        }
+    }
     // // Insert first 1 nodes single-threaded
     // for (size_t i = 0; i < firstNodes; i++)
     // {
@@ -185,6 +204,7 @@ int tree_main(int argc, char *argv[])
     }
 
     cap = args.capacity_arg;
+    iteration = args.iteration_arg;
 
     string inputFile = args.input_arg;
 

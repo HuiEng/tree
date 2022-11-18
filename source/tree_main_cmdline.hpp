@@ -363,13 +363,13 @@ public:
   const char *query_arg;
   double split_threshold_arg;
   double stay_threshold_arg;
+  size_t iteration_arg;
 
   bool input_given;
   bool tag_given;
   bool minimiser_match_given;
   bool capacity_given;
   bool random_arg;
-  bool intersect_arg;
   bool query_given;
   bool split_threshold_given;
   bool stay_threshold_given;
@@ -384,7 +384,7 @@ public:
                         minimiser_match_arg(0), capacity_arg(0),
                         input_given(false),
                         minimiser_match_given(false), capacity_given(false),
-                        random_arg(false), intersect_arg(false),
+                        random_arg(false), iteration_arg(0),
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
                         stay_threshold_given(false), stay_threshold_arg(0)
@@ -395,7 +395,7 @@ public:
                                               minimiser_match_arg(0), capacity_arg(0),
                                               input_given(false),
                                               minimiser_match_given(false), capacity_given(false),
-                                              random_arg(false), intersect_arg(false),
+                                              random_arg(false), iteration_arg(0),
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
                                               stay_threshold_given(false), stay_threshold_arg(0)
@@ -413,13 +413,13 @@ public:
         {"split", 1, 0, 'L'},
         {"stay", 1, 0, 'S'},
         {"random", 0, 0, 'R'},
-        {"intersect", 0, 0, 'I'},
+        {"iteration", 0, 0, 'I'},
         {"query", 1, 0, 'q'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:RIq:S:L:m:T:";
+    static const char *short_options = "hVi:o:c:RI:q:S:L:m:T:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -492,7 +492,8 @@ public:
         random_arg = true;
         break;
       case 'I':
-        intersect_arg = true;
+        iteration_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-I, --iteration=size_t")
         break;
       }
     }
@@ -570,7 +571,7 @@ public:
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
            " -R,                                      inserting seqs in random order\n"
-           " -I, --intersect                          compare BF by intersecting bits [default=FALSE, calc by HD]\n"
+           " -I, --iteration                          number or reinsertion [default=0]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
            " -V, --version                            Version";
@@ -592,7 +593,7 @@ public:
     os << " capacity_given:" << capacity_given << "\t"
        << " capacity_arg:" << capacity_arg << "\n";
     os << " random_arg:" << random_arg << "\n";
-    os << " intersect_arg:" << intersect_arg << "\n";
+    os << " iteration_arg:" << iteration_arg << "\n";
     os << " query_given:" << query_given << "\t"
        << " query_arg:" << query_arg << "\n";
     os << " split_threshold_given:" << split_threshold_given << "\t"

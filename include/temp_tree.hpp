@@ -247,6 +247,17 @@ public:
         // printMatrix(stderr, node);
     }
 
+    void clearNode(size_t node)
+    {
+        isBranchNode[node] = 0;
+        childCounts[node] = 0;
+        childLinks[node].clear();
+        seqIDs[node].clear();
+        matrices[node].clear();
+        means[node] = createMeanSig(matrices[node]);
+        priority[node] = 0;
+    }
+
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
@@ -267,7 +278,8 @@ public:
         //     priority[node] = countSingleSetBits(means[node]);
         // }
         means[node] = createMeanSig(matrices[node]);
-        // priority[node] = calcDistortion(matrices[node]);
+        //? p
+        priority[node] = calcDistortion(matrices[node]);
     }
 
     // priority = distance to ancestor
@@ -361,7 +373,8 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                double sim = calcDistance(matrices[child][0], signature);
+                // double sim = calcDistance(matrices[child][0], signature);
+                double sim = compareSigToMean(child, signature);
 
                 fprintf(stderr, " <%zu,%.2f> ", child, sim);
 
@@ -398,8 +411,6 @@ public:
 
                 parentLinks[temp] = node;
                 isBranchNode[temp] = 1;
-                childCounts[temp] = matching.size();
-                childLinks[temp] = matching;
 
                 childCounts[node] = mismatch.size() + 1;
                 childLinks[node].clear();
@@ -410,15 +421,64 @@ public:
 
                 for (size_t n : matching)
                 {
-                    parentLinks[n] = temp;
-                    fprintf(stderr, "leaves: %zu\n", n);
+                    for (seq_type sig : matrices[n])
+                    {
+                        addSigToMatrix(temp, sig);
+                    }
+
+                    for (size_t grandchild : childLinks[n])
+                    {
+                        parentLinks[grandchild] = temp;
+                        childLinks[temp].push_back(grandchild);
+                    }
+
+                    for (size_t id : seqIDs[n])
+                    {
+                        seqIDs[temp].push_back(id);
+                    }
+
+                    childCounts[temp] += childCounts[n];
+                    fprintf(stderr, "leaves: %zu,%zu\n", n, childCounts[temp]);
+                    clearNode(n);
+                    insertionList.push_back(n);
                 }
+                // fprintf(stderr, "leaves: %zu\n",childCounts[temp]);
+                // printSubTreeJson(stderr,root);
 
                 //?
-                priority[temp]--;
+                priority[temp] = childCounts[temp] - 1;
 
                 return make_tuple(true, temp);
             }
+
+            // else if (matching.size() > 1) // matching with multiple
+            // {
+            //     size_t temp = createNode(signature, insertionList, node);
+
+            //     parentLinks[temp] = node;
+            //     isBranchNode[temp] = 1;
+            //     childCounts[temp] = matching.size();
+            //     childLinks[temp] = matching;
+
+            //     childCounts[node] = mismatch.size() + 1;
+            //     childLinks[node].clear();
+            //     childLinks[node] = mismatch;
+            //     childLinks[node].push_back(temp);
+
+            //     fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
+
+            //     for (size_t n : matching)
+            //     {
+            //         parentLinks[n] = temp;
+            //         fprintf(stderr, "leaves: %zu\n", n);
+            //     }
+
+            //     //?
+            //     priority[temp]--;
+
+            //     return make_tuple(true, temp);
+            // }
+
             // updateNodeMean(node);
             node = matching[0]; // choose the first matching for now, may change to best
         }
@@ -437,8 +497,9 @@ public:
         // priority[node] = 1;
         addSigToMatrix(node, signature);
         means[node] = getMinimiseSet(signature)[0];
+        //? p
         // priority[node] = countSingleSetBits(means[node]);
-        priority[node] = 1;
+        // priority[node] = 1;
         return node;
     }
 
@@ -467,10 +528,10 @@ public:
             addSigToMatrix(parent, signature);
             means[parent] = createMeanSig(matrices[parent]);
             // priority[parent] = countSingleSetBits(means[parent]);
-            // priority[parent] = calcDistortion(matrices[parent]);
-            priority[parent]++;
+            //? p
+            priority[parent] = calcDistortion(matrices[parent]);
+            // priority[parent]++;
 
-            
             // priority[parent]++;
             // return parent;
         }
@@ -534,7 +595,7 @@ public:
         return calcJaccardGlobal(means[node], getMinimiseSet(signature)[0]);
     }
 
-    inline size_t search(seq_type signature, size_t idx)
+    inline size_t search(seq_type signature, size_t idx = 0)
     {
         size_t node = root;
 
@@ -556,7 +617,7 @@ public:
                 // found same, move on with the next seq
                 if (sim >= (stay_threshold))
                 {
-                    seqIDs[child].push_back(idx);
+                    // seqIDs[child].push_back(idx);
                     return child;
                 }
 
@@ -575,7 +636,7 @@ public:
             node = local_best_child;
         }
 
-        seqIDs[best_child].push_back(idx);
+        // seqIDs[best_child].push_back(idx);
         return best_child;
     }
 
@@ -585,6 +646,27 @@ public:
         {
             seqIDs[i].clear();
         }
+    }
+
+    // make sure cluster centroid is up-to-date before clearing matrices
+    // clear matrices and seqID for the next insertion cycle
+    // cluster means still remain
+    void prepReinsert(size_t lastNode)
+    {
+        for (size_t i = 0; i < lastNode; i++)
+        {
+            updateNodeMean(i);
+            matrices[i].clear();
+            seqIDs[i].clear();
+        }
+    }
+
+    size_t reinsert(seq_type signature, size_t idx)
+    {
+        size_t node = search(signature);
+        seqIDs[node].push_back(idx);
+        addSigToMatrix(node, signature);
+        return node;
     }
 
     void destroyLocks(size_t node)
