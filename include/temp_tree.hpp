@@ -237,6 +237,7 @@ public:
     {
         fprintf(stream, "var treeData = ");
         printSubTreeJson(stream, root);
+        fprintf(stream, ";\n");
     }
 
     void addSigToMatrix(size_t node, seq_type signature)
@@ -648,16 +649,35 @@ public:
         }
     }
 
+    // // make sure cluster centroid is up-to-date before clearing matrices
+    // // clear matrices and seqID for the next insertion cycle
+    // // cluster means still remain
+    // void prepReinsert(size_t lastNode)
+    // {
+    //     for (size_t i = 0; i < lastNode; i++)
+    //     {
+    //         updateNodeMean(i);
+    //         matrices[i].clear();
+    //         seqIDs[i].clear();
+    //     }
+    // }
+
     // make sure cluster centroid is up-to-date before clearing matrices
     // clear matrices and seqID for the next insertion cycle
     // cluster means still remain
-    void prepReinsert(size_t lastNode)
+    void prepReinsert(size_t node)
     {
-        for (size_t i = 0; i < lastNode; i++)
+
+        updateNodeMean(node);
+        matrices[node].clear();
+        seqIDs[node].clear();
+
+        if (isBranchNode[node])
         {
-            updateNodeMean(i);
-            matrices[i].clear();
-            seqIDs[i].clear();
+            for (size_t child : childLinks[node])
+            {
+                prepReinsert(child);
+            }
         }
     }
 
