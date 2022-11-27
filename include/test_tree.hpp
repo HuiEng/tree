@@ -134,7 +134,6 @@ public:
     {
         reserve(capacity);
         childCounts[root] = 0;
-        isBranchNode[root] = 0;
     }
 
     size_t getNewNodeIdx(vector<size_t> &insertionList)
@@ -195,7 +194,7 @@ public:
 
     void printSubTreeJson(FILE *stream, size_t tnode)
     {
-        if (isBranchNode[tnode])
+        if (childCounts[tnode]>0)
         {
             printNodeJson(stream, tnode);
             printSubTreeJson(stream, childLinks[tnode][0]);
@@ -312,82 +311,6 @@ public:
         priority[node] = calcDistortion(matrices[node]);
     }
 
-    // priority = distance to ancestor
-    inline size_t rotateAnc(size_t node)
-    {
-        if (node == root)
-        {
-            return 0;
-        }
-        size_t parent = parentLinks[node];
-
-        if (parent == root)
-        {
-            return 0;
-        }
-
-        if (priority[parent] < priority[node])
-        {
-            return 0; // heap order, larger priority on top
-        }
-
-        fprintf(stderr, ">%zu; priority: %.1f,%.1f\n", parent, priority[parent], priority[node]);
-
-        size_t grandparent = parentLinks[parent];
-        vector<size_t> &siblings = childLinks[parent];
-        fprintf(stderr, "\nrotate: %zu,%zu,%zu\n", grandparent, parent, node);
-
-        // remove(siblings.begin(), siblings.end(), node);
-        siblings.erase(remove(siblings.begin(), siblings.end(), node), siblings.end());
-
-        vector<size_t> &uncles = childLinks[grandparent];
-        uncles.erase(remove(uncles.begin(), uncles.end(), parent), uncles.end());
-
-        childLinks[grandparent].push_back(node);
-        childCounts[grandparent] += siblings.size();
-        for (size_t sibling : siblings)
-        {
-            fprintf(stderr, "\nSibling: %zu\n", sibling);
-            childLinks[grandparent].push_back(sibling);
-            parentLinks[sibling] = grandparent;
-        }
-
-        parentLinks[node] = grandparent;
-        childCounts[node]++;
-
-        for (size_t grand : childLinks[node])
-        {
-            fprintf(stderr, "%zu,", grand);
-        }
-        fprintf(stderr, "\n");
-        childLinks[node].push_back(parent);
-        for (size_t grand : childLinks[node])
-        {
-            fprintf(stderr, "%zu,", grand);
-        }
-        fprintf(stderr, "\n");
-
-        parentLinks[parent] = node;
-
-        int temp = isBranchNode[parent];
-        isBranchNode[parent] = isBranchNode[node];
-        isBranchNode[node] = temp;
-
-        fprintf(stderr, "finish: %zu\n", grandparent);
-
-        for (size_t child : childLinks[grandparent])
-        {
-            fprintf(stderr, "%zu>", child);
-            for (size_t grand : childLinks[child])
-            {
-                fprintf(stderr, "%zu,", grand);
-            }
-            fprintf(stderr, "\n");
-        }
-
-        return parent;
-    }
-
     // return if found same, and the destination node
     inline tuple<bool, size_t> traverse(data_type signature, vector<size_t> &insertionList)
     {
@@ -395,7 +318,7 @@ public:
         double local_stay = stay_threshold;
         double offset = 0.1;
 
-        while (isBranchNode[node])
+        while (childCounts[node]>0)
         {
             vector<size_t> mismatch;
             vector<size_t> matching;
@@ -411,7 +334,6 @@ public:
                 if (distance <= (local_stay))
                 {
                     // priority[child]++;
-                    // rotateAnc(child);
                     return make_tuple(true, child);
                 }
 
@@ -431,7 +353,6 @@ public:
             if (mismatch.size() == childCounts[node])
             {
                 fprintf(stderr, " -no match:%zu, ", node);
-                // node = rotateAnc(node);
                 return make_tuple(false, node);
             }
             else if (matching.size() > 1) // matching with multiple
@@ -439,7 +360,6 @@ public:
                 size_t temp = createNode(signature, insertionList, node);
 
                 parentLinks[temp] = node;
-                isBranchNode[temp] = 1;
 
                 childCounts[node] = mismatch.size() + 1;
                 childLinks[node].clear();
@@ -479,31 +399,51 @@ public:
 
                 return make_tuple(true, temp);
             }
-
-            // else if (matching.size() > 1) // matching with multiple
+            // else if (matching.size() == 1 && childCounts[node] == 1) // matching with multiple
             // {
             //     size_t temp = createNode(signature, insertionList, node);
 
             //     parentLinks[temp] = node;
-            //     isBranchNode[temp] = 1;
-            //     childCounts[temp] = matching.size();
-            //     childLinks[temp] = matching;
+            //     isBranchNode[temp] = 0;
 
-            //     childCounts[node] = mismatch.size() + 1;
+            //     childCounts[node] = 1;
             //     childLinks[node].clear();
-            //     childLinks[node] = mismatch;
             //     childLinks[node].push_back(temp);
 
-            //     fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
+            //     childCounts[temp] = 2;
+            //     childLinks[node].push_back(matching[0]);
+            //     childLinks[temp].push_back(temp);
+
+            //     fprintf(stderr, "\nxxx here: %zu,%zu\n", temp, node);
 
             //     for (size_t n : matching)
             //     {
-            //         parentLinks[n] = temp;
-            //         fprintf(stderr, "leaves: %zu\n", n);
+            //         for (data_type sig : matrices[n])
+            //         {
+            //             addSigToMatrix(temp, sig);
+            //         }
+
+            //         for (size_t grandchild : childLinks[n])
+            //         {
+            //             parentLinks[grandchild] = temp;
+            //             childLinks[temp].push_back(grandchild);
+            //         }
+
+            //         for (size_t id : seqIDs[n])
+            //         {
+            //             seqIDs[temp].push_back(id);
+            //         }
+
+            //         childCounts[temp] += childCounts[n];
+            //         fprintf(stderr, "leaves: %zu,%zu\n", n, childCounts[temp]);
+            //         clearNode(n);
+            //         insertionList.push_back(n);
             //     }
+            //     // fprintf(stderr, "leaves: %zu\n",childCounts[temp]);
+            //     // printSubTreeJson(stderr,root);
 
             //     //?
-            //     priority[temp]--;
+            //     priority[temp] = childCounts[temp] - 1;
 
             //     return make_tuple(true, temp);
             // }
@@ -521,7 +461,6 @@ public:
         size_t node = getNewNodeIdx(insertionList);
         parentLinks[node] = parent;
         childLinks[parent].push_back(node);
-        isBranchNode[parent] = 1;
         childCounts[parent]++;
         // priority[node] = 1;
         addSigToMatrix(node, signature);
@@ -568,27 +507,6 @@ public:
 
         fprintf(stderr, "\ninserting %zu at %zu\n", idx, parent);
         return parent;
-
-        // size_t insertionPoint = traverse(signature);
-
-        // // fprintf(stdout, " at %zu\n", insertionPoint);
-        // omp_set_lock(&locks[insertionPoint]);
-
-        // // if (childCounts[insertionPoint] < order)
-        // {
-        //     addSigToMatrix(insertionPoint, signature);
-
-        //     childLinks[insertionPoint].push_back(idx);
-        //     fprintf(stdout, " at %zu\n", insertionPoint);
-
-        //     childCounts[insertionPoint]++;
-        //     recalculateSig(insertionPoint);
-        //     if (isBranchNode[root])
-        //     {
-        //         recalculateUp(parentLinks[insertionPoint]);
-        //     }
-        // }
-        // omp_unset_lock(&locks[insertionPoint]);
     }
 
     inline size_t search(data_type signature, size_t idx = 0)
@@ -598,7 +516,7 @@ public:
         size_t best_child = node;
         double best_distance = 0;
 
-        while (isBranchNode[node])
+        while (childCounts[node]>0)
         {
             size_t local_best_child = node;
             double local_best_distance = 0;
@@ -654,7 +572,7 @@ public:
         matrices[node].clear();
         seqIDs[node].clear();
 
-        if (isBranchNode[node])
+        if (childCounts[node]>0)
         {
             for (size_t child : childLinks[node])
             {
@@ -674,7 +592,7 @@ public:
     void destroyLocks(size_t node)
     {
         omp_destroy_lock(&locks[node]);
-        if (isBranchNode[node])
+        if (childCounts[node]>0)
         {
             for (size_t i = 0; i < childCounts[node]; i++)
             {
