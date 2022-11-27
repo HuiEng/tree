@@ -89,6 +89,15 @@ install/fast: preinstall/fast
 	/usr/local/bin/cmake -P cmake_install.cmake
 .PHONY : install/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
 # Special rule for the target install/strip
 install/strip: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
@@ -120,15 +129,6 @@ rebuild_cache:
 # Special rule for the target rebuild_cache
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
-
-# Special rule for the target list_install_components
-list_install_components:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
-.PHONY : list_install_components
-
-# Special rule for the target list_install_components
-list_install_components/fast: list_install_components
-.PHONY : list_install_components/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -251,6 +251,19 @@ minimiser_main: cmake_check_build_system
 minimiser_main/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/minimiser_main.dir/build.make CMakeFiles/minimiser_main.dir/build
 .PHONY : minimiser_main/fast
+
+#=============================================================================
+# Target rules for targets named test_main
+
+# Build rule for target.
+test_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_main
+.PHONY : test_main
+
+# fast build rule for target.
+test_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_main.dir/build.make CMakeFiles/test_main.dir/build
+.PHONY : test_main/fast
 
 #=============================================================================
 # Target rules for targets named partree_main
@@ -544,6 +557,30 @@ similarity_main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/similarity_main.cpp.s
 .PHONY : similarity_main.cpp.s
 
+test_main.o: test_main.cpp.o
+.PHONY : test_main.o
+
+# target to build an object file
+test_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_main.dir/build.make CMakeFiles/test_main.dir/test_main.cpp.o
+.PHONY : test_main.cpp.o
+
+test_main.i: test_main.cpp.i
+.PHONY : test_main.i
+
+# target to preprocess a source file
+test_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_main.dir/build.make CMakeFiles/test_main.dir/test_main.cpp.i
+.PHONY : test_main.cpp.i
+
+test_main.s: test_main.cpp.s
+.PHONY : test_main.s
+
+# target to generate assembly for a file
+test_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_main.dir/build.make CMakeFiles/test_main.dir/test_main.cpp.s
+.PHONY : test_main.cpp.s
+
 tree_main.o: tree_main.cpp.o
 .PHONY : tree_main.o
 
@@ -589,6 +626,7 @@ help:
 	@echo "... partree_main"
 	@echo "... partree_multi_main"
 	@echo "... similarity_main"
+	@echo "... test_main"
 	@echo "... tree"
 	@echo "... tree_main"
 	@echo "... build_main.o"
@@ -621,6 +659,9 @@ help:
 	@echo "... similarity_main.o"
 	@echo "... similarity_main.i"
 	@echo "... similarity_main.s"
+	@echo "... test_main.o"
+	@echo "... test_main.i"
+	@echo "... test_main.s"
 	@echo "... tree_main.o"
 	@echo "... tree_main.i"
 	@echo "... tree_main.s"

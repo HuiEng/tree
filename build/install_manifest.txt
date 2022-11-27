@@ -7,5 +7,6 @@
 /usr/local/lib/libpartree_main.so
 /usr/local/lib/libpartree_multi_main.so
 /usr/local/lib/libsimilarity_main.so
+/usr/local/lib/libtest_main.so
 /usr/local/lib/libtree_main.so
 /usr/local/bin/tree

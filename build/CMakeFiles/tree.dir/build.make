@@ -101,6 +101,7 @@ tree: libminimiser_main.so
 tree: libpartree_main.so
 tree: libpartree_multi_main.so
 tree: libsimilarity_main.so
+tree: libtest_main.so
 tree: libtree_main.so
 tree: /usr/lib/x86_64-linux-gnu/libz.so
 tree: CMakeFiles/tree.dir/link.txt

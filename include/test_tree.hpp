@@ -8,82 +8,76 @@
 // As the space to be used is determined at runtime, we use
 // parallel arrays, not structs
 
-#ifndef INCLUDE_temp_tree_HPP
-#define INCLUDE_temp_tree_HPP
+#ifndef INCLUDE_test_tree_HPP
+#define INCLUDE_test_tree_HPP
 
 #include <omp.h>
 #include <unordered_map>
 #include <unordered_set>
-#include <set>
-#include "read.hpp"
-#include "distance.hpp"
+#include <experimental/filesystem>
+#include "bloom_filter.hpp"
+
+// #include "read.hpp"
 
 using namespace std;
+typedef pair<float, float> data_type;
 
-// typedef unsigned char cell_type;
-bloom_parameters parameters;
+double split_threshold = 5;
+double stay_threshold = 1;
+size_t minimiser_match_threshold = 4;
 size_t partree_capacity = 100;
 
-vector<cell_type> createMeanSig(const vector<seq_type> clusterSigs)
+data_type createMeanSig(const vector<data_type> clusterSigs)
 {
-    vector<cell_type> meanSig(signatureSize * bits_per_char);
-    vector<size_t> counter(signatureSize * bits_per_char);
+    data_type meanSig = make_pair(0, 0);
 
-    for (seq_type signature : clusterSigs)
+    for (data_type signature : clusterSigs)
     {
-        seq_type signatureData = getMinimiseSet(signature);
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            for (int n = 0; n < bits_per_char; n++)
-            {
-                if ((signatureData[0][i] >> n) & 1)
-                {
-                    counter[i * bits_per_char + n]++;
-                }
-            }
-        }
+        meanSig.first += signature.first;
+        meanSig.second += signature.second;
     }
 
-    for (int i = 0; i < counter.size(); i++)
-    {
-        if (counter[i] >= clusterSigs.size() / 2)
-        {
-            meanSig[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-        }
-    }
+    meanSig.first = meanSig.first / clusterSigs.size();
+    meanSig.second = meanSig.second / clusterSigs.size();
 
     return meanSig;
 }
 
-// RMSD
-double calcDistortion(const vector<seq_type> clusterSigs)
+double calcDistance(data_type a, data_type b)
 {
-    vector<cell_type> meanSig = createMeanSig(clusterSigs);
+    float x = a.first - b.first;
+    float y = a.second - b.second;
+    return sqrt(x * x + y * y);
+}
+
+// RMSD
+double calcDistortion(const vector<data_type> clusterSigs)
+{
+    data_type meanSig = createMeanSig(clusterSigs);
     double sumSquareDistance = 0;
 
-    for (seq_type signature : clusterSigs)
+    for (data_type signature : clusterSigs)
     {
-        vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-        double distance = calcJaccardGlobal(meanSig, signatureData);
+        double distance = calcDistance(meanSig, signature);
         sumSquareDistance += distance * distance;
     }
     return sqrt(sumSquareDistance / clusterSigs.size());
 }
 
-class temp_tree
+class test_tree
 {
 public:
-    size_t root = 0;                   // # of root node
-    vector<size_t> childCounts;        // n entries, number of children
-    vector<int> isBranchNode;          // n entries, is this a branch node
-    vector<vector<size_t>> childLinks; // n * o entries, links to children
-    vector<vector<size_t>> seqIDs;     // n * o entries, links to children
-    vector<size_t> parentLinks;        // n entries, links to parents
-    vector<distance_type> priority;    // n entries, links to parents
-    vector<vector<cell_type>> means;   // n * signatureSize entries, node signatures
-    vector<vector<seq_type>> matrices; // capacity * signatureSize * n
-    vector<omp_lock_t> locks;          // n locks
-    size_t capacity = 0;               // Set during construction, currently can't change
+    size_t root = 0;                    // # of root node
+    vector<size_t> childCounts;         // n entries, number of children
+    vector<int> isBranchNode;           // n entries, is this a branch node
+    vector<vector<size_t>> childLinks;  // n * o entries, links to children
+    vector<vector<size_t>> seqIDs;      // n * o entries, links to children
+    vector<size_t> parentLinks;         // n entries, links to parents
+    vector<float> priority;             // n entries, links to parents
+    vector<data_type> means;            // n * signatureSize entries, node signatures
+    vector<vector<data_type>> matrices; // capacity * signatureSize * n
+    vector<omp_lock_t> locks;           // n locks
+    size_t capacity = 0;                // Set during construction, currently can't change
 
     void reserve(size_t capacity)
     {
@@ -131,25 +125,16 @@ public:
             }
             //#pragma omp single
             {
-                means.resize(capacity * signatureSize);
+                means.resize(capacity);
             }
         }
     }
 
-    temp_tree(size_t capacity)
+    test_tree(size_t capacity)
     {
         reserve(capacity);
         childCounts[root] = 0;
         isBranchNode[root] = 0;
-    }
-
-    void printMatrix(FILE *stream, size_t node)
-    {
-        fprintf(stream, ">>>printing matrix at node %zu\n", node);
-        for (seq_type seq : matrices[node])
-        {
-            dbgPrintSignature(stream, seq);
-        }
     }
 
     size_t getNewNodeIdx(vector<size_t> &insertionList)
@@ -240,12 +225,9 @@ public:
         fprintf(stream, ";\n");
     }
 
-    void addSigToMatrix(size_t node, seq_type signature)
+    void addSigToMatrix(size_t node, data_type signature)
     {
         matrices[node].push_back(signature);
-
-        // // debug
-        // printMatrix(stderr, node);
     }
 
     void clearNode(size_t node)
@@ -259,13 +241,60 @@ public:
         priority[node] = 0;
     }
 
+    // merge if number of children is greater than tree order
+    // decrease split threshold
+    // to allow node with larger distortion
+    // the local split threshold should be gradual, but we just make it 110% of the og threshold
+    // stay threshold should have nothing to do here, if not split just stay
+    // at this stage, we don't do k-means
+    // implement as if this is an independant tree
+    void mergeChildren(size_t node, vector<size_t> &insertionList)
+    {
+        // double local_split = split_threshold * 1.1;
+
+        double local_split = minimiser_match_threshold;
+
+        vector<data_type> temp_means;
+        vector<size_t> temp_childLink;
+
+        // insert first child
+        size_t child = childLinks[node][0];
+        temp_childLink.push_back(child);
+        temp_means.push_back(means[child]);
+
+        for (size_t i = 1; i < childCounts[node]; i++)
+        {
+            child = childLinks[node][i];
+            size_t n = 0;
+            for (data_type mean : temp_means)
+            {
+                float distance = calcDistance(means[child], mean);
+                // fprintf(stderr, "Distance:%.2f, %.2f, %.2f\n", distance,split_threshold, local_split);
+                if (distance < local_split)
+                {
+                    fprintf(stderr, "Merge %zu into %zu\n", child, childLinks[node][n]);
+                    break;
+                }
+                n++;
+            }
+            fprintf(stderr, "n:%zu\n", n);
+            if (n == temp_means.size())
+            {
+                temp_childLink.push_back(child);
+                temp_means.push_back(means[child]);
+            }
+        }
+
+        fprintf(stderr, "Before: %zu, After:%zu\n", childCounts[node], temp_childLink.size());
+    }
+
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
         // if (childCounts[node] > 1)
         // {
         //     size_t size = signatureSize * bits_per_char;
-        //     vector<cell_type> meanSig(size);
+        //     data_type meanSig(size);
         //     fill(&meanSig[0], &meanSig[0] + size, 0);
 
         //     for (size_t child : childLinks[node])
@@ -360,7 +389,7 @@ public:
     }
 
     // return if found same, and the destination node
-    inline tuple<bool, size_t> traverse(seq_type signature, vector<size_t> &insertionList)
+    inline tuple<bool, size_t> traverse(data_type signature, vector<size_t> &insertionList)
     {
         size_t node = root;
         double local_stay = stay_threshold;
@@ -374,13 +403,12 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                // double sim = calcDistance(matrices[child][0], signature);
-                double sim = compareSigToMean(child, signature);
+                double distance = calcDistance(means[child], signature);
 
-                fprintf(stderr, " <%zu,%.2f> ", child, sim);
+                fprintf(stderr, " <%zu,%.2f> ", child, distance);
 
                 // found same, move on with the next seq
-                if (sim >= (local_stay))
+                if (distance <= (local_stay))
                 {
                     // priority[child]++;
                     // rotateAnc(child);
@@ -388,7 +416,7 @@ public:
                 }
 
                 // count how many nodes mismatch
-                if (sim <= (split_threshold))
+                if (distance >= (split_threshold))
                 {
                     // mismatch++;
                     mismatch.push_back(child);
@@ -422,7 +450,7 @@ public:
 
                 for (size_t n : matching)
                 {
-                    for (seq_type sig : matrices[n])
+                    for (data_type sig : matrices[n])
                     {
                         addSigToMatrix(temp, sig);
                     }
@@ -487,7 +515,7 @@ public:
         return std::make_tuple(false, node);
     }
 
-    inline size_t createNode(seq_type signature, vector<size_t> &insertionList, size_t parent)
+    inline size_t createNode(data_type signature, vector<size_t> &insertionList, size_t parent)
     {
         // size_t parent = root;
         size_t node = getNewNodeIdx(insertionList);
@@ -497,21 +525,21 @@ public:
         childCounts[parent]++;
         // priority[node] = 1;
         addSigToMatrix(node, signature);
-        means[node] = getMinimiseSet(signature)[0];
+        means[node] = signature;
         //? p
         // priority[node] = countSingleSetBits(means[node]);
         // priority[node] = 1;
         return node;
     }
 
-    inline size_t first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t parent = 0)
+    inline size_t first_insert(data_type signature, vector<size_t> &insertionList, size_t idx, size_t parent = 0)
     {
         size_t node = createNode(signature, insertionList, parent);
         seqIDs[node].push_back(idx);
         return node;
     }
 
-    inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    inline size_t insert(data_type signature, vector<size_t> &insertionList, size_t idx)
     {
         bool stay = false;
         size_t parent = root;
@@ -520,8 +548,9 @@ public:
 
         if (!stay) // add new node
         {
-            parent = createNode(signature, insertionList, parent);
-            seqIDs[parent].push_back(idx);
+            size_t node = createNode(signature, insertionList, parent);
+            seqIDs[node].push_back(idx);
+            return node;
         }
         else // add seq without adding new node
         {
@@ -562,75 +591,41 @@ public:
         // omp_unset_lock(&locks[insertionPoint]);
     }
 
-    inline void removeSingleton(vector<tuple<size_t, size_t>> &clusters, vector<size_t> &insertionList)
-    {
-        vector<size_t> tempChildren;
-        vector<size_t> singletons;
-        for (size_t i = 0; i < childCounts[root]; i++)
-        {
-            size_t node = childLinks[root][i];
-            if (childCounts[node] > 1)
-            {
-                tempChildren.push_back(node);
-            }
-            else
-            {
-                singletons.push_back(node);
-            }
-        }
-        childLinks[root].clear();
-        childLinks[root] = tempChildren;
-        childCounts[root] = tempChildren.size();
-
-        for (size_t node : singletons)
-        {
-            size_t i = seqIDs[node][0];
-            // insertionList.push_back(node);
-            size_t clu = insert(matrices[node][0], insertionList, i);
-            clusters[i] = make_tuple(clu, findAncestor(clu));
-        }
-    }
-
-    inline double compareSigToMean(size_t node, seq_type signature)
-    {
-        return calcJaccardGlobal(means[node], getMinimiseSet(signature)[0]);
-    }
-
-    inline size_t search(seq_type signature, size_t idx = 0)
+    inline size_t search(data_type signature, size_t idx = 0)
     {
         size_t node = root;
 
         size_t best_child = node;
-        double best_sim = 0;
+        double best_distance = 0;
 
         while (isBranchNode[node])
         {
             size_t local_best_child = node;
-            double local_best_sim = 0;
+            double local_best_distance = 0;
 
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                double sim = compareSigToMean(child, signature);
+                double distance = calcDistance(means[child], signature);
 
-                fprintf(stderr, " <%zu,%.2f> ", child, sim);
+                fprintf(stderr, " <%zu,%.2f> ", child, distance);
 
                 // found same, move on with the next seq
-                if (sim >= (stay_threshold))
+                if (distance <= (stay_threshold))
                 {
                     // seqIDs[child].push_back(idx);
                     return child;
                 }
 
-                if (sim >= local_best_sim)
+                if (distance <= local_best_distance)
                 {
-                    local_best_sim = sim;
+                    local_best_distance = distance;
                     local_best_child = child;
                 }
             }
-            if (local_best_sim >= best_sim)
+            if (local_best_distance <= best_distance)
             {
-                best_sim = local_best_sim;
+                best_distance = local_best_distance;
                 best_child = local_best_child;
             }
 
@@ -648,7 +643,6 @@ public:
             seqIDs[i].clear();
         }
     }
-
 
     // make sure cluster centroid is up-to-date before clearing matrices
     // clear matrices and seqID for the next insertion cycle
@@ -669,7 +663,7 @@ public:
         }
     }
 
-    size_t reinsert(seq_type signature, size_t idx)
+    size_t reinsert(data_type signature, size_t idx)
     {
         size_t node = search(signature);
         seqIDs[node].push_back(idx);

@@ -1,14 +1,14 @@
 #include <random>
-#include "tree_main_cmdline.hpp"
-#include "temp_tree.hpp"
-typedef temp_tree tree_type;
+#include "test_main_cmdline.hpp"
+#include "test_tree.hpp"
+typedef test_tree tree_type;
 typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 bool random_ = false;
 size_t cap = 0;
 size_t iteration = 0;
 using namespace std;
 
-static tree_main_cmdline args; // Command line switches and arguments
+static test_main_cmdline args; // Command line switches and arguments
 
 void outputClusters(FILE *pFile, const vector<size_t> &clusters)
 {
@@ -50,7 +50,7 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
+vector<size_t> clusterSignatures(const vector<data_type> &seqs)
 {
     size_t seqCount = seqs.size();
     // seqCount = 300;
@@ -111,77 +111,138 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
             clusters[foo[i]] = clus;
         }
     }
-    
-    if (iteration == 0)
-    {
-        tree.printTreeJson(stdout);
-        tree.clearSeqId(insertionList[0]);
 
-        for (size_t i = 0; i < cap; i++)
-        {
-            size_t clus = tree.search(seqs[foo[i]], foo[i]);
-            tree.seqIDs[clus].push_back(foo[i]);
+    tree.mergeChildren(tree.root, insertionList);
 
-            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
-            // clusters[foo[i]] = tree.findAncestor(clus);
-            clusters[foo[i]] = clus;
-        }
-    }
-    // // Insert first 1 nodes single-threaded
-    // for (size_t i = 0; i < firstNodes; i++)
+    // if (iteration == 0)
     // {
-    //     size_t clus = tree.first_insert(seqs[foo[i]], insertionList, foo[i]);
-    //     clusters[foo[i]] = clus;
-    //     // fprintf(stderr, ">>%zu\n", foo[i]);
-    //     // dbgPrintSignatureIdx(stderr, seqs[foo[i]]);
+    //     tree.printTreeJson(stdout);
+    //     tree.clearSeqId(insertionList[0]);
+
+    //     for (size_t i = 0; i < cap; i++)
+    //     {
+    //         size_t clus = tree.search(seqs[foo[i]], foo[i]);
+    //         tree.seqIDs[clus].push_back(foo[i]);
+
+    //         fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+    //         // clusters[foo[i]] = tree.findAncestor(clus);
+    //         clusters[foo[i]] = clus;
+    //     }
     // }
 
-    // for (size_t i = firstNodes; i < seqCount; i++)
-    // {
-    //     // fprintf(stdout, "inserting %zu", i);
-    //     size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
-    //     // clusters[foo[i]] = tree.findAncestor(clus);
-    //     clusters[foo[i]] = clus;
-    //     fprintf(stderr, ">>%zu\n", foo[i]);
-    //     // dbgPrintSignatureIdx(stderr, seqs[foo[i]]);
-    // }
-
-    // // update ancestor after inserting all
-    // for (size_t i = 0; i < seqCount; i++)
-    // {
-    //     output[foo[i]] = make_tuple(clusters[foo[i]], tree.findAncestorNlevel(clusters[foo[i]]));
-    // }
-
-    // tree.removeSingleton(clusters, insertionList);
-
-    // //search
-    // for (size_t i = 0; i < seqCount; i++)
-    // {
-    //     // fprintf(stdout, "inserting %zu", foo[i]);
-    //     size_t clus = tree.search(seqs[foo[i]], foo[i]);
-    //     // clusters[foo[i]] = tree.findAncestor(clus);
-    //     clusters[foo[i]] = make_tuple(clus, tree.findAncestor(clus));
-    // }
-
-    // Recursively destroy all locks
-    tree.destroyLocks();
+    // // Recursively destroy all locks
+    // tree.destroyLocks();
 
     tree.printTreeJson(stdout);
 
     return clusters;
 }
 
-int tree_main(int argc, char *argv[])
+vector<pair<float, float>> generateCentroids(size_t count, size_t factor = 1, float mean = 0, float std = 1)
+{
+    vector<pair<float, float>> centroids;
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+
+    std::normal_distribution<double> distribution(0.0, std);
+
+    for (int i = 0; i < count; ++i)
+    {
+        centroids.push_back(make_pair(distribution(generator) * factor, distribution(generator) * factor));
+    }
+
+    // for (int i = 0; i < count; ++i)
+    // {
+    //     std::cout << centroids[i].first <<","<< centroids[i].second << std::endl;
+    // }
+    return centroids;
+}
+
+vector<float> rNorm(size_t count, float mean = 0, float std = 1)
+{
+    vector<float> output;
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+
+    std::normal_distribution<double> distribution(mean, std);
+
+    for (int i = 0; i < count; ++i)
+    {
+        output.push_back(distribution(generator));
+    }
+
+    return output;
+}
+
+vector<data_type> writeData(FILE *pFile, size_t clusCount, size_t clusSize)
+{
+    vector<pair<float, float>> data;
+
+    fprintf(pFile, "%zu\n", clusCount);
+    vector<pair<float, float>> centroids = generateCentroids(clusCount, 10);
+
+    vector<float> x;
+    vector<float> y;
+
+    for (int i = 0; i < clusCount; ++i)
+    {
+        fprintf(pFile, "%f,%f\n", centroids[i].first, centroids[i].second);
+    }
+
+    for (int i = 0; i < clusCount; ++i)
+    {
+        x = rNorm(clusSize, centroids[i].first);
+        y = rNorm(clusSize, centroids[i].second);
+
+        for (int i = 0; i < clusSize; ++i)
+        {
+            fprintf(pFile, "%f,%f\n", x[i], y[i]);
+            data.push_back(make_pair(x[i], y[i]));
+        }
+    }
+
+    return data;
+}
+
+// read data, the first line is the number of clusters, the next few lines are the cluster centroids
+vector<data_type> readData(const char *path)
+{
+    vector<data_type> data;
+    FILE *fp = fopen(path, "r");
+    if (!fp)
+    {
+        fprintf(stderr, "Failed to load %s\n", path);
+        exit(1);
+    }
+
+    fprintf(stderr, "reading %s\n", path);
+    size_t clusCount;
+    fscanf(fp, "%zu", &clusCount); // check how many clusters
+
+    for (size_t i = 0; i < clusCount; i++)
+    {
+        char fileBuf[100];
+        fscanf(fp, "%s", fileBuf); // skip centroids
+    }
+
+    size_t i = 0;
+    for (;;)
+    {
+        float x;
+        float y;
+        if (fscanf(fp, "%f,%f\n", &x, &y) < 1)
+            break;
+
+        data.push_back(make_pair(x, y));
+        i++;
+    }
+    return data;
+}
+
+int test_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
-
-    //?
-    if (!args.input_given)
-    {
-        cout << "No input and/or query given! Exiting...\n";
-        return 0;
-    }
 
     if (args.random_arg)
     {
@@ -191,14 +252,15 @@ int tree_main(int argc, char *argv[])
     if (args.split_threshold_given)
     {
         split_threshold = args.split_threshold_arg;
-        fprintf(stderr, "split threshold: %.2f\n", split_threshold);
     }
 
     if (args.stay_threshold_given)
     {
         stay_threshold = args.stay_threshold_arg;
-        fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
     }
+    
+    fprintf(stderr, "split threshold: %.2f\n", split_threshold);
+    fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
 
     if (args.minimiser_match_given)
     {
@@ -206,32 +268,54 @@ int tree_main(int argc, char *argv[])
         fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
     }
 
-    cap = args.capacity_arg;
     iteration = args.iteration_arg;
 
-    string inputFile = args.input_arg;
+    // vector<double> seqs = readPartitionBF(inputFile);
+    // fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
 
-    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
-    fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
+    // signatureSize = seqs[0][0].size();
+    // fprintf(stderr, "Building Signature...\n");
+    // default_random_engine rng;
+    // // output_type clusters = clusterSignatures(seqs);
+    // vector<size_t> clusters = clusterSignatures(seqs);
 
-    signatureSize = seqs[0][0].size();
-    fprintf(stderr, "Building Signature...\n");
-    default_random_engine rng;
-    // output_type clusters = clusterSignatures(seqs);
-    vector<size_t> clusters = clusterSignatures(seqs);
+    // fprintf(stderr, "writing output...\n");
 
-    fprintf(stderr, "writing output...\n");
+    // size_t firstindex = inputFile.find_last_of("/") + 1;
+    // size_t lastindex = inputFile.find_last_of(".");
+    // string rawname = inputFile.substr(firstindex, lastindex - firstindex);
 
-    size_t firstindex = inputFile.find_last_of("/") + 1;
-    size_t lastindex = inputFile.find_last_of(".");
-    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
-
-    auto fileName = rawname + "-s" + to_string((int)(stay_threshold * 100)) + "-l" + to_string((int)(split_threshold * 100));
-    if (args.tag_given)
+    // auto fileName = rawname + "-s" + to_string((int)(stay_threshold * 100)) + "-l" + to_string((int)(split_threshold * 100));
+    // if (args.tag_given)
+    // {
+    //     fileName = fileName + "-" + args.tag_arg;
+    // }
+    // FILE *pFile = fopen((fileName + ".txt").c_str(), "w");
+    // outputClusters(pFile, clusters);
+    vector<data_type> seqs;
+    if (args.input_given)
     {
-        fileName = fileName + "-" + args.tag_arg;
+        seqs = readData(args.input_arg);
+        fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
     }
-    FILE *pFile = fopen((fileName + ".txt").c_str(), "w");
+    else
+    {
+        FILE *pFile = fopen("data.txt", "w");
+        seqs = writeData(pFile, 10, 100);
+        fprintf(stderr, "Created %zu signatures...\n", seqs.size());
+    }
+
+    if (args.capacity_given)
+    {
+        cap = args.capacity_arg;
+    }
+    else
+    {
+        cap = seqs.size();
+    }
+
+    vector<size_t> clusters = clusterSignatures(seqs);
+    FILE *pFile = fopen("output.txt", "w");
     outputClusters(pFile, clusters);
 
     return 0;
