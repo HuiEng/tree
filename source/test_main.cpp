@@ -87,13 +87,13 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
         // foo = temp;
     }
 
-    for (size_t i = 0; i < cap; i++)
-    {
-        for (size_t j = 0; j < cap; j++)
-        {
-            fprintf(stderr,"%zu,%zu,%.2f\n",i,j,calcDistance(seqs[foo[i]], seqs[foo[j]]));
-        }
-    }
+    // for (size_t i = 0; i < cap; i++)
+    // {
+    //     for (size_t j = 0; j < cap; j++)
+    //     {
+    //         fprintf(stderr,"%zu,%zu,%.2f\n",i,j,calcDistance(seqs[foo[i]], seqs[foo[j]]));
+    //     }
+    // }
 
     clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
     for (size_t i = 1; i < cap; i++)
