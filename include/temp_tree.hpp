@@ -528,38 +528,13 @@ public:
             seqIDs[parent].push_back(idx);
             addSigToMatrix(parent, signature);
             means[parent] = createMeanSig(matrices[parent]);
-            // priority[parent] = countSingleSetBits(means[parent]);
             //? p
             priority[parent] = calcDistortion(matrices[parent]);
-            // priority[parent]++;
-
-            // priority[parent]++;
-            // return parent;
         }
 
         fprintf(stderr, "\ninserting %zu at %zu\n", idx, parent);
         return parent;
 
-        // size_t insertionPoint = traverse(signature);
-
-        // // fprintf(stdout, " at %zu\n", insertionPoint);
-        // omp_set_lock(&locks[insertionPoint]);
-
-        // // if (childCounts[insertionPoint] < order)
-        // {
-        //     addSigToMatrix(insertionPoint, signature);
-
-        //     childLinks[insertionPoint].push_back(idx);
-        //     fprintf(stdout, " at %zu\n", insertionPoint);
-
-        //     childCounts[insertionPoint]++;
-        //     recalculateSig(insertionPoint);
-        //     if (isBranchNode[root])
-        //     {
-        //         recalculateUp(parentLinks[insertionPoint]);
-        //     }
-        // }
-        // omp_unset_lock(&locks[insertionPoint]);
     }
 
     inline void removeSingleton(vector<tuple<size_t, size_t>> &clusters, vector<size_t> &insertionList)
