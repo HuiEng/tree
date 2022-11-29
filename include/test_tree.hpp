@@ -62,6 +62,7 @@ double calcDistortion(const vector<data_type> clusterSigs)
         sumSquareDistance += distance * distance;
     }
     return sqrt(sumSquareDistance / clusterSigs.size());
+    // return sqrt(sumSquareDistance);
 }
 
 class test_tree
@@ -323,122 +324,6 @@ public:
                 updateNodeMean(parent);
             }
         }
-    }
-
-    // return if found same, and the destination node
-    inline tuple<bool, size_t> traverse(data_type signature, vector<size_t> &insertionList)
-    {
-        size_t node = root;
-        double local_stay = stay_threshold;
-        double offset = 0.1;
-
-        while (childCounts[node] > 0)
-        {
-            vector<size_t> mismatch;
-            vector<size_t> matching;
-
-            for (size_t i = 0; i < childCounts[node]; i++)
-            {
-                size_t child = childLinks[node][i];
-                double distance = calcDistance(means[child], signature);
-
-                fprintf(stderr, " <%zu,%.2f> ", child, distance);
-
-                // found same, move on with the next seq
-                if (distance <= (local_stay))
-                {
-                    // priority[child]++;
-                    return make_tuple(true, child);
-                }
-
-                // count how many nodes mismatch
-                if (distance >= (split_threshold))
-                {
-                    // mismatch++;
-                    mismatch.push_back(child);
-                }
-                else
-                {
-                    matching.push_back(child);
-                }
-            }
-
-            // nothing is close enough, spawn new child under parent
-            if (mismatch.size() == childCounts[node])
-            {
-                fprintf(stderr, " -no match:%zu, ", node);
-                return make_tuple(false, node);
-            }
-            else if (matching.size() > 1) // matching with multiple
-            {
-                size_t temp = createNode(signature, insertionList, node);
-
-                parentLinks[temp] = node;
-
-                childCounts[node] = mismatch.size() + 1;
-                childLinks[node].clear();
-                childLinks[node] = mismatch;
-                childLinks[node].push_back(temp);
-
-                childCounts[temp] = matching.size();
-
-                fprintf(stderr, "\nxxx multiple: %zu,%zu\n", temp, node);
-
-                for (size_t n : matching)
-                {
-                    for (data_type sig : matrices[n])
-                    {
-                        addSigToMatrix(temp, means[n]);
-                    }
-
-                    parentLinks[n] = temp;
-                    childLinks[temp].push_back(n);
-                    fprintf(stderr, "leaves: %zu\n", n);
-                }
-                // fprintf(stderr, "leaves: %zu\n",childCounts[temp]);
-                // printSubTreeJson(stderr,root);
-
-                //?
-                priority[temp] = childCounts[temp] - 1;
-
-                return make_tuple(true, temp);
-            }
-
-            else if (matching.size() == 1 && childCounts[node] == 1) // matching with multiple
-            {
-                size_t match = matching[0];
-
-                if (isBranchNode[match])
-                {
-                    node = match;
-                    fprintf(stderr, "matching with branch %zu\n", node);
-                }
-                else
-                {
-                    childCounts[node] = 0;
-                    childLinks[node].clear();
-                    size_t tempUnion = createNode(signature, insertionList, node);
-                    parentLinks[tempUnion] = node;
-                    isBranchNode[tempUnion] = 1;
-                    branchCounts[node]++;
-                    childLinks[node][0] = tempUnion;
-
-                    size_t newNode = createNode(signature, insertionList, tempUnion);
-                    childCounts[tempUnion]++;
-                    childLinks[tempUnion].push_back(match);
-
-                    fprintf(stderr, "\nxxx here: %zu>%zu,%zu\n", tempUnion, newNode, match);
-
-                    addSigToMatrix(tempUnion, matrices[match][0]);
-                    updateNodeMean(tempUnion);
-                    return make_tuple(true, newNode);
-                }
-            }
-            // updateNodeMean(node);
-            node = matching[0]; // choose the first matching for now, may change to best
-        }
-
-        return std::make_tuple(false, node);
     }
 
     inline bool hasBranch(size_t node)
@@ -863,9 +748,6 @@ public:
 
         fprintf(stderr, "\ncreated node %zu\n", node);
 
-        //? p
-        // priority[node] = countSingleSetBits(means[node]);
-        // priority[node] = 1;
 
         return node;
     }
@@ -879,31 +761,6 @@ public:
 
     inline size_t insert(data_type signature, vector<size_t> &insertionList, size_t idx)
     {
-        // bool stay = false;
-        // size_t parent = root;
-        // tie(stay, parent) = traverse(signature, insertionList);
-        // fprintf(stderr, "inserting seq %zu at node %zu; stay: %d\n", idx, parent, stay);
-
-        // if (!stay) // add new node
-        // {
-        //     size_t node = createNode(signature, insertionList, parent);
-        //     seqIDs[node].push_back(idx);
-        //     return node;
-        // }
-        // else // add seq without adding new node
-        // {
-        //     seqIDs[parent].push_back(idx);
-        //     addSigToMatrix(parent, signature);
-        //     means[parent] = createMeanSig(matrices[parent]);
-        //     // priority[parent] = countSingleSetBits(means[parent]);
-        //     //? p
-        //     priority[parent] = calcDistortion(matrices[parent]);
-        //     // priority[parent]++;
-
-        //     // priority[parent]++;
-        //     // return parent;
-        // }
-
         size_t parent = traverse(signature, insertionList, idx);
 
         fprintf(stderr, "\ninserting %zu at %zu\n", idx, parent);

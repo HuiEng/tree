@@ -72,7 +72,7 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     }
 
     vector<size_t> foo;
-    for (int i = 0; i < seqCount; i++)
+    for (int i = 0; i < cap; i++)
     {
         foo.push_back(i);
     }
@@ -101,13 +101,12 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     //     }
     // }
 
-    clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
-    for (size_t i = 1; i < cap; i++)
+    for (size_t i = 0; i < cap; i++)
     {
         // fprintf(stderr, "inserting %zu\n", foo[i]);
         size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
         // clusters[foo[i]] = tree.findAncestor(clus);
-        clusters[foo[i]] = clus;
+        clusters[foo[i]] = tree.parentLinks[clus];
     }
     fprintf(stderr, "\n\n\n\n");
 
@@ -193,7 +192,7 @@ vector<data_type> writeData(FILE *pFile, size_t clusCount, size_t clusSize)
     vector<pair<float, float>> data;
 
     fprintf(pFile, "%zu\n", clusCount);
-    vector<pair<float, float>> centroids = generateCentroids(clusCount, 10);
+    vector<pair<float, float>> centroids = generateCentroids(clusCount, 15);
 
     vector<float> x;
     vector<float> y;
@@ -330,6 +329,8 @@ int test_main(int argc, char *argv[])
 
     vector<size_t> clusters = clusterSignatures(seqs);
     FILE *pFile = fopen("output.txt", "w");
+
+    compressClusterList(clusters);
     outputClusters(pFile, clusters);
 
     return 0;
