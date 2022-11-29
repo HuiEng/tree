@@ -377,7 +377,15 @@ public:
             }
             else if (isBranchNode[child])
             {
-                NN_branches.push_back(child);
+                // split earlier if it's branch, change offset later
+                if (distance > split_threshold / 2)
+                {
+                    mismatch.push_back(child);
+                }
+                else
+                {
+                    NN_branches.push_back(child);
+                }
             }
             else
             {
@@ -583,7 +591,7 @@ public:
                 // NN to 1 branch only, check its children
                 if (NN_branches.size() == 1)
                 {
-                    fprintf(stderr, ">>>\n");
+                    fprintf(stderr, ">>>1\n");
                     return traverse(signature, insertionList, idx, NN_branches[0]);
                 }
                 else
@@ -635,7 +643,7 @@ public:
 
                 else if (NN_branches.size() == 1 && NN_leaves.size() == 1)
                 {
-                    fprintf(stderr, ">>>\n");
+                    fprintf(stderr, ">>>2\n");
                     return traverse(signature, insertionList, idx, NN_branches[0]);
                 }
                 else
@@ -748,7 +756,6 @@ public:
 
         fprintf(stderr, "\ncreated node %zu\n", node);
 
-
         return node;
     }
 
@@ -761,10 +768,10 @@ public:
 
     inline size_t insert(data_type signature, vector<size_t> &insertionList, size_t idx)
     {
-        size_t parent = traverse(signature, insertionList, idx);
+        size_t node = traverse(signature, insertionList, idx);
 
-        fprintf(stderr, "\ninserting %zu at %zu\n", idx, parent);
-        return parent;
+        fprintf(stderr, "\ninserting %zu at %zu\n", idx, node);
+        return node;
     }
 
     inline size_t search(data_type signature, size_t idx = 0)
