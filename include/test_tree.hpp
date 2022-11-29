@@ -69,6 +69,7 @@ class test_tree
 public:
     size_t root = 0;                    // # of root node
     vector<size_t> childCounts;         // n entries, number of children
+    vector<size_t> branchCounts;        // n entries, number of children which are a branch
     vector<int> isBranchNode;           // n entries, is this a branch node
     vector<vector<size_t>> childLinks;  // n * o entries, links to children
     vector<vector<size_t>> seqIDs;      // n * o entries, links to children
@@ -94,6 +95,10 @@ public:
             //#pragma omp single
             {
                 childCounts.resize(capacity);
+            }
+            //#pragma omp single
+            {
+                branchCounts.resize(capacity);
             }
             //#pragma omp single
             {
@@ -431,6 +436,7 @@ public:
                     size_t tempUnion = createNode(signature, insertionList, node);
                     parentLinks[tempUnion] = node;
                     isBranchNode[tempUnion] = 1;
+                    branchCounts[node]++;
                     childLinks[node][0] = tempUnion;
 
                     size_t newNode = createNode(signature, insertionList, tempUnion);
@@ -509,64 +515,116 @@ public:
             seqIDs[newNode].push_back(idx);
             return newNode;
         }
-        // else if (mismatch.size() == 0)
-        // {
-        //     // create new child
-        //     size_t newChild = getNewNodeIdx(insertionList);
-        //     seqIDs[newChild].push_back(idx);
-        //     addSigToMatrix(newChild, signature);
-        //     updateNodeMean(newChild);
+        // all children of this node are leaves, no branch at all
+        else if (branchCounts[node] == 0)
+        {
+            // match with all nodes (leaves)
+            if (mismatch.size() == 0)
+            {
+                if (isBranchNode[node])
+                {
+                    size_t newChild = createNode(signature, insertionList, node);
+                    seqIDs[newChild].push_back(idx);
+                    return newChild;
+                }
+                else
+                {
+                    size_t tempParent = getNewNodeIdx(insertionList);
+                    fprintf(stderr, "created %zu\n", tempParent);
+                    isBranchNode[tempParent] = 1;
+                    branchCounts[node]++;
+                    parentLinks[tempParent] = node;
+                    childCounts[tempParent] = childCounts[node];
+                    childLinks[tempParent] = childLinks[node];
 
-        //     if (isBranchNode[node])
-        //     {
-        //         childCounts[node]++;
-        //         childLinks[node].push_back(newChild);
-        //         addSigToMatrix(node, means[newChild]);
-        //         updateNodeMean(node);
-        //     }
-        //     else
-        //     {
-        //         // create new branch and let NN leaves be its children
-        //         size_t tempParent = getNewNodeIdx(insertionList);
-        //         isBranchNode[tempParent] = 1;
-        //         childCounts[tempParent] = NN_leaves.size() + NN_branches.size() + 1;
-        //         for (size_t n : NN_leaves)
-        //         {
-        //             addSigToMatrix(tempParent, means[n]);
-        //             childLinks[tempParent].push_back(n);
+                    childCounts[node] = 1;
+                    childLinks[node].clear();
+                    childLinks[node].push_back(tempParent);
 
-        //             // update NN children's parent to temp
-        //             parentLinks[n] = tempParent;
-        //         }
-        //         for (size_t n : NN_branches)
-        //         {
-        //             addSigToMatrix(tempParent, means[n]);
-        //             childLinks[tempParent].push_back(n);
+                    for (size_t n : childLinks[tempParent])
+                    {
+                        addSigToMatrix(tempParent, means[n]);
+                        parentLinks[n] = tempParent;
+                    }
 
-        //             // update NN children's parent to temp
-        //             parentLinks[n] = tempParent;
-        //         }
+                    size_t newChild = createNode(signature, insertionList, tempParent);
+                    seqIDs[newChild].push_back(idx);
+                    return newChild;
+                }
+            }
+            // match with some leaves only
+            else
+            {
 
-        //         // add newChild to the back
-        //         childLinks[tempParent].push_back(newChild);
-        //         addSigToMatrix(tempParent, means[newChild]);
-        //         parentLinks[newChild] = tempParent;
+                size_t tempParent = getNewNodeIdx(insertionList);
+                isBranchNode[tempParent] = 1;
+                branchCounts[node]++;
+                parentLinks[tempParent] = node;
+                childCounts[tempParent] = NN_leaves.size();
+                childLinks[tempParent] = NN_leaves;
 
-        //         updateNodeMean(tempParent);
+                for (size_t n : NN_leaves)
+                {
+                    childLinks[tempParent].push_back(n);
+                    addSigToMatrix(tempParent, means[n]);
+                    parentLinks[n] = tempParent;
+                }
 
-        //         // format node (previous parent), replace NN children with temp
-        //         childCounts[node] = 1;
-        //         childLinks[node].clear();
-        //         childLinks[node].push_back(tempParent);
-        //         matrices[node].clear();
-        //         matrices[node].push_back(means[tempParent]);
-        //         updateNodeMean(node);
-        //     }
+                size_t newChild = createNode(signature, insertionList, tempParent);
+                seqIDs[newChild].push_back(idx);
 
-        //     return newChild;
-        // }
+                fprintf(stderr, "here %zu, %zu, %zu\n", node, isBranchNode[node], NN_leaves.size());
 
-        else // NN
+                if (isBranchNode[node])
+                {
+                    fprintf(stderr, "a\n");
+                    childCounts[node] = 2;
+                    childLinks[node].clear();
+                    childLinks[node].push_back(tempParent);
+                    matrices[node].clear();
+                    addSigToMatrix(node, means[tempParent]);
+
+                    // merge mismatch leaves
+                    // put NN in one branch, mismatch in another branch
+                    if (mismatch.size() > 1)
+                    {
+                        size_t mismatchBranch = getNewNodeIdx(insertionList);
+                        isBranchNode[mismatchBranch] = 1;
+                        branchCounts[node]++;
+                        parentLinks[mismatchBranch] = node;
+                        childCounts[mismatchBranch] = mismatch.size();
+                        childLinks[mismatchBranch] = mismatch;
+                        for (size_t n : mismatch)
+                        {
+                            addSigToMatrix(node, means[n]);
+                            parentLinks[n] = mismatchBranch;
+                        }
+                        childLinks[node].push_back(mismatchBranch);
+                    }
+                    else
+                    {
+                        // should just be 1 mismatch
+                        for (size_t n : mismatch)
+                        {
+                            addSigToMatrix(node, means[n]);
+                            childLinks[node].push_back(n);
+                        }
+                    }
+                    updateNodeMean(node);
+                }
+                else
+                {
+                    fprintf(stderr, "b\n");
+                    childCounts[node] = mismatch.size() + 1;
+                    childLinks[node].clear();
+                    childLinks[node] = mismatch;
+                    childLinks[node].push_back(tempParent);
+                }
+
+                return newChild;
+            }
+        }
+        else // NN with branch
         {
             // NN with leaves only => new node or new seq then merge all into new branch
             if (NN_branches.size() == 0)
@@ -580,6 +638,7 @@ public:
                 // NN to all leaves
                 if (isBranchNode[node] && mismatch.size() + NN_leaves.size() == childCounts[node])
                 {
+                    fprintf(stderr, "match with all leaves %zu\n", node);
                     parentLinks[newChild] = node;
                     childCounts[node]++;
                     childLinks[node].push_back(newChild);
@@ -592,6 +651,7 @@ public:
                     // create new branch and let NN leaves be its children
                     size_t tempParent = getNewNodeIdx(insertionList);
                     isBranchNode[tempParent] = 1;
+                    branchCounts[node]++;
                     childCounts[tempParent] = NN_leaves.size() + 1;
                     for (size_t n : NN_leaves)
                     {
@@ -620,6 +680,7 @@ public:
                     }
                     childLinks[node].push_back(tempParent);
                     temp_matrice.push_back(means[tempParent]);
+                    parentLinks[tempParent] = node;
 
                     //? check if vector replace is good
                     matrices[node] = temp_matrice;
@@ -732,6 +793,176 @@ public:
                 return newChild;
             }
         }
+
+        // else // NN with branch
+        // {
+        //     // NN with leaves only => new node or new seq then merge all into new branch
+        //     if (NN_branches.size() == 0)
+        //     {
+        //         // create new child
+        //         size_t newChild = getNewNodeIdx(insertionList);
+        //         seqIDs[newChild].push_back(idx);
+        //         addSigToMatrix(newChild, signature);
+        //         updateNodeMean(newChild);
+
+        //         // NN to all leaves
+        //         if (isBranchNode[node] && mismatch.size() + NN_leaves.size() == childCounts[node])
+        //         {
+        //             fprintf(stderr, "match with all leaves %zu\n", node);
+        //             parentLinks[newChild] = node;
+        //             childCounts[node]++;
+        //             childLinks[node].push_back(newChild);
+        //             addSigToMatrix(node, means[newChild]);
+        //             updateNodeMean(node);
+        //         }
+        //         // some leaves not NN
+        //         else
+        //         {
+        //             // create new branch and let NN leaves be its children
+        //             size_t tempParent = getNewNodeIdx(insertionList);
+        //             isBranchNode[tempParent] = 1;
+        //             branchCounts[node]++;
+        //             childCounts[tempParent] = NN_leaves.size() + 1;
+        //             for (size_t n : NN_leaves)
+        //             {
+        //                 addSigToMatrix(tempParent, means[n]);
+        //                 childLinks[tempParent].push_back(n);
+
+        //                 // update NN children's parent to temp
+        //                 parentLinks[n] = tempParent;
+        //             }
+
+        //             // add newChild to the back
+        //             childLinks[tempParent].push_back(newChild);
+        //             addSigToMatrix(tempParent, means[newChild]);
+        //             parentLinks[newChild] = tempParent;
+
+        //             updateNodeMean(tempParent);
+
+        //             // format node (previous parent), replace NN children with temp
+        //             vector<data_type> temp_matrice;
+        //             childCounts[node] = mismatch.size() + 1;
+        //             childLinks[node].clear();
+        //             for (size_t n : mismatch)
+        //             {
+        //                 childLinks[node].push_back(n);
+        //                 temp_matrice.push_back(means[n]);
+        //             }
+        //             childLinks[node].push_back(tempParent);
+        //             temp_matrice.push_back(means[tempParent]);
+        //             parentLinks[tempParent] = node;
+
+        //             //? check if vector replace is good
+        //             matrices[node] = temp_matrice;
+        //             updateNodeMean(node);
+        //         }
+        //         return newChild;
+        //     }
+        //     else if (NN_leaves.size() == 0)
+        //     {
+        //         // NN to 1 branch only, check its children
+        //         if (NN_branches.size() == 1)
+        //         {
+        //             fprintf(stderr, ">>>\n");
+        //             return traverse(signature, insertionList, idx, NN_branches[0]);
+        //         }
+        //         else
+        //         {
+        //             // NN with multiple branches, no leaf
+        //             // create sibling
+        //             size_t newChild = createNode(signature, insertionList, node);
+        //             seqIDs[newChild].push_back(idx);
+        //             return newChild;
+        //         }
+        //     }
+        //     else // mix case
+        //     {
+
+        //         // create new child
+        //         size_t newChild = getNewNodeIdx(insertionList);
+        //         seqIDs[newChild].push_back(idx);
+        //         addSigToMatrix(newChild, signature);
+        //         updateNodeMean(newChild);
+
+        //         // create new branch and let NN leaves be its children
+        //         size_t tempParent = getNewNodeIdx(insertionList);
+        //         isBranchNode[tempParent] = 1;
+        //         childCounts[tempParent] = NN_leaves.size() + NN_branches.size() + 1;
+        //         for (size_t n : NN_leaves)
+        //         {
+        //             addSigToMatrix(tempParent, means[n]);
+        //             childLinks[tempParent].push_back(n);
+        //             parentLinks[n] = tempParent;
+        //         }
+        //         for (size_t n : NN_branches)
+        //         {
+        //             addSigToMatrix(tempParent, means[n]);
+        //             childLinks[tempParent].push_back(n);
+        //             parentLinks[n] = tempParent;
+        //         }
+
+        //         // add newChild to the back
+        //         childLinks[tempParent].push_back(newChild);
+        //         addSigToMatrix(tempParent, means[newChild]);
+        //         parentLinks[newChild] = tempParent;
+
+        //         updateNodeMean(tempParent);
+
+        //         // format node (previous parent), replace NN children with temp
+        //         vector<data_type> temp_matrice;
+        //         childCounts[node] = mismatch.size() + 1;
+        //         childLinks[node].clear();
+        //         for (size_t n : mismatch)
+        //         {
+        //             childLinks[node].push_back(n);
+        //             temp_matrice.push_back(means[n]);
+        //         }
+        //         childLinks[node].push_back(tempParent);
+        //         temp_matrice.push_back(means[tempParent]);
+
+        //         //? check if vector replace is good
+        //         matrices[node] = temp_matrice;
+        //         updateNodeMean(node);
+
+        //         // // create new branch and let NN leaves be its children
+        //         // size_t tempParent = getNewNodeIdx(insertionList);
+        //         // isBranchNode[tempParent] = 1;
+        //         // childCounts[tempParent] = NN_leaves.size();
+        //         // for (size_t n : NN_leaves)
+        //         // {
+        //         //     addSigToMatrix(tempParent, means[n]);
+        //         //     childLinks[tempParent].push_back(n);
+
+        //         //     // update NN children's parent to temp
+        //         //     parentLinks[n] = tempParent;
+        //         // }
+
+        //         // updateNodeMean(tempParent);
+
+        //         // // format node (previous parent), replace NN children with temp
+        //         // vector<data_type> temp_matrice;
+        //         // childCounts[node] = NN_branches.size() + 2;
+        //         // childLinks[node].clear();
+        //         // for (size_t n : NN_branches)
+        //         // {
+        //         //     childLinks[node].push_back(n);
+        //         //     temp_matrice.push_back(means[n]);
+        //         // }
+        //         // childLinks[node].push_back(tempParent);
+        //         // temp_matrice.push_back(means[tempParent]);
+
+        //         // // add newChild to the back
+        //         // childLinks[node].push_back(newChild);
+        //         // addSigToMatrix(node, means[newChild]);
+        //         // parentLinks[newChild] = node;
+
+        //         // //? check if vector replace is good
+        //         // matrices[node] = temp_matrice;
+        //         // updateNodeMean(node);
+        //         fprintf(stderr, "Mix > %zu,%zu,%zu\n", node, tempParent, newChild);
+        //         return newChild;
+        //     }
+        // }
     }
 
     inline size_t createNode(data_type signature, vector<size_t> &insertionList, size_t parent)
@@ -742,7 +973,6 @@ public:
         childLinks[parent].push_back(node);
         childCounts[parent]++;
         addSigToMatrix(node, signature);
-        // means[node] = signature;
         updateNodeMean(node);
 
         if (isBranchNode[parent])
@@ -751,9 +981,12 @@ public:
             updateNodeMean(parent);
         }
 
+        fprintf(stderr, "\ncreated node %zu\n", node);
+
         //? p
         // priority[node] = countSingleSetBits(means[node]);
         // priority[node] = 1;
+
         return node;
     }
 
