@@ -605,14 +605,11 @@ public:
         return new_node;
     }
 
-    inline size_t traverse(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    // return stay child
+    // if stay is leave, just add new seq in; if stay is branch, can choose to check it again
+    // else return node, the vectors will be updated as well
+    inline size_t checkNode(size_t node, data_type signature, vector<size_t> &mismatch, vector<size_t> &NN_branches, vector<size_t> &NN_leaves)
     {
-        size_t current_childCount = childCounts[node];
-
-        vector<size_t> mismatch;
-        // near neighbour
-        vector<size_t> NN_branches;
-        vector<size_t> NN_leaves;
 
         for (size_t i = 0; i < childCounts[node]; i++)
         {
@@ -623,19 +620,20 @@ public:
 
             if (distance <= stay_threshold)
             {
-                // stay in branch, check its children
-                if (isBranchNode[child])
-                {
-                    fprintf(stderr, "stay in branch %zu\n", child);
-                    return traverse(signature, insertionList, idx, child);
-                }
-                else
-                {
-                    seqIDs[child].push_back(idx);
-                    addSigToMatrix(child, signature);
-                    updateNodeMean(child);
-                    return child;
-                }
+                return child;
+                // // stay in branch, check its children
+                // if (isBranchNode[child])
+                // {
+                //     fprintf(stderr, "stay in branch %zu\n", child);
+                //     //return traverse(signature, insertionList, idx, child);
+                // }
+                // else
+                // {
+                //     // seqIDs[child].push_back(idx);
+                //     // addSigToMatrix(child, signature);
+                //     // updateNodeMean(child);
+                //     return child;
+                // }
             }
 
             if (distance > split_threshold)
@@ -659,6 +657,37 @@ public:
             else
             {
                 NN_leaves.push_back(child);
+            }
+
+            return node;
+        }
+    }
+
+    inline size_t traverse(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    {
+        size_t current_childCount = childCounts[node];
+
+        vector<size_t> mismatch;
+        // near neighbour
+        vector<size_t> NN_branches;
+        vector<size_t> NN_leaves;
+
+        size_t child = checkNode(node, signature, mismatch, NN_branches, NN_leaves);
+
+        if (child != node)
+        {
+            // stay in branch, check its children
+            if (isBranchNode[child])
+            {
+                fprintf(stderr, "stay in branch %zu\n", child);
+                return traverse(signature, insertionList, idx, child);
+            }
+            else
+            {
+                seqIDs[child].push_back(idx);
+                addSigToMatrix(child, signature);
+                updateNodeMean(child);
+                return child;
             }
         }
 
