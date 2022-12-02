@@ -302,15 +302,14 @@ int test_main(int argc, char *argv[])
     if (args.split_threshold_given)
     {
         split_threshold = args.split_threshold_arg;
-        split_node_threshold = split_threshold / 2;
     }
 
     if (args.stay_threshold_given)
     {
         stay_threshold = args.stay_threshold_arg;
     }
-    split_node_threshold = split_threshold / 2;
-    // split_node_threshold = stay_threshold + 1;
+    // split_node_threshold = split_threshold / 2;
+    split_node_threshold = stay_threshold + 2;
 
     fprintf(stderr, "split threshold: %.2f\n", split_threshold);
     fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);

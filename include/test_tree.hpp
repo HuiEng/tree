@@ -641,18 +641,18 @@ public:
             }
             else if (isBranchNode[child])
             {
-                NN_branches.push_back(child);
-                // // split earlier if it's branch, change offset later
-                // if (distance > split_node_threshold)
-                // {
-                //     fprintf(stderr, " -*%zu*- ", child);
-                //     mismatch.push_back(child);
-                // }
-                // else
-                // {
-                //     fprintf(stderr, " -%zu- ", child);
-                //     NN_branches.push_back(child);
-                // }
+                // NN_branches.push_back(child);
+                // split earlier if it's branch, change offset later
+                if (distance > split_node_threshold)
+                {
+                    fprintf(stderr, " -*%zu*- ", child);
+                    mismatch.push_back(child);
+                }
+                else
+                {
+                    fprintf(stderr, " -%zu- ", child);
+                    NN_branches.push_back(child);
+                }
             }
             else
             {
@@ -746,6 +746,8 @@ public:
                     childLinks[t_parent].push_back(l);
                     addSigToMatrix(t_parent, means[l]);
                 }
+
+                updateNodeMean(t_parent);
 
                 // //? may not need this here
                 // updateNodeMean(node);
