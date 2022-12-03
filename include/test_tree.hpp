@@ -391,190 +391,6 @@ public:
         return false;
     }
 
-    // inline size_t forceSplit(size_t node, vector<size_t> &insertionList, double threshold)
-    // {
-    //     size_t childCount = childCounts[node];
-
-    //     vector<vector<size_t>> clusters;
-    //     // initialise cluster
-    //     vector<size_t> temp = {childLinks[node][0]};
-    //     clusters.push_back(temp);
-
-    //     for (size_t i = 1; i < childCount; i++)
-    //     {
-    //         size_t child = childLinks[node][i];
-    //         bool found = false;
-    //         // for (int c = 0; c < clusters.size(); c++)
-    //         for (vector<size_t> &cluster : clusters)
-    //         {
-    //             // vector<size_t> &cluster = clusters[c];
-    //             for (size_t n : cluster)
-    //             {
-    //                 if (calcDistance(means[n], means[child]) < threshold)
-    //                 {
-    //                     found = true;
-    //                     break;
-    //                 }
-    //             }
-    //             if (found)
-    //             {
-    //                 cluster.push_back(child);
-    //                 break;
-    //             }
-    //         }
-    //         if (!found)
-    //         {
-    //             vector<size_t> t = {child};
-    //             clusters.push_back(t);
-    //         }
-    //     }
-
-    //     fprintf(stderr, "split %zu, %.2f\n", node, priority[node]);
-
-    //     childLinks[node].clear();
-    //     childCounts[node] = clusters.size();
-    //     matrices[node].clear();
-    //     for (vector<size_t> &cluster : clusters)
-    //     {
-    //         for (size_t child : cluster)
-    //         {
-    //             fprintf(stderr, "%zu,", child);
-    //         }
-    //         fprintf(stderr, "\n>\n");
-    //         if (cluster.size() == 1)
-    //         {
-    //             // no need extra node for singleton, add it back to the node
-    //             childLinks[node].push_back(cluster[0]);
-    //             addSigToMatrix(node, means[cluster[0]]);
-
-    //             // // may further split
-    //             // if (isBranchNode[cluster[0]])
-    //             // {
-    //             //     splitNode(cluster[0], insertionList)
-    //             // }
-    //         }
-    //         else
-    //         {
-    //             size_t newNode = getNewNodeIdx(insertionList);
-    //             parentLinks[newNode] = node;
-
-    //             childCounts[newNode] = cluster.size();
-    //             childLinks[newNode] = cluster;
-    //             for (size_t child : cluster)
-    //             {
-    //                 addSigToMatrix(newNode, means[child]);
-    //             }
-    //             updateNodeMean(newNode);
-    //             isBranchNode[newNode] = 1;
-    //             childLinks[node].push_back(newNode);
-    //             addSigToMatrix(node, means[newNode]);
-    //         }
-    //     }
-    //     updateNodeMean(node);
-    //     fprintf(stderr, "nowF %zu, %.2f\n", node, priority[node]);
-
-    //     return 1;
-    // }
-
-    // inline size_t splitNode(size_t node, vector<size_t> &insertionList)
-    // {
-    //     if (hasBranch(node))
-    //     {
-    //         return 0;
-    //     }
-    //     size_t childCount = childCounts[node];
-
-    //     if (priority[node] < split_node_threshold | childCount <= 1)
-    //     {
-    //         return 0;
-    //     }
-
-    //     vector<vector<size_t>> clusters;
-    //     // initialise cluster
-    //     vector<size_t> temp = {childLinks[node][0]};
-    //     clusters.push_back(temp);
-
-    //     for (size_t i = 1; i < childCount; i++)
-    //     {
-    //         size_t child = childLinks[node][i];
-    //         bool found = false;
-    //         // for (int c = 0; c < clusters.size(); c++)
-    //         for (vector<size_t> &cluster : clusters)
-    //         {
-    //             // vector<size_t> &cluster = clusters[c];
-    //             for (size_t n : cluster)
-    //             {
-    //                 if (calcDistance(means[n], means[child]) < split_node_threshold)
-    //                 {
-    //                     found = true;
-    //                     break;
-    //                 }
-    //             }
-    //             if (found)
-    //             {
-    //                 cluster.push_back(child);
-    //                 break;
-    //             }
-    //         }
-    //         if (!found)
-    //         {
-    //             vector<size_t> t = {child};
-    //             clusters.push_back(t);
-    //         }
-    //     }
-
-    //     // no need to split
-    //     if (clusters.size() == 1)
-    //     {
-    //         return 0;
-    //     }
-
-    //     fprintf(stderr, "split %zu, %.2f\n", node, priority[node]);
-
-    //     childLinks[node].clear();
-    //     childCounts[node] = clusters.size();
-    //     matrices[node].clear();
-    //     for (vector<size_t> &cluster : clusters)
-    //     {
-    //         for (size_t child : cluster)
-    //         {
-    //             fprintf(stderr, "%zu,", child);
-    //         }
-    //         fprintf(stderr, "\n>\n");
-    //         if (cluster.size() == 1)
-    //         {
-    //             // no need extra node for singleton, add it back to the node
-    //             childLinks[node].push_back(cluster[0]);
-    //             addSigToMatrix(node, means[cluster[0]]);
-
-    //             // // may further split
-    //             // if (isBranchNode[cluster[0]])
-    //             // {
-    //             //     splitNode(cluster[0], insertionList)
-    //             // }
-    //         }
-    //         else
-    //         {
-    //             size_t newNode = getNewNodeIdx(insertionList);
-    //             isBranchNode[newNode] = 1;
-    //             parentLinks[newNode] = node;
-
-    //             childCounts[newNode] = cluster.size();
-    //             childLinks[newNode] = cluster;
-    //             for (size_t child : cluster)
-    //             {
-    //                 addSigToMatrix(newNode, means[child]);
-    //             }
-    //             updateNodeMean(newNode);
-    //             childLinks[node].push_back(newNode);
-    //             addSigToMatrix(node, means[newNode]);
-    //         }
-    //     }
-    //     updateNodeMean(node);
-    //     fprintf(stderr, "now %zu %.2f\n", node, priority[node]);
-    //     return 1;
-    // }
-
     // haven't update childLinks[t_parent] yet
     inline size_t createTempParent(size_t node, vector<size_t> &insertionList, bool copy = false)
     {
@@ -671,7 +487,7 @@ public:
                 NN_leaves.push_back(child);
             }
         }
-        
+
         return node;
     }
 
@@ -721,53 +537,6 @@ public:
             return createNode(signature, insertionList, node, idx);
         }
 
-        // // continue with the only NN branch, merge any NN leaves
-        // if (NN_branches.size() == 1)
-        // {
-        //     fprintf(stderr, ">b\n");
-        //     // continue with NN branch, create t_parent if there is any NN_leaves
-        //     size_t NN_branch = NN_branches[0];
-
-        //     // create t_parent to merge NN branch with NN leaves
-        //     // maybe check distortion before doing this
-        //     // eg if (NN_leaves.size() > 0 && priority[NN_branch] < split_node_threshold)
-        //     if (NN_leaves.size() > 0)
-        //     {
-        //         size_t t_parent = node;
-
-        //         // create supercluster if node is not already one
-        //         if (!isBranchNode[node])
-        //         {
-        //             t_parent = createTempParent(node, insertionList);
-
-        //             // add mismatches back to node
-        //             childCounts[node] += mismatch.size();
-        //             for (size_t m : mismatch)
-        //             {
-        //                 childLinks[node].push_back(m);
-        //                 addSigToMatrix(node, means[m]);
-        //             }
-        //         }
-
-        //         // add matches to t_parent
-        //         childCounts[t_parent] += NN_leaves.size() + 1;
-        //         childLinks[t_parent].push_back(NN_branch);
-        //         addSigToMatrix(t_parent, means[NN_branch]);
-
-        //         for (size_t l : NN_leaves)
-        //         {
-        //             childLinks[t_parent].push_back(l);
-        //             addSigToMatrix(t_parent, means[l]);
-        //         }
-
-        //         updateNodeMean(t_parent);
-
-        //         // //? may not need this here
-        //         // updateNodeMean(node);
-        //     }
-        //     return traverse(signature, insertionList, idx, NN_branch);
-        // }
-
         // matches all, add level => create new branch
         if (mismatch.size() == 0)
         {
@@ -780,165 +549,24 @@ public:
             else
             {
                 size_t t_parent = node;
-fprintf(stderr, ">>1\n");
                 // if node alr a branch, use node
                 // this is to avoid unipath
                 if (!isBranchNode[node])
                 {
-                    fprintf(stderr, ">>2\n");
                     t_parent = createTempParent(node, insertionList, true);
                 }
-fprintf(stderr, ">>3\n");
                 return createNode(signature, insertionList, t_parent, idx);
             }
-
-            // // this node does not have branch child
-            // if (NN_branches.size() == 0)
-            // {
-            //     fprintf(stderr, "a\n");
-            //     size_t t_parent = node;
-
-            //     // if node alr a branch, use node
-            //     // this is to avoid unipath
-            //     if (!isBranchNode[node])
-            //     {
-            //         t_parent = createTempParent(node, insertionList, true);
-            //     }
-
-            //     return createNode(signature, insertionList, t_parent, idx);
-            // }
-            // // this node does not have leaves, at least 2 branches and they are all NN
-            // else if (NN_leaves.size() == 0)
-            // {
-            //     fprintf(stderr, "b\n");
-            //     size_t t_parent = node;
-
-            //     // create supercluster if node is not already one
-            //     if (!isBranchNode[node])
-            //     {
-            //         t_parent = createTempParent(node, insertionList, true);
-            //     }
-
-            //     double temp_priority = priority[t_parent];
-            //     reclusterNode(t_parent, insertionList);
-            //     if (temp_priority == priority[t_parent])
-            //     {
-            //         fprintf(stderr, "b1\n");
-            //         return createNode(signature, insertionList, t_parent, idx);
-            //     }
-            //     else
-            //     {
-            //         fprintf(stderr, "b2\n");
-            //         return traverse(signature, insertionList, idx, t_parent);
-            //     }
-            // }
-            // // mix case
-            // else
-            // {
-            //     size_t t_parent = node;
-
-            //     // create supercluster if node is not already one
-            //     if (!isBranchNode[node])
-            //     {
-            //         t_parent = createTempParent(node, insertionList, true);
-            //     }
-
-            //     double temp_priority = priority[t_parent];
-            //     reclusterNode(t_parent, insertionList);
-            //     if (temp_priority == priority[t_parent])
-            //     {
-            //         fprintf(stderr, "c1\n");
-            //         return createNode(signature, insertionList, t_parent, idx);
-            //     }
-            //     else
-            //     {
-            //         fprintf(stderr, "c2\n");
-            //         return traverse(signature, insertionList, idx, t_parent);
-            //     }
-            // }
         }
-
-        // add NN leaves to t_parent, leave mismatches in node
-        // if (NN_branches.size() == 0)
-        // {
-        //     fprintf(stderr, ">>a\n");
-        //     size_t t_parent = node;
-
-        //     // create supercluster if node is not already one
-        //     if (!isBranchNode[node])
-        //     {
-        //         t_parent = createTempParent(node, insertionList);
-
-        //         // add mismatches back to node
-        //         childCounts[node] += mismatch.size();
-        //         for (size_t m : mismatch)
-        //         {
-        //             childLinks[node].push_back(m);
-        //             addSigToMatrix(node, means[m]);
-        //         }
-        //     }
-
-        //     // add matches to t_parent
-        //     childCounts[t_parent] += NN_leaves.size();
-        //     for (size_t l : NN_leaves)
-        //     {
-        //         childLinks[t_parent].push_back(l);
-        //         addSigToMatrix(t_parent, means[l]);
-        //     }
-
-        //     // prep new node then add to t_parent
-        //     size_t dest = createNode(signature, insertionList, t_parent, idx);
-
-        //     // //? maybe don't need this here
-        //     // reclusterNode(node, insertionList);
-
-        //     return dest;
-        // }
-        // else //?
-        // {
-        //     fprintf(stderr, ">>c\n");
-        //     // create t_parent to merge NN branch with NN leaves
-        //     size_t t_parent = node;
-
-        //     // create supercluster if node is not already one
-        //     if (!isBranchNode[node])
-        //     {
-        //         t_parent = createTempParent(node, insertionList);
-
-        //         // add mismatches back to node
-        //         childCounts[node] += mismatch.size();
-        //         for (size_t m : mismatch)
-        //         {
-        //             childLinks[node].push_back(m);
-        //             addSigToMatrix(node, means[m]);
-        //         }
-        //     }
-
-        //     // add matches to t_parent
-        //     childCounts[t_parent] += NN_branches.size() + NN_leaves.size();
-        //     for (size_t b : NN_branches)
-        //     {
-        //         childLinks[t_parent].push_back(b);
-        //         addSigToMatrix(t_parent, means[b]);
-        //     }
-        //     for (size_t l : NN_leaves)
-        //     {
-        //         childLinks[t_parent].push_back(l);
-        //         addSigToMatrix(t_parent, means[l]);
-        //     }
-
-        //     // prep new node then add to t_parent
-        //     size_t dest = createNode(signature, insertionList, t_parent, idx);
-
-        //     reclusterNode(t_parent, insertionList);
-
-        //     return dest;
-        // }
 
         // NN with some children
         size_t t_parent = node;
-
-        if (isBranchNode[node])
+        if (NN_branches.size() == 1 && NN_leaves.size() == 0)
+        {
+            fprintf(stderr, "match 1 branch\n");
+            return traverse(signature, insertionList, idx, NN_branches[0]);
+        }
+        else if (isBranchNode[node])
         {
             // promote mismatches
             // makes mismatch the sibling of node
@@ -950,6 +578,7 @@ fprintf(stderr, ">>3\n");
             {
                 childLinks[parent].push_back(m);
                 addSigToMatrix(parent, means[m]);
+                parentLinks[m] = parent;
                 fprintf(stderr, ">%zu\n", m);
             }
 
@@ -981,16 +610,25 @@ fprintf(stderr, ">>3\n");
         {
             childLinks[t_parent].push_back(b);
             addSigToMatrix(t_parent, means[b]);
+            parentLinks[b] = t_parent;
         }
         for (size_t l : NN_leaves)
         {
             childLinks[t_parent].push_back(l);
             addSigToMatrix(t_parent, means[l]);
+            parentLinks[l] = t_parent;
         }
         // // prep new node then add to t_parent
         // size_t dest = createNode(signature, insertionList, t_parent, idx);
 
         // reclusterNode(t_parent, insertionList);
+
+        if (NN_branches.size() == 1)
+        {
+            fprintf(stderr, "c0\n");
+            updateNodeMean(t_parent);
+            return traverse(signature, insertionList, idx, NN_branches[0]);
+        }
 
         double temp_priority = priority[t_parent];
         reclusterNode(t_parent, insertionList);
