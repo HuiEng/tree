@@ -499,7 +499,74 @@ public:
         {
             return 0;
         }
+
         fprintf(stderr, "reclustering %zu\n", node);
+
+        // get children of branches
+        vector<size_t> temp_nodes;
+        for (size_t child : childLinks[node])
+        {
+            if (isBranchNode[child])
+            {
+                for (size_t n : childLinks[child])
+                {
+                    temp_nodes.push_back(n);
+                }
+                childCounts[child] = 0;
+                childLinks[child].clear();
+                matrices[child].clear();
+            }
+        }
+
+        size_t changed = 0;
+
+        for (size_t n : temp_nodes)
+        {
+            double best_dist = numeric_limits<double>::max();
+            size_t best_child = 0;
+            data_type signature = means[n];
+
+            for (size_t child : childLinks[node])
+            {
+                double distance = calcDistance(means[child], signature);
+
+                // fprintf(stderr, " <%zu,%.2f> ", child, distance);
+
+                // found same, move on with the next seq
+                if (distance <= best_dist)
+                {
+                    best_dist = distance;
+                    best_child = child;
+                }
+            }
+
+            // fprintf(stderr, "\n");
+            if (best_child != parentLinks[n])
+            {
+                // fprintf(stderr, "child %zu from %zu to %zu\n", n, parentLinks[n], best_child);
+                changed = 1;
+                parentLinks[n] = best_child;
+            }
+
+            childCounts[best_child]++;
+            childLinks[best_child].push_back(n);
+            addSigToMatrix(best_child, signature);
+        }
+
+        if (changed)
+        {
+            matrices[node].clear();
+            for (size_t child : childLinks[node])
+            {
+                // updateNodeMean(child);
+                means[child] = createMeanSig(matrices[child]);
+                priority[child] = calcDistortion(matrices[child]);
+                addSigToMatrix(node, means[child]);
+            }
+            updateNodeMean(node);
+        }
+
+        return changed;
     }
 
     inline size_t traverse(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
@@ -631,8 +698,7 @@ public:
         }
 
         double temp_priority = priority[t_parent];
-        reclusterNode(t_parent, insertionList);
-        if (temp_priority == priority[t_parent])
+        if (!reclusterNode(t_parent, insertionList))
         {
             fprintf(stderr, "c1\n");
             return createNode(signature, insertionList, t_parent, idx);
