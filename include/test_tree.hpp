@@ -335,13 +335,17 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
-        fprintf(stderr, "updating node %zu\n", node);
-        means[node] = createMeanSig(matrices[node]);
-        //? p
-        updatePriority(node);
+        // fprintf(stderr, "updating node %zu\n", node);
+        // means[node] = createMeanSig(matrices[node]);
+        // //? p
+        // updatePriority(node);
 
         if (isBranchNode[node])
         {
+            fprintf(stderr, "updating node %zu\n", node);
+            means[node] = createMeanSig(matrices[node]);
+            //? p
+            updatePriority(node);
             updateParentMean(node);
         }
     }
@@ -382,6 +386,34 @@ public:
             // updateNodeMean(node); //wrong
             matrices[parent][idx] == means[node];
             updateParentMean(parent);
+        }
+    }
+
+    // union mean of children
+    inline void deleteNode(size_t node)
+    {
+        fprintf(stderr, "deleting %zu\n", node);
+        size_t parent = parentLinks[node];
+
+        int idx = -1;
+        for (size_t i = 0; i < childCounts[parent]; i++)
+        {
+            if (childLinks[parent][i] == node)
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx == -1)
+        {
+            fprintf(stderr, "ERROR deleting %zu!!\n", parent);
+        }
+        else
+        {
+            matrices[parent].erase(matrices[parent].begin() + idx);
+            childLinks[parent].erase(childLinks[parent].begin() + idx);
+            childCounts[parent]--;
         }
     }
 
@@ -450,7 +482,8 @@ public:
 
         if (isBranchNode[t_parent])
         {
-            updatePriority(t_parent);
+            // updatePriority(t_parent);
+            updateNodeMean(t_parent);
         }
 
         fprintf(stderr, "create new node %zu\n", new_node);
@@ -611,6 +644,30 @@ public:
         return changed;
     }
 
+    // delete 1 branch, move all its children to its parent
+    void splitNode(size_t node)
+    {
+        size_t parent = parentLinks[node];
+        childCounts[parent] += childCounts[node];
+
+        for (size_t child : childLinks[node])
+        {
+            childLinks[parent].push_back(child);
+            addSigToMatrix(parent, means[child]);
+            parentLinks[child] = parent;
+        }
+
+        deleteNode(node);
+
+        if (isBranchNode[parent])
+        {
+            // updatePriority(parent);
+            updateNodeMean(parent);
+        }
+
+        clearNode(node);
+    }
+
     // unpack child branches and recluster again
     // create new t_parent if necessary
     size_t splitNode(size_t node, vector<size_t> &insertionList)
@@ -755,36 +812,15 @@ public:
         if (mismatch.size() == current_childCount)
         {
             fprintf(stderr, ">>mismatch\n");
-            return createNode(signature, insertionList, node, idx);
+            size_t dest = createNode(signature, insertionList, node, idx);
+
+            if (isBranchNode[node])
+            {
+                fprintf(stderr, ">>break cluster\n");
+                splitNode(node);
+            }
+            return dest;
         }
-
-        // // matches all, add level => create new branch
-        // if (mismatch.size() == 0)
-        // {
-        //     fprintf(stderr, ">>match all");
-        //     if (current_childCount == 1 && hasBranch(node))
-        //     {
-        //         fprintf(stderr, ", traverse %zu\n", childLinks[node][0]);
-        //         return traverse(signature, insertionList, idx, childLinks[node][0]);
-        //     }
-        //     else
-        //     {
-        //         size_t t_parent = node;
-        //         // if node alr a branch, use node
-        //         // this is to avoid unipath
-        //         if (!isBranchNode[node])
-        //         {
-        //             t_parent = createTempParent(node, insertionList, true);
-        //         }
-        //         size_t dest = createNode(signature, insertionList, t_parent, idx);
-
-        //         updatePriority(t_parent);
-        //         // reclusterNode(t_parent, insertionList);
-        //         // splitNode(t_parent, insertionList);
-
-        //         return dest;
-        //     }
-        // }
 
         // proceed if only 1 branch matching
         if (NN_branches.size() == 1 && NN_leaves.size() == 0)
@@ -799,7 +835,12 @@ public:
             // promote mismatches
             // makes mismatch the sibling of node
             size_t parent = parentLinks[node];
-            fprintf(stderr, "promote %zu to %zu\n", node, parent);
+
+            if (mismatch.size() > 0)
+            {
+                fprintf(stderr, "promote mismatch from %zu to %zu\n", node, parent);
+            }
+
             // add mismatches back to node
             childCounts[parent] += mismatch.size();
             for (size_t m : mismatch)
@@ -842,11 +883,13 @@ public:
                 addSigToMatrix(t_parent, means[l]);
                 parentLinks[l] = t_parent;
             }
+            
+
+            fprintf(stderr, "match leaves only %zu\n", t_parent);
+            size_t dest =  createNode(signature, insertionList, t_parent, idx);
             updateNodeMean(t_parent);
             updatePriority(node);
-            
-            fprintf(stderr, "match leaves only %zu\n", t_parent);
-            return createNode(signature, insertionList, t_parent, idx);
+            return dest;
         }
 
         // add matches to t_parent
@@ -893,6 +936,7 @@ public:
                 }
             }
         }
+
         for (size_t l : NN_leaves)
         {
             childLinks[t_parent].push_back(l);
@@ -903,6 +947,49 @@ public:
         // updatePriority(t_parent);
         updateNodeMean(t_parent);
         updatePriority(node);
+
+        //? promote mismatch grandchildren
+        for (size_t b : NN_branches)
+        {
+            vector<size_t> mismatch_grandchildren;
+            // get distance of grandchildren
+            for (size_t grandC : childLinks[b])
+            {
+                double distance = calcDistance(means[node], means[grandC]);
+                fprintf(stderr, "\n>grand <%zu,%.2f>\n", grandC, distance);
+                if (distance > split_threshold)
+                {
+                    mismatch_grandchildren.push_back(grandC);
+                }
+            }
+
+            if (mismatch_grandchildren.size() > 0)
+            {
+                fprintf(stderr, "promoting some child from branch %zu\n", b);
+                size_t mismatch_parent = getNewNodeIdx(insertionList);
+                isBranchNode[mismatch_parent] = 1;
+                childCounts[node]++;
+                childLinks[node].push_back(mismatch_parent);
+                parentLinks[mismatch_parent] = node;
+                addSigToMatrix(node, means[mismatch_parent]);
+
+                // // do this to avoid unipath, ignore for now
+                // if (mismatch_grandchildren.size() > 1 ||
+                //     (mismatch_grandchildren.size() == 1 && !isBranchNode[mismatch_grandchildren[0]]))
+                // {
+                // }
+
+                childCounts[mismatch_parent] += mismatch_grandchildren.size();
+                childLinks[mismatch_parent] = mismatch_grandchildren;
+                for (size_t grandC : mismatch_grandchildren)
+                {
+                    addSigToMatrix(mismatch_parent, means[grandC]);
+                    parentLinks[grandC] = mismatch_parent;
+                }
+
+                updateNodeMean(mismatch_parent);
+            }
+        }
 
         // this only possible for grandchildren
         if (best_dist <= stay_threshold)
