@@ -832,6 +832,23 @@ public:
             }
         }
 
+        // matches with leaves only
+        if (NN_branches.size() == 0)
+        {
+            childCounts[t_parent] += NN_leaves.size();
+            childLinks[t_parent] = NN_leaves;
+            for (size_t l : NN_leaves)
+            {
+                addSigToMatrix(t_parent, means[l]);
+                parentLinks[l] = t_parent;
+            }
+            updateNodeMean(t_parent);
+            updatePriority(node);
+            
+            fprintf(stderr, "match leaves only %zu\n", t_parent);
+            return createNode(signature, insertionList, t_parent, idx);
+        }
+
         // add matches to t_parent
         childCounts[t_parent] += NN_branches.size() + NN_leaves.size();
 
@@ -886,13 +903,6 @@ public:
         // updatePriority(t_parent);
         updateNodeMean(t_parent);
         updatePriority(node);
-
-        // matches with leaves only
-        if (NN_branches.size() == 0)
-        {
-            fprintf(stderr, "match leaves only %zu\n", t_parent);
-            return createNode(signature, insertionList, t_parent, idx);
-        }
 
         // this only possible for grandchildren
         if (best_dist <= stay_threshold)

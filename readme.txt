@@ -18,8 +18,11 @@ current algorithm:
 if node is branch, dont touch matches, promote mismatches to become siblings of node
 if node is not a branch, ie is a root, create new branch to merge matches, dont touch mismatches
 
+- if NN only leaves
+create new t_parent and merge NN leaves
+
+
 - find nearest among NN
-* to modify => deal with case with matching only leaves separately
 get the distance between seq and every NN, if NN is a branch, get the distance of its children too.
 If NN is a grandchild & grandchild is branch => traverse grandchild
 If NN is a grandchild & grandchild is leaf => add level	
