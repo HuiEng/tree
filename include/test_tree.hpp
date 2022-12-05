@@ -887,6 +887,13 @@ public:
         updateNodeMean(t_parent);
         updatePriority(node);
 
+        // matches with leaves only
+        if (NN_branches.size() == 0)
+        {
+            fprintf(stderr, "match leaves only %zu\n", t_parent);
+            return createNode(signature, insertionList, t_parent, idx);
+        }
+
         // this only possible for grandchildren
         if (best_dist <= stay_threshold)
         {
@@ -899,9 +906,8 @@ public:
             {
                 seqIDs[best_node].push_back(idx);
                 addSigToMatrix(best_node, signature);
-                // updateNodeMean(child);
-                updatePriority(child);
-                return child;
+                updatePriority(best_node);
+                return best_node;
             }
         }
         else
