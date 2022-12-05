@@ -112,10 +112,10 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
         // clusters[foo[i]] = tree.findAncestor(clus);
         clusters[foo[i]] = clus;
     }
-    for (size_t i = 0; i < cap; i++)
-    {
-        clusters[foo[i]] = tree.superCluster(clusters[foo[i]]);
-    }
+    // for (size_t i = 0; i < cap; i++)
+    // {
+    //     clusters[foo[i]] = tree.superCluster(clusters[foo[i]]);
+    // }
     fprintf(stderr, "\n\n\n\n");
 
     // size_t n = 102;
@@ -140,7 +140,11 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     }
     fprintf(pFile, "node,parent,isBranch,priority,x,y\n");
     tree.printSubTreeMatrices(pFile, seqs, 0);
-    
+
+    // size_t best = tree.findNearest(seqs[15], 19, 0);
+    // fprintf(stderr,"***%zu\n",best);
+
+    fprintf(stderr, "%f, %f \n", tree.means[48].first, tree.means[48].second);
 
     for (size_t run = 0; run < iteration; run++)
     {
