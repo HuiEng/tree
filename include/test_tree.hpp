@@ -1094,12 +1094,12 @@ public:
         {
             if (isBranchNode[child])
             {
-                fprintf(stderr, "continue %zu\n", child);
+                fprintf(stderr, "#continue %zu\n", child);
                 return tt(signature, insertionList, idx, child);
             }
             else
             {
-                fprintf(stderr, "same %zu\n", child);
+                fprintf(stderr, "#same %zu\n", child);
                 seqIDs[child].push_back(idx);
                 addSigToMatrix(child, signature);
                 updatePriority(child);
@@ -1110,6 +1110,7 @@ public:
         // match none and split
         if (mismatch.size() == current_childCount)
         {
+            fprintf(stderr, "#split %zu\n", node);
             return createNode(signature, insertionList, node, idx);
         }
 
@@ -1117,14 +1118,15 @@ public:
         if (mismatch.size() == 0)
         {
             size_t t_parent = node;
+            size_t dest = 0;
             if (!isBranchNode[node])
             {
                 size_t t_parent = getNewNodeIdx(insertionList);
                 isBranchNode[t_parent] = 1;
                 parentLinks[t_parent] = node;
-                size_t new_node = createNode(signature, insertionList, t_parent, idx);
+                dest = createNode(signature, insertionList, t_parent, idx);
 
-                fprintf(stderr, "merging all to new parent %zu\n", t_parent);
+                fprintf(stderr, "#merging all to new parent %zu\n", t_parent);
                 childCounts[t_parent] += childCounts[node];
                 for (size_t n : childLinks[node])
                 {
@@ -1142,10 +1144,15 @@ public:
                 matrices[node].clear();
                 matrices[node].push_back(means[t_parent]);
                 updatePriority(node);
-                return new_node;
             }
-            fprintf(stderr, "match all, add to %zu\n", t_parent);
-            return createNode(signature, insertionList, t_parent, idx);
+            else
+            {
+                fprintf(stderr, "#match all, add to %zu\n", t_parent);
+                dest = createNode(signature, insertionList, t_parent, idx);
+            }
+
+            reclusterNode(t_parent, insertionList);
+            return dest;
         }
 
         // NN with leaves only
