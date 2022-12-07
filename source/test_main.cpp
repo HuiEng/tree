@@ -104,8 +104,8 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     //         fprintf(stderr,"%zu,%zu,%.2f\n",i,j,calcDistance(seqs[foo[i]], seqs[foo[j]]));
     //     }
     // }
-
-    for (size_t i = 0; i < cap; i++)
+    size_t clus = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
+    for (size_t i = 1; i < cap; i++)
     {
         // fprintf(stderr, "inserting %zu\n", foo[i]);
         size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
