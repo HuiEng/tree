@@ -144,7 +144,7 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     // size_t best = tree.findNearest(seqs[15], 19, 0);
     // fprintf(stderr,"***%zu\n",best);
 
-    fprintf(stderr, "%f, %f \n", tree.means[48].first, tree.means[48].second);
+    // fprintf(stderr, "%f, %f \n", tree.means[48].first, tree.means[48].second);
 
     for (size_t run = 0; run < iteration; run++)
     {
@@ -179,8 +179,8 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     //     }
     // }
 
-    // Recursively destroy all locks
-    tree.destroyLocks();
+    // // Recursively destroy all locks
+    // tree.destroyLocks();
 
     tree.printTreeJson(stdout);
 
