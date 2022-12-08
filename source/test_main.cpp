@@ -111,12 +111,15 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
         size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
         // clusters[foo[i]] = tree.findAncestor(clus);
         clusters[foo[i]] = clus;
+        
+    fprintf(stderr, "***3 %zu, %zu, %zu\n", tree.matrices[3].size(),tree.childLinks[3].size(),tree.childCounts[3]);
     }
     // for (size_t i = 0; i < cap; i++)
     // {
     //     clusters[foo[i]] = tree.superCluster(clusters[foo[i]]);
     // }
     fprintf(stderr, "\n\n\n\n");
+    tree.printTreeJson(stderr);
 
     // size_t n = 102;
     // double threshold = 1.5;
@@ -183,7 +186,7 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     // tree.destroyLocks();
 
     tree.printTreeJson(stdout);
-
+    tree.destroyTree();
     return clusters;
 }
 
