@@ -112,7 +112,6 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
         // clusters[foo[i]] = tree.findAncestor(clus);
         clusters[foo[i]] = clus;
         
-    fprintf(stderr, "***3 %zu, %zu, %zu\n", tree.matrices[3].size(),tree.childLinks[3].size(),tree.childCounts[3]);
     }
     // for (size_t i = 0; i < cap; i++)
     // {

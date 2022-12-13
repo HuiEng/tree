@@ -280,10 +280,6 @@ public:
 
     void addSigToMatrix(size_t node, data_type signature)
     {
-        if (node == 3)
-        {
-            fprintf(stderr, "*** add %zu\n", matrices[node].size());
-        }
         matrices[node].push_back(signature);
     }
 
@@ -370,23 +366,18 @@ public:
         double max_distance = 0;
         size_t i = 0;
 
-        if (node == 3)
-        {
-            fprintf(stderr, "*** update %zu\n", matrices[node].size());
-        }
-
-        fprintf(stderr, ">>%f,%f\n", meanSig.first, meanSig.second);
+        // fprintf(stderr, ">>%f,%f\n", meanSig.first, meanSig.second);
         for (data_type sig : matrices[node])
         {
             double distance = calcDistance(meanSig, sig);
 
             if (isBranchNode[node])
             {
-                fprintf(stderr, "%zu,%f,%f,%f\n", childLinks[node][i], sig.first, sig.second, distance);
+                // fprintf(stderr, "%zu,%f,%f,%f\n", childLinks[node][i], sig.first, sig.second, distance);
             }
             else
             {
-                fprintf(stderr, "%zu,%f,%f,%f\n", seqIDs[node][i], sig.first, sig.second, distance);
+                // fprintf(stderr, "%zu,%f,%f,%f\n", seqIDs[node][i], sig.first, sig.second, distance);
             }
             if (distance > max_distance)
             {
@@ -404,7 +395,7 @@ public:
         //     }
         // }
         // return max_distance + max_priority;
-        fprintf(stderr, "done %zu\n\n\n", node);
+        // fprintf(stderr, "done %zu\n\n\n", node);
         return max_distance;
     }
 
@@ -587,8 +578,19 @@ public:
     // thresholds for branch = threshold set by user + priority or distortion of children
     // if stay is leave, just add new seq in; if stay is branch, can choose to check it again
     // else return node, the vectors will be updated as well
-    inline bool checkNode(size_t node, data_type signature, vector<size_t> &mismatch, vector<size_t> &NN, vector<size_t> &stay)
+    inline bool checkNode(size_t node, data_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN, vector<size_t> &stay)
     {
+        if (node == root && childCounts[node] > 3)
+        {
+            forcesplitBranch(node, insertionList);
+        }
+
+        while (splitBranch(node, insertionList))
+        {
+            // splitBranch(node, insertionList);
+            // return checkNode(node, signature, insertionList, mismatch, NN, stay);
+        }
+
         bool matchBranchCentroid = false;
         size_t i = 0;
         if (isBranchNode[node])
@@ -720,124 +722,6 @@ public:
         parentLinks[child] = new_parent;
     }
 
-    // //? need to modify again
-    // inline void splitLeaf(size_t node, vector<size_t> &insertionList)
-    // {
-    //     size_t furthest_idx = 0;
-    //     double max_distance = 0;
-    //     vector<data_type> temp_matrice = matrices[node];
-    //     vector<size_t> temp_seqIDs = seqIDs[node];
-
-    //     for (size_t i = 1; i < temp_matrice.size(); i++)
-    //     {
-    //         double distance = calcDistance(means[node], matrices[node][i]);
-    //         if (distance > max_distance)
-    //         {
-    //             furthest_idx = i;
-    //             max_distance = distance;
-    //         }
-    //     }
-
-    //     if (furthest_idx == 0)
-    //     {
-    //         fprintf(stderr, "!!something went wrong when splitting %zu\n", node);
-    //     }
-
-    //     size_t t_parent = parentLinks[node];
-    //     if (!isBranchNode[t_parent])
-    //     { // at root
-    //         t_parent = createParent(t_parent, insertionList);
-    //         moveParent(node, t_parent);
-    //         matrices[node].clear();
-    //         seqIDs[node].clear();
-    //     }
-
-    //     seqIDs[node].push_back(temp_seqIDs[0]);
-    //     addSigToMatrix(node, temp_matrice[0]);
-
-    //     size_t new_node = createNode(matrices[node][furthest_idx], insertionList, t_parent, seqIDs[node][furthest_idx]);
-    //     for (size_t i = 1; i < temp_matrice.size(); i++)
-    //     {
-    //         if (i == furthest_idx)
-    //         {
-    //             continue;
-    //         }
-    //         double dist1 = calcDistance(means[node], temp_matrice[i]);
-    //         double dist2 = calcDistance(means[new_node], temp_matrice[i]);
-
-    //         size_t dest = node;
-
-    //         if (dist2 < dist1)
-    //         {
-    //             dest = new_node;
-    //         }
-    //         seqIDs[dest].push_back(temp_seqIDs[i]);
-    //         addSigToMatrix(dest, temp_matrice[i]);
-    //     }
-    //     updatePriority(node);
-    //     updatePriority(new_node);
-    //     updatePriority(t_parent);
-    // }
-
-    // //? need to modify again
-    // inline void splitBranch(size_t node, vector<size_t> &insertionList)
-    // {
-    //     size_t furthest_idx = 0;
-    //     double max_distance = 0;
-    //     vector<data_type> temp_matrice = matrices[node];
-    //     vector<size_t> temp_seqIDs = seqIDs[node];
-
-    //     for (size_t i = 1; i < temp_matrice.size(); i++)
-    //     {
-    //         double distance = calcDistance(means[node], matrices[node][i]);
-    //         if (distance > max_distance)
-    //         {
-    //             furthest_idx = i;
-    //             max_distance = distance;
-    //         }
-    //     }
-
-    //     if (furthest_idx == 0)
-    //     {
-    //         fprintf(stderr, "!!something went wrong when splitting %zu\n", node);
-    //     }
-
-    //     size_t t_parent = parentLinks[node];
-    //     if (!isBranchNode[t_parent])
-    //     { // at root
-    //         t_parent = createParent(t_parent, insertionList);
-    //         moveParent(node, t_parent);
-    //         matrices[node].clear();
-    //         seqIDs[node].clear();
-    //     }
-
-    //     seqIDs[node].push_back(temp_seqIDs[0]);
-    //     addSigToMatrix(node, temp_matrice[0]);
-
-    //     size_t new_node = createNode(matrices[node][furthest_idx], insertionList, t_parent, seqIDs[node][furthest_idx]);
-    //     for (size_t i = 1; i < temp_matrice.size(); i++)
-    //     {
-    //         if (i == furthest_idx)
-    //         {
-    //             continue;
-    //         }
-    //         double dist1 = calcDistance(means[node], temp_matrice[i]);
-    //         double dist2 = calcDistance(means[new_node], temp_matrice[i]);
-
-    //         size_t dest = node;
-
-    //         if (dist2 < dist1)
-    //         {
-    //             dest = new_node;
-    //         }
-    //         seqIDs[dest].push_back(temp_seqIDs[i]);
-    //         addSigToMatrix(dest, temp_matrice[i]);
-    //     }
-    //     updatePriority(node);
-    //     updatePriority(new_node);
-    //     updatePriority(t_parent);
-    // }
-
     inline size_t tt_node(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
         size_t current_childCount = childCounts[node];
@@ -845,7 +729,7 @@ public:
         vector<size_t> NN;
         vector<size_t> stay;
 
-        bool matchCentroid = checkNode(node, signature, mismatch, NN, stay);
+        bool matchCentroid = checkNode(node, signature, insertionList, mismatch, NN, stay);
         size_t dest = node;
 
         fprintf(stderr, "tt_node %zu\n", node);
@@ -862,18 +746,35 @@ public:
         }
         else if (stay.size() > 1)
         {
-            // what if there is branch
-            fprintf(stderr, "stay in multiple children %zu\n", stay.size());
-            size_t t_parent = createParent(node, insertionList);
-            dest = createNode(signature, insertionList, t_parent, idx);
-            means[t_parent] = signature;
-            addSigToMatrix(node,means[t_parent]);
+            // // what if there is branch
+            // fprintf(stderr, "stay in multiple children %zu\n", stay.size());
+            // size_t t_parent = createParent(node, insertionList);
+            // dest = createNode(signature, insertionList, t_parent, idx);
+            // means[t_parent] = signature;
+            // addSigToMatrix(node, means[t_parent]);
+            // for (size_t child : stay)
+            // {
+            //     moveParent(child, t_parent);
+            // }
+            // updatePriority(t_parent);
+            // return dest;
+
+            double min_distance = numeric_limits<double>::max();
+            size_t best_child = 0;
             for (size_t child : stay)
             {
-                moveParent(child, t_parent);
+                double distance = calcDistance(means[child], signature);
+                if (distance < min_distance)
+                {
+                    min_distance = distance;
+                    best_child = child;
+                }
             }
-            updatePriority(t_parent);
-            return dest;
+            if (isBranchNode[best_child])
+            {
+                fprintf(stderr, "best child is branch %zu\n", best_child);
+            }
+            return stayNode(signature, insertionList, idx, best_child);
         }
 
         if (NN.size() == 1)
@@ -887,7 +788,7 @@ public:
             size_t t_parent = createParent(node, insertionList);
             dest = createNode(signature, insertionList, t_parent, idx);
             means[t_parent] = signature;
-            addSigToMatrix(node,means[t_parent]);
+            addSigToMatrix(node, means[t_parent]);
             for (size_t child : NN)
             {
                 moveParent(child, t_parent);
@@ -898,75 +799,260 @@ public:
 
         fprintf(stderr, "??wrong\n");
         return createNode(signature, insertionList, node, idx);
-
-        // if (stay.size() == 0)
-        // {
-        //     if (NN.size() == 1)
-        //     {
-        //         fprintf(stderr, "??NN with one without stay\n");
-        //     }
-        //     else if (NN.size() > 1)
-        //     {
-        //         fprintf(stderr, "NN with multiple without stay\n");
-        //         size_t t_parent = createParent(node, insertionList);
-        //         dest = createNode(signature, insertionList, t_parent, idx);
-        //         means[t_parent] = signature;
-        //         for (size_t child : NN)
-        //         {
-        //             moveParent(child, t_parent);
-        //         }
-        //         updatePriority(t_parent);
-        //     }
-        // }
-        // else
-        // {
-        //     if (NN.size() == 1)
-        //     {
-        //         fprintf(stderr, "??NN with one with stay\n");
-        //     }
-        //     else if (NN.size() > 1)
-        //     {
-        //         fprintf(stderr, "??NN with multiple with stay\n");
-        //         size_t t_parent = createParent(node, insertionList);
-        //         moveParent(dest, t_parent);
-
-        //         for (size_t child : NN)
-        //         {
-        //             moveParent(child, t_parent);
-        //         }
-        //         updatePriority(t_parent);
-        //     }
-        // }
-
-        // if (dest == node)
-        // {
-        //     fprintf(stderr, "deal with tt_node later\n");
-        //     dest = createNode(signature, insertionList, node, idx);
-        //     printTreeJson(stderr);
-        // }
-
-        // if (isBranchNode[dest] && priority[dest] > stay_threshold)
-        // {
-        //     fprintf(stderr, "branch %zu is bigger than threshold\n", dest);
-        //     splitBranch(dest, insertionList);
-        // }
-        // else if (!isBranchNode[dest] && priority[dest] > stay_threshold)
-        // {
-        //     fprintf(stderr, "leaf %zu is bigger than threshold\n", dest);
-        //     splitLeaf(dest, insertionList);
-        // }
-
-        // return dest;
     }
 
-    inline size_t tt_branch(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    size_t splitBranch(size_t node, vector<size_t> &insertionList)
+    {
+
+        if (!isBranchNode[node])
+        {
+            return 0;
+        }
+        else if (childCounts[node] < 3)
+        {
+            return 0;
+        }
+        else if (priority[node] < split_threshold)
+        {
+            return 0;
+        }
+        fprintf(stderr, "splitbranch node %zu, %f\n", node, priority[node]);
+
+        vector<size_t> temp_centroids = {childLinks[node][0]};
+        vector<vector<size_t>> clusters;
+        vector<size_t> temp;
+        clusters.push_back(temp);
+        for (size_t i = childCounts[node] - 1; i > 0; i--)
+        {
+
+            for (size_t centroid : temp_centroids)
+            {
+
+                if (calcDistance(means[centroid], matrices[node][i]) < split_threshold)
+                {
+                    break;
+                }
+            }
+            temp_centroids.push_back(childLinks[node][i]);
+            vector<size_t> t;
+            clusters.push_back(t);
+        }
+
+        if (temp_centroids.size() == 1)
+        {
+            fprintf(stderr, "??cannot splitbranch node %zu, %f\n", node, priority[node]);
+            return 0;
+        }
+
+        for (size_t n = 0; n < matrices[node].size(); n++)
+        {
+            size_t dest = 0;
+            double min_distance = priority[node];
+            for (size_t i = 0; i < temp_centroids.size(); i++)
+            {
+                double distance = calcDistance(means[temp_centroids[i]], matrices[node][n]);
+                if (distance <= min_distance)
+                {
+                    min_distance = distance;
+                    dest = i;
+                }
+            }
+
+            clusters[dest].push_back(childLinks[node][n]);
+        }
+
+        // prepare newBranch for valid clusters
+        size_t parent = parentLinks[node];
+        for (size_t i = 1; i < temp_centroids.size(); i++)
+        {
+            size_t centroid = temp_centroids[i];
+            fprintf(stderr, "*** %zu\n", centroid);
+            if (isBranchNode[centroid])
+            {
+                moveParent(centroid, parent);
+            }
+            else if (clusters[i].size() > 1)
+            {
+                size_t t_parent = createParent(parent, insertionList);
+                moveParent(centroid, t_parent);
+                means[t_parent] = means[centroid];
+                addSigToMatrix(parent, means[t_parent]);
+            }
+            else
+            {
+                // leaf & no NN
+                moveParent(centroid, parent);
+            }
+        }
+
+        // new centroid should have been move out at this stage
+        for (size_t i = 1; i < temp_centroids.size(); i++)
+        {
+            for (size_t n = 1; n < clusters[i].size(); n++)
+            {
+
+                moveParent(clusters[i][n], temp_centroids[i]);
+            }
+            updatePriority(temp_centroids[i]);
+        }
+
+        updatePriority(node);
+        if (isBranchNode[parent])
+        {
+            updatePriority(parent);
+        }
+
+        fprintf(stderr, ">> %f\n", priority[node]);
+        return 1;
+    }
+
+    size_t forcesplitBranch(size_t node, vector<size_t> &insertionList)
+    {
+
+        printTreeJson(stderr);
+
+        fprintf(stderr, "force split node %zu, %f\n", node, priority[node]);
+        vector<size_t> temp_centroids = {childLinks[node][0]};
+        vector<vector<size_t>> clusters;
+        vector<size_t> temp;
+        clusters.push_back(temp);
+        vector<size_t> t;
+        clusters.push_back(t);
+
+        double max_distance = 0;
+        size_t candidate = 0;
+        for (size_t i = childCounts[node] - 1; i > 0; i--)
+        {
+            double distance = calcDistance(means[node], matrices[node][i]);
+            if (distance > max_distance)
+            {
+                max_distance = distance;
+                candidate = childLinks[node][i];
+            }
+        }
+
+        if (candidate == 0)
+        {
+            fprintf(stderr, "??something is wrong %zu, %f\n", node, priority[node]);
+            return 0;
+        }
+
+        temp_centroids.push_back(candidate);
+        fprintf(stderr, ">??%zu, %zu\n", matrices[node].size(), childCounts[node]);
+
+        // cluster the rest of the matrices, centroid will not be in clusters
+        for (size_t n = 1; n < matrices[node].size(); n++)
+        {
+            size_t child = childLinks[node][n];
+            if (child == candidate)
+            {
+                continue;
+            }
+            size_t dest = 0;
+            double min_distance = numeric_limits<double>::max();
+            for (size_t i = 0; i < temp_centroids.size(); i++)
+            {
+                double distance = calcDistance(means[temp_centroids[i]], matrices[node][n]);
+                fprintf(stderr, "%zu, %f\n", temp_centroids[i], distance);
+                if (distance < min_distance)
+                {
+                    min_distance = distance;
+                    dest = i;
+                }
+            }
+            fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
+            clusters[dest].push_back(child);
+        }
+
+        if (clusters[0].size() == 0 || clusters[1].size() == 0)
+        {
+            fprintf(stderr, "??something is wrong cannot split evenly\n");
+            return 0;
+        }
+
+        // prepare newBranch for valid clusters
+
+        // size_t parent = createParent(node, insertionList);
+        // means[parent] = means[childLinks[node][0]];
+        if (isBranchNode[node])
+        {
+            // //?
+            // for (size_t i = 1; i < temp_centroids.size(); i++)
+            // {
+            //     size_t centroid = temp_centroids[i];
+            //     fprintf(stderr, "*** %zu\n", centroid);
+            //     if (isBranchNode[centroid])
+            //     {
+            //         moveParent(centroid, parent);
+            //     }
+            //     else if (clusters[i].size() > 1)
+            //     {
+            //         size_t t_parent = createParent(parent, insertionList);
+            //         moveParent(centroid, t_parent);
+            //         means[t_parent] = means[centroid];
+            //         addSigToMatrix(parent, means[t_parent]);
+            //     }
+            //     else
+            //     {
+            //         // leaf & no NN
+            //         moveParent(centroid, parent);
+            //     }
+            // }
+        }
+        else
+        {
+            for (size_t i = 0; i < temp_centroids.size(); i++)
+            {
+                size_t centroid = temp_centroids[i];
+                size_t t_parent = createParent(node, insertionList);
+                means[t_parent] = means[centroid];
+                moveParent(centroid, t_parent);
+                addSigToMatrix(node, means[t_parent]);
+            }
+        }
+
+        // new centroid should have been move out at this stage
+        for (size_t i = 0; i < temp_centroids.size(); i++)
+        {
+
+            size_t centroid = temp_centroids[i];
+            size_t t_parent = parentLinks[centroid];
+            fprintf(stderr, "*** %zu\n", centroid);
+            for (size_t n = 0; n < clusters[i].size(); n++)
+            {
+                moveParent(clusters[i][n], t_parent);
+                fprintf(stderr, "--- %zu\n", clusters[i][n]);
+            }
+            updatePriority(t_parent);
+        }
+
+        updatePriority(node);
+
+        fprintf(stderr, ">?? done %zu, %zu\n", matrices[node].size(), childCounts[node]);
+
+        // for (size_t i = 0; i < childCounts[root]; i++)
+        // {
+        //     if (matrices[root][i].first != means[childLinks[root][i]].first || matrices[root][i].second != means[childLinks[root][i]].second)
+        //     {
+        //         fprintf(stderr, "++ %zu, %zu\n", i, childLinks[root][i]);
+        //         fprintf(stderr, "> %f, %f\n", matrices[root][i].first, matrices[root][i].second);
+        //         fprintf(stderr, "* %f, %f\n\n", means[childLinks[root][i]].first, means[childLinks[root][i]].second);
+        //     }
+        // }
+
+        printTreeJson(stderr);
+        return 1;
+    }
+
+    inline size_t
+    tt_branch(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
         size_t current_childCount = childCounts[node] - 1;
         vector<size_t> mismatch;
         vector<size_t> NN;
         vector<size_t> stay;
 
-        bool matchCentroid = checkNode(node, signature, mismatch, NN, stay);
+        bool matchCentroid = checkNode(node, signature, insertionList, mismatch, NN, stay);
         size_t dest = node;
 
         fprintf(stderr, "tt_branch %zu\n", node);
@@ -992,32 +1078,11 @@ public:
 
             return stayNode(signature, insertionList, idx, childLinks[node][0]);
 
-            // if (stay.size() == current_childCount)
-            // {
-            //     fprintf(stderr, "stay in all [%zu]\n", stay.size());
-            //     return stayNode(signature, insertionList, idx, stay[0]);
-            // }
-            // if (stay.size() == 1)
-            // {
-            //     fprintf(stderr, "stay in one child other than centroid %zu\n", stay[0]);
-            //     return stayNode(signature, insertionList, idx, stay[0]);
-            // }
-            // if (stay.size() > 1)
-            // {
-            //     fprintf(stderr, "#stay in multiple children %zu\n", stay.size());
-            //     size_t t_parent = createParent(node, insertionList);
-            //     dest = createNode(signature, insertionList, t_parent, idx);
-            //     means[t_parent] = signature;
-            //     for (size_t child : stay)
-            //     {
-            //         moveParent(child, t_parent);
-            //     }
-            //     updatePriority(t_parent);
-            //     return dest;
-            // }
+            // if (st
         }
         else
         {
+
             if (current_childCount == 1)
             {
                 if (mismatch.size() == 1)
@@ -1044,28 +1109,54 @@ public:
                     return stayNode(signature, insertionList, idx, stay[0]);
                 }
                 else if (!isBranchNode[NN[0]])
-                { // NN>0
-                    // return tt_node(signature, insertionList, idx, NN[0]);
-                    fprintf(stderr, "??move centroid\n");
-                    size_t new_node = createNode(means[dest], insertionList, node, 0); // idx will be changed
+                {
+                    // only NN to centroid and the other child
+                    return createNode(signature, insertionList, node, idx);
+                    // fprintf(stderr, "??move centroid\n");
+                    // // promote centroid to grandparent, make the input seq as the centroid of current branch instead
+                    // size_t t_parent = parentLinks[node];
+                    // moveParent(childLinks[node][0], t_parent, false);
 
-                    // copy centroid to new node
-                    matrices[new_node] = matrices[dest];
-                    seqIDs[new_node] = seqIDs[dest];
-                    priority[new_node] = priority[dest];
+                    // size_t new_node = getNewNodeIdx(insertionList);
+                    // parentLinks[new_node] = node;
+                    // seqIDs[new_node].push_back(idx);
+                    // means[new_node] = signature;
 
-                    // change mean
-                    means[dest] = signature;
-                    matrices[node][0] = signature;
-                    means[node] = signature;
-                    matrices[dest].clear();
-                    matrices[dest].push_back(signature);
-                    seqIDs[dest].clear();
-                    seqIDs[dest].push_back(idx);
-                    priority[dest] = 0;
+                    // // correct node (branch)
+                    // matrices[node][0] = signature;
+                    // means[node] = signature;
+                    // childLinks[node][0] = new_node;
 
-                    updatePriority(node);
-                    return new_node;
+                    // updatePriority(node);
+
+                    // if (isBranchNode[t_parent])
+                    // {
+                    //     updatePriority(t_parent);
+                    // }
+
+                    // return new_node;
+
+                    // // return tt_node(signature, insertionList, idx, NN[0]);
+                    // fprintf(stderr, "??move centroid\n");
+                    // size_t new_node = createNode(means[dest], insertionList, node, 0); // idx will be changed
+
+                    // // copy centroid to new node
+                    // matrices[new_node] = matrices[dest];
+                    // seqIDs[new_node] = seqIDs[dest];
+                    // priority[new_node] = priority[dest];
+
+                    // // change mean
+                    // means[dest] = signature;
+                    // matrices[node][0] = signature;
+                    // means[node] = signature;
+                    // matrices[dest].clear();
+                    // matrices[dest].push_back(signature);
+                    // seqIDs[dest].clear();
+                    // seqIDs[dest].push_back(idx);
+                    // priority[dest] = 0;
+
+                    // updatePriority(node);
+                    // return dest;
                 }
                 else
                 {
@@ -1074,12 +1165,22 @@ public:
                 }
             }
 
-            else if (mismatch.size() > 0)
+            if (mismatch.size() > 0)
             {
-                fprintf(stderr, "??b-has mismatch\n");
-                return createNode(signature, insertionList, node, idx);
+                // promote
+                fprintf(stderr, "has mismatch\n");
+                size_t parent = parentLinks[node];
+                for (size_t child : mismatch)
+                {
+                    moveParent(child, parent);
+                }
+                if (isBranchNode[parent])
+                {
+                    updatePriority(parent);
+                }
             }
-            else if (stay.size() == 1)
+
+            if (stay.size() == 1)
             {
                 fprintf(stderr, "#b-stay in one child\n", stay[0]);
                 return stayNode(signature, insertionList, idx, stay[0]);
@@ -1087,51 +1188,47 @@ public:
             else if (stay.size() > 1)
             {
                 fprintf(stderr, "#b-stay in multiple children %zu\n", stay.size());
-                // return createNode(signature, insertionList, node, idx);
 
-                // what if there is branch
-                size_t t_parent = createParent(node, insertionList);
-                dest = createNode(signature, insertionList, t_parent, idx);
-                means[t_parent] = signature;
-                addSigToMatrix(node,means[t_parent]);
+                double min_distance = numeric_limits<double>::max();
+                size_t best_child = 0;
                 for (size_t child : stay)
                 {
-                    moveParent(child, t_parent);
+                    double distance = calcDistance(means[child], signature);
+                    if (distance < min_distance)
+                    {
+                        min_distance = distance;
+                        best_child = child;
+                    }
                 }
-                updatePriority(t_parent);
-                return dest;
+                if (isBranchNode[best_child])
+                {
+                    fprintf(stderr, "best child is branch %zu\n", best_child);
+                }
+                return stayNode(signature, insertionList, idx, best_child);
+                // // return createNode(signature, insertionList, node, idx);
+
+                // // what if there is branch
+                // size_t t_parent = createParent(node, insertionList);
+                // dest = createNode(signature, insertionList, t_parent, idx);
+                // means[t_parent] = signature;
+                // addSigToMatrix(node, means[t_parent]);
+                // for (size_t child : stay)
+                // {
+                //     moveParent(child, t_parent);
+                // }
+                // updatePriority(t_parent);
+
+                // return dest;
             }
             else
             {
-                fprintf(stderr, "replace mean of branch\n");
+                fprintf(stderr, "??b replace mean of branch\n");
                 return createNode(signature, insertionList, node, idx);
-                // size_t parent = parentLinks[node];
-                // moveParent(childLinks[node][0], parent, false);
-                // if (isBranchNode[parent])
-                // {
-                //     updatePriority(parent);
-                // }
-
-                // dest = getNewNodeIdx(insertionList);
-                // parentLinks[dest] = node;
-                // matrices[node][0] = signature;
-                // childLinks[node][0] = dest;
-                // means[node] = signature;
-                // seqIDs[dest].push_back(idx);
-                // updatePriority(node);
-                // return dest;
             }
         }
 
-        fprintf(stderr, "deal with tt_branch later\n");
+        fprintf(stderr, "??b deal with tt_branch later\n");
         return createNode(signature, insertionList, node, idx);
-
-        // if (dest == node)
-        // {
-        //     fprintf(stderr, "deal with tt_branch later\n");
-        //     dest = createNode(signature, insertionList, node, idx);
-        // }
-        // return dest;
     }
 
     inline size_t tt(data_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
@@ -1157,6 +1254,16 @@ public:
         size_t node = tt(signature, insertionList, idx);
 
         fprintf(stderr, "inserted %zu at %zu\n\n", idx, node);
+        for (size_t i = 0; i < childCounts[root]; i++)
+        {
+
+            if (matrices[root][i].first != means[childLinks[root][i]].first || matrices[root][i].second != means[childLinks[root][i]].second)
+            {
+                fprintf(stderr, "+ %zu, %zu\n", i, childLinks[root][i]);
+                fprintf(stderr, "> %f, %f\n", matrices[root][i].first, matrices[root][i].second);
+                fprintf(stderr, "* %f, %f\n\n", means[childLinks[root][i]].first, means[childLinks[root][i]].second);
+            }
+        }
         return node;
     }
 
