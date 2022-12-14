@@ -580,7 +580,7 @@ public:
     // else return node, the vectors will be updated as well
     inline bool checkNode(size_t node, data_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN, vector<size_t> &stay)
     {
-        if (node == root && childCounts[node] > 3)
+        if (childCounts[node] > 5)
         {
             forcesplitBranch(node, insertionList);
         }
@@ -909,7 +909,7 @@ public:
     size_t forcesplitBranch(size_t node, vector<size_t> &insertionList)
     {
 
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
 
         fprintf(stderr, "force split node %zu, %f\n", node, priority[node]);
         vector<size_t> temp_centroids = {childLinks[node][0]};
@@ -938,7 +938,7 @@ public:
         }
 
         temp_centroids.push_back(candidate);
-        fprintf(stderr, ">??%zu, %zu\n", matrices[node].size(), childCounts[node]);
+        // fprintf(stderr, ">??%zu, %zu\n", matrices[node].size(), childCounts[node]);
 
         // cluster the rest of the matrices, centroid will not be in clusters
         for (size_t n = 1; n < matrices[node].size(); n++)
@@ -953,14 +953,14 @@ public:
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
                 double distance = calcDistance(means[temp_centroids[i]], matrices[node][n]);
-                fprintf(stderr, "%zu, %f\n", temp_centroids[i], distance);
+                // fprintf(stderr, "%zu, %f\n", temp_centroids[i], distance);
                 if (distance < min_distance)
                 {
                     min_distance = distance;
                     dest = i;
                 }
             }
-            fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
+            // fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
             clusters[dest].push_back(child);
         }
 
@@ -976,6 +976,17 @@ public:
         // means[parent] = means[childLinks[node][0]];
         if (isBranchNode[node])
         {
+            // promote the other clusters
+            fprintf(stderr, "??promote\n");
+            size_t parent = parentLinks[node];
+            for (size_t i = 1; i < temp_centroids.size(); i++)
+            {
+                size_t centroid = temp_centroids[i];
+                size_t t_parent = createParent(parent, insertionList);
+                means[t_parent] = means[centroid];
+                moveParent(centroid, t_parent);
+                addSigToMatrix(parent, means[t_parent]);
+            }
             // //?
             // for (size_t i = 1; i < temp_centroids.size(); i++)
             // {
@@ -1028,7 +1039,7 @@ public:
 
         updatePriority(node);
 
-        fprintf(stderr, ">?? done %zu, %zu\n", matrices[node].size(), childCounts[node]);
+        // fprintf(stderr, ">?? done %zu, %zu\n", matrices[node].size(), childCounts[node]);
 
         // for (size_t i = 0; i < childCounts[root]; i++)
         // {
@@ -1040,7 +1051,7 @@ public:
         //     }
         // }
 
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
         return 1;
     }
 
