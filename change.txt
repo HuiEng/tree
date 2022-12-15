@@ -1,0 +1,15 @@
+force split/merge at root level to limit the width of tree
+- groups the children of root into 2 supercluster by using the first child and the furthest from the first child as seeds
+- the rest of the children find the closest seed to join
+- give up if any of the two supercluster has only 1 element
+- hopefully it will be able to split soon in the next cycles
+
+*** force split can cause undesirably large supercluster at the start
+so when force split happen again, we will dissolve branch child or promote branch grandchildren before splitting
+- check if any branch child of root has priority greater than the split_node_threshold (may use split_threshold instead)
+- then check if the centroid of the branch child (aka first grandchild) is also a branch
+- if yes, dissolve this branch, basically delete the branch child and move grandchildren of that branch up
+- if not, just promote any branch grandchildren with priority higher than the threshold (same threshold as the branch child)
+
+
+*** still need to check random

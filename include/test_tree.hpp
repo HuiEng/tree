@@ -600,6 +600,8 @@ public:
 
             // first child is the centroid, deal with it separately
             size_t child = childLinks[node][0];
+            fprintf(stderr, "checking %zu \n", child);
+            splitBranch(child, insertionList);
             double local_stay_t = stay_threshold;
 
             // increase stay threshold of a node
@@ -808,10 +810,6 @@ public:
         {
             return 0;
         }
-        else if (childCounts[node] < 3)
-        {
-            return 0;
-        }
         else if (priority[node] < split_node_threshold)
         {
             return 0;
@@ -877,15 +875,17 @@ public:
             clusters[dest].push_back(child);
         }
 
-        // for (vector<size_t> cluster : clusters)
-        // {
-        //     if (cluster.size() == 0)
-        //     {
-        //         fprintf(stderr, ">>??something is wrong cannot split evenly\n");
-        //         return 0;
-        //     }
-        // }
-
+        if (temp_centroids.size() == 2)
+        {
+            for (vector<size_t> cluster : clusters)
+            {
+                if (cluster.size() == 0)
+                {
+                    fprintf(stderr, ">>??something is wrong cannot split evenly\n");
+                    return 0;
+                }
+            }
+        }
         // prepare newBranch for valid clusters
         size_t parent = parentLinks[node];
         for (size_t i = 1; i < temp_centroids.size(); i++)
@@ -931,6 +931,42 @@ public:
         return 1;
     }
 
+    void prep()
+    {
+        for (size_t i = 0; i < childCounts[root]; i++)
+        {
+            size_t child = childLinks[root][i];
+            // priority>split_threshold good enough?
+            if (isBranchNode[child] && priority[child] > split_node_threshold)
+            {
+                size_t centroid = childLinks[child][0];
+                if (isBranchNode[centroid])
+                {
+                    // dissolve this branch
+                    childLinks[root][i] = centroid;
+                    parentLinks[centroid] = root;
+
+                    for (size_t j = 1; j < childCounts[child]; j++)
+                    {
+                        moveParent(childLinks[child][j], root);
+                    }
+                    clearNode(child); // doesn't do anything now, just clear memory; can insert back to insertionList
+                }
+                else
+                {
+                    for (size_t grandchild : childLinks[child])
+                    {
+                        if (isBranchNode[grandchild] && priority[grandchild] > split_node_threshold)
+                        {
+                            moveParent(grandchild, root);
+                        }
+                    }
+                    updatePriority(child);
+                }
+            }
+        }
+    }
+
     size_t forcesplitBranch(size_t node, vector<size_t> &insertionList)
     {
         if (node != root)
@@ -938,6 +974,8 @@ public:
             return 0;
         }
 
+        // printTreeJson(stderr);
+        prep();
         // printTreeJson(stderr);
 
         fprintf(stderr, "force split node %zu, %f\n", node, priority[node]);
@@ -1080,7 +1118,6 @@ public:
         //     }
         // }
 
-        // printTreeJson(stderr);
         return 1;
     }
 
