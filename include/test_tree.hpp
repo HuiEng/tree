@@ -1368,7 +1368,7 @@ public:
         size_t best_child = node;
         double best_distance = numeric_limits<double>::max();
 
-        while (childCounts[node] > 0)
+        do
         {
             size_t local_best_child = node;
             // double local_best_distance = 0;
@@ -1379,12 +1379,18 @@ public:
                 size_t child = childLinks[node][i];
                 double distance = calcDistance(means[child], signature);
 
-                fprintf(stderr, " <%zu,%.2f> ", child, distance);
+                // fprintf(stderr, " <%zu,%.2f> ", child, distance);
 
                 // found same, move on with the next seq
                 if (distance <= (stay_threshold))
                 {
                     // seqIDs[child].push_back(idx);
+                    // return child;
+
+                    while (isBranchNode[child])
+                    {
+                        child = childLinks[child][0];
+                    }
                     return child;
                 }
 
@@ -1401,7 +1407,8 @@ public:
             }
 
             node = local_best_child;
-        }
+
+        } while (isBranchNode[node]);
 
         // seqIDs[best_child].push_back(idx);
         return best_child;
@@ -1475,18 +1482,46 @@ public:
     // make sure cluster centroid is up-to-date before clearing matrices
     // clear matrices and seqID for the next insertion cycle
     // cluster means still remain
-    void prepReinsert(size_t node)
+    void prepReinsert(size_t node = 0)
     {
-
-        updateNodeMean(node);
-        matrices[node].clear();
-        seqIDs[node].clear();
-
-        if (childCounts[node] > 0)
+        if (!isBranchNode[node])
         {
-            for (size_t child : childLinks[node])
+            seqIDs[node].clear();
+        }
+        // // updateNodeMean(node);
+        // updatePriority(node);
+        // matrices[node].clear();
+        // seqIDs[node].clear();
+
+        for (size_t child : childLinks[node])
+        {
+            prepReinsert(child);
+        }
+    }
+
+    void trim(size_t last_idx)
+    {
+        std::set<size_t> parents;
+        fprintf(stderr, "\nTrimming\n");
+        for (size_t i = last_idx; i > 0; i--)
+        {
+
+            // fprintf(stderr, "\nTrimming %zu\n", i);
+            if (!isBranchNode[i])
             {
-                prepReinsert(child);
+                if (seqIDs[i].size() == 0)
+                {
+                    deleteNode(i);
+                }
+                else
+                {
+                    size_t node = i;
+                    while (node != root)
+                    {
+                        updatePriority(node);
+                        node = parentLinks[node];
+                    }
+                }
             }
         }
     }
