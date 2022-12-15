@@ -988,9 +988,11 @@ public:
 
         double max_distance = 0;
         size_t candidate = 0;
+        data_type mean0 = means[childLinks[node][0]];
         for (size_t i = childCounts[node] - 1; i > 0; i--)
         {
-            double distance = calcDistance(means[node], matrices[node][i]);
+            double distance = calcDistance(mean0, matrices[node][i]);
+            // fprintf(stderr, "%zu, %f\n", childLinks[node][i], distance);
             if (distance > max_distance)
             {
                 max_distance = distance;
