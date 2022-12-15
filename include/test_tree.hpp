@@ -948,7 +948,7 @@ public:
 
                     for (size_t j = 1; j < childCounts[child]; j++)
                     {
-                        moveParent(childLinks[child][j], root);
+                        moveParent(childLinks[child][j], root, false);
                     }
                     clearNode(child); // doesn't do anything now, just clear memory; can insert back to insertionList
                 }
