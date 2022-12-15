@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <experimental/filesystem>
 #include "bloom_filter.hpp"
+#include <set>
 
 // #include "read.hpp"
 
@@ -292,6 +293,7 @@ public:
         matrices[node].clear();
         means[node] = createMeanSig(matrices[node]);
         priority[node] = 0;
+        parentLinks[node] = 0;
     }
 
     // merge if number of children is greater than tree order
@@ -1479,6 +1481,12 @@ public:
         }
     }
 
+    // void cutBranch(size_t node){
+    //     while (isBranchNode[node]){
+    //         node = childLinks
+    //     }
+    // }
+
     // make sure cluster centroid is up-to-date before clearing matrices
     // clear matrices and seqID for the next insertion cycle
     // cluster means still remain
@@ -1499,10 +1507,23 @@ public:
         }
     }
 
+    bool isCentroid(size_t node)
+    {
+        size_t parent = parentLinks[node];
+        if (parent == root)
+        {
+            return false;
+        }
+
+        return childLinks[parent][0] == node;
+    }
+
     void trim(size_t last_idx)
     {
         std::set<size_t> parents;
         fprintf(stderr, "\nTrimming\n");
+
+        // do leaves
         for (size_t i = last_idx; i > 0; i--)
         {
 
@@ -1511,19 +1532,95 @@ public:
             {
                 if (seqIDs[i].size() == 0)
                 {
-                    deleteNode(i);
+
+                    size_t parent = parentLinks[i];
+                    size_t grandparent = parentLinks[parent];
+                    // if centroid is deleted, so should the entire super cluster
+
+                    if (isCentroid(parent))
+                    {
+
+                        fprintf(stderr, "\n>> BClear %zu\n", i);
+
+                        while (isCentroid(parent))
+                        {
+                            grandparent = parentLinks[parent];
+                            clearNode(parent);
+                            parent = grandparent;
+                        }
+                        // deleteNode(parent);//?
+                    }
+                    else
+                    {
+                        deleteNode(i);
+                        if (childCounts[parent] == 0)
+                        {
+                            fprintf(stderr, "\n>> Clear %zu\n", i);
+
+                            while (isCentroid(parent))
+                            {
+                                grandparent = parentLinks[parent];
+                                clearNode(parent);
+                                parent = grandparent;
+                            }
+                        }
+                    }
+
+                    // parents.insert(parentLinks[i]);
                 }
                 else
                 {
-                    size_t node = i;
-                    while (node != root)
-                    {
-                        updatePriority(node);
-                        node = parentLinks[node];
-                    }
+                    // fprintf(stderr, "keep %zu\n", i);
+                    // size_t node = i;
+                    // while (node != root)
+                    // {
+                    //     updatePriority(node);
+                    //     node = parentLinks[node];
+                    // }
                 }
             }
+            else
+            {
+                // parents.insert(i);
+                // for (size_t child : childLinks[i])
+                // {
+                //     fprintf(stderr, "%zu, ", child);
+                // }
+                // fprintf(stderr, "\n>>B %zu\n", i);
+            }
         }
+
+        // // do parents
+        // for (auto &node : parents)
+        // {
+        //     if (node == root)
+        //     {
+        //         continue;
+        //     }
+        //     size_t parent = node;
+        //     vector<size_t> temp;
+        //     while (childCounts[parent] == 1)
+        //     {
+        //         temp.push_back(parent);
+        //         parent = parentLinks[parent];
+        //     }
+        //     if (node == parent)
+        //     {
+        //         continue;
+        //     }
+        //     fprintf(stderr, ">>>P %zu,%zu\n", node, parent);
+
+        //     for (size_t child : childLinks[node])
+        //     {
+        //         moveParent(child, parent);
+        //     }
+
+        //     deleteNode(temp[temp.size() - 1]);
+        //     for (size_t n : temp)
+        //     {
+        //         clearNode(n);
+        //     }
+        // }
     }
 
     size_t reinsert(data_type signature, size_t idx)

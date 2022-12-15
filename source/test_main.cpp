@@ -156,7 +156,7 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
         {
             size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
 
-            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+            // fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
         }
