@@ -215,6 +215,7 @@ public:
 
     void printSubTreeJson(FILE *stream, size_t tnode)
     {
+        updatePriority(tnode);
         if (childCounts[tnode] > 0)
         {
             printNodeJson(stream, tnode);
@@ -1540,7 +1541,6 @@ public:
     {
         if (isBranchNode[node])
         {
-            fprintf(stderr, ">>> check branch %zu\n", node);
             size_t centroid = node;
             size_t parent = parentLinks[node];
             size_t idx = getNodeIdx(node);
@@ -1549,7 +1549,6 @@ public:
                 size_t temp = centroid;
                 centroid = childLinks[centroid][0];
                 clearNode(temp);
-                fprintf(stderr, "centroid %zu\n", centroid);
             }
 
             if (centroid != node)
@@ -1557,7 +1556,7 @@ public:
                 childLinks[parent][idx] = centroid;
                 parentLinks[centroid] = parent;
             }
-            
+
             for (size_t child : childLinks[centroid])
             {
                 dropBranch(child);
@@ -1565,36 +1564,71 @@ public:
         }
     }
 
+    void getEmptyLeaves(vector<size_t> &leaves, size_t node = 0)
+    {
+        for (size_t child : childLinks[node])
+        {
+            if (isBranchNode[child])
+            {
+                getEmptyLeaves(leaves, child);
+            }
+            else if (seqIDs[child].size() == 0)
+            {
+                leaves.push_back(child);
+            }
+            else
+            {
+                updatePriority(child);
+            }
+        }
+    }
+
     void trim(size_t last_idx)
     {
-        std::set<size_t> leaves;
+        std::set<size_t> branches;
         fprintf(stderr, "\nTrimming\n");
 
+        vector<size_t> leaves;
+
+        getEmptyLeaves(leaves);
+
         // do leaves
-        for (size_t i = last_idx; i > 0; i--)
+        for (size_t i : leaves)
         {
-            // fprintf(stderr, "\nTrimming %zu\n", i);
-            if (!isBranchNode[i])
+            if (seqIDs[i].size() == 0)
             {
-                if (seqIDs[i].size() == 0)
+                size_t parent = parentLinks[i];
+                deleteNode(i);
+                if (childCounts[parent] == 0)
                 {
-                    size_t parent = parentLinks[i];
-                    deleteNode(i);
-                    if (childCounts[parent] == 0)
-                    {
-                        leaves.insert(parent);
-                    }
+                    branches.insert(parent);
                 }
             }
         }
 
+        // for (size_t i = last_idx; i > 0; i--)
+        // {
+        //     // fprintf(stderr, "\nTrimming %zu\n", i);
+        //     if (!isBranchNode[i])
+        //     {
+        //         if (seqIDs[i].size() == 0)
+        //         {
+        //             size_t parent = parentLinks[i];
+        //             deleteNode(i);
+        //             if (childCounts[parent] == 0)
+        //             {
+        //                 branches.insert(parent);
+        //             }
+        //         }
+        //     }
+        // }
+
         // do parents
-        for (auto &n : leaves)
+        for (auto &b : branches)
         {
-            size_t node = n;
+            size_t node = b;
             size_t parent = parentLinks[node];
 
-            fprintf(stderr, "Drop branch %zu, %zu\n", node, parent);
             while (redundant(node))
             {
                 size_t temp = parent;
