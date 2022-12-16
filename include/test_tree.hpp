@@ -1536,6 +1536,35 @@ public:
         return false;
     }
 
+    void dropBranch(size_t node = 0)
+    {
+        if (isBranchNode[node])
+        {
+            fprintf(stderr, ">>> check branch %zu\n", node);
+            size_t centroid = node;
+            size_t parent = parentLinks[node];
+            size_t idx = getNodeIdx(node);
+            while (isBranchNode[centroid] && childCounts[centroid] == 1)
+            {
+                size_t temp = centroid;
+                centroid = childLinks[centroid][0];
+                clearNode(temp);
+                fprintf(stderr, "centroid %zu\n", centroid);
+            }
+
+            if (centroid != node)
+            {
+                childLinks[parent][idx] = centroid;
+                parentLinks[centroid] = parent;
+            }
+            
+            for (size_t child : childLinks[centroid])
+            {
+                dropBranch(child);
+            }
+        }
+    }
+
     void trim(size_t last_idx)
     {
         std::set<size_t> leaves;
@@ -1573,12 +1602,14 @@ public:
                 deleteNode(node);
                 clearNode(node);
                 node = temp;
-                // if (childCounts[parent] == 0)
-                // {
-                //     leaves.insert(parent);
-                // }
             }
             updatePriority(node);
+        }
+
+        // remove unitig for non-empty leaves
+        for (size_t child : childLinks[root])
+        {
+            dropBranch(child);
         }
     }
 
