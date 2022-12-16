@@ -130,17 +130,7 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
     //         tree.forceSplit(child, insertionList, threshold);
     //     }
     // }
-    FILE *pFile;
-    if (random_)
-    {
-        pFile = fopen("tree-test-r.csv", "w");
-    }
-    else
-    {
-        pFile = fopen("tree-test.csv", "w");
-    }
-    fprintf(pFile, "node,parent,isBranch,priority,x,y\n");
-    tree.printSubTreeMatrices(pFile, seqs, 0);
+    
 
     // size_t best = tree.findNearest(seqs[15], 19, 0);
     // fprintf(stderr,"***%zu\n",best);
@@ -163,6 +153,18 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
 
         tree.trim(insertionList[insertionList.size() - 1] - 1);
     }
+
+    FILE *pFile;
+    if (random_)
+    {
+        pFile = fopen("tree-test-r.csv", "w");
+    }
+    else
+    {
+        pFile = fopen("tree-test.csv", "w");
+    }
+    fprintf(pFile, "node,parent,isBranch,priority,x,y\n");
+    tree.printSubTreeMatrices(pFile, seqs, 0);
 
     // tree.mergeChildren(tree.root, insertionList);
 

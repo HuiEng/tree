@@ -307,32 +307,69 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
-        // if (childCounts[node] > 1)
-        // {
-        //     size_t size = signatureSize * bits_per_char;
-        //     vector<cell_type> meanSig(size);
-        //     fill(&meanSig[0], &meanSig[0] + size, 0);
+        if (isBranchNode[node])
+        {
+            seq_type meanSig = means[childLinks[node][0]];
 
-        //     for (size_t child : childLinks[node])
-        //     {
-        //         for (size_t i = 0; i < size; i++)
-        //         {
-        //             meanSig[i] |= means[child][i];
-        //         }
-        //     }
-        //     means[node] = meanSig;
-        //     priority[node] = countSingleSetBits(means[node]);
-        // }
+            for (size_t c = 1; c < childCounts[node]; c++)
+            {
+                meanSig = doUnion(meanSig, means[childLinks[node][c]]);
+            }
 
-        // means[node] = createMeanSig(matrices[node]);
-        //? p
-        priority[node] = calcDistortion(matrices[node]);
+            // size_t winNum = meanSig.size();
+
+            // vector<vector<size_t>> counters;
+            // for (size_t w = 0; w < winNum; w++)
+            // {
+            //     vector<size_t> counter(signatureSize * bits_per_char);
+            //     counters.push_back(counter);
+            // }
+
+            // for (size_t c = 1; c < childCounts[node]; c++)
+            // {
+            //     seq_type signatureData = means[childLinks[node][c]];
+            //     for (size_t w = 0; w < min(winNum, signatureData.size()); w++)
+            //     {
+            //         for (size_t i = 0; i < signatureSize; i++)
+            //         {
+            //             for (int n = 0; n < bits_per_char; n++)
+            //             {
+            //                 if ((signatureData[w][i] >> n) & 1)
+            //                 {
+            //                     counters[w][i * bits_per_char + n]++;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+
+            // for (size_t w = 0; w < winNum; w++)
+            // {
+            //     vector<size_t> counter = counters[w];
+            //     for (int i = 0; i < counter.size(); i++)
+            //     {
+            //         // make it upperbound
+            //         if (counter[i] >= (childCounts[node] + 1) / 2)
+            //         {
+            //             meanSig[w][i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
+            //         }
+            //     }
+            // }
+            means[node] = meanSig;
+        }
     }
 
     // add priority to the branch child
     double calcNodeMaxDistance(size_t node)
     {
         seq_type meanSig = means[node];
+
+        //?
+        if (isBranchNode[node])
+        {
+            meanSig = means[childLinks[node][0]];
+        }
+
         double min_distance = 1;
         size_t i = 0;
 
@@ -363,7 +400,7 @@ public:
     inline void updatePriority(size_t node)
     {
         // priority[node] = calcDistortion(matrices[node]);
-        priority[node] = calcNodeMaxDistance(node);
+        // priority[node] = calcNodeMaxDistance(node);
 
         // priority[node] = calcNodeDistortion(node);
     }
@@ -1158,19 +1195,31 @@ public:
         if (NN.size() == 1)
         {
             fprintf(stderr, "??NN with one without stay\n");
-            return createNode(signature, insertionList, node, idx);
+            size_t best_child = NN[0];
+            if (isBranchNode[best_child])
+            {
+                return stayNode(signature, insertionList, idx, best_child);
+            }
+            else
+            {
+                return createNode(signature, insertionList, node, idx);
+            }
         }
         else if (NN.size() > 1)
         {
             fprintf(stderr, "NN with multiple without stay\n");
             size_t t_parent = createParent(node, insertionList);
             dest = createNode(signature, insertionList, t_parent, idx);
-            means[t_parent] = signature;
-            addSigToMatrix(node, means[t_parent]);
+            // means[t_parent] = signature;
+            // dbgPrintSignatureIdx(stderr, signature);
             for (size_t child : NN)
             {
                 moveParent(child, t_parent);
+                // dbgPrintSignatureIdx(stderr, means[child]);
             }
+            updateNodeMean(t_parent);
+            // dbgPrintSignatureIdx(stderr, means[t_parent]);
+            addSigToMatrix(node, means[t_parent]);
             updatePriority(t_parent);
             return dest;
         }

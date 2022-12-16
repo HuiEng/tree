@@ -17,7 +17,6 @@ using namespace std;
 
 size_t signatureSize = 0; // Signature size (depends on element in BF, obtained while read binary)
 
-
 void toBinaryIdx(FILE *stream, vector<cell_type> sig)
 {
     for (int i = 0; i < signatureSize; i++)
@@ -53,7 +52,7 @@ void toBinary(FILE *stream, vector<cell_type> sig)
 }
 
 // print each window in one line
-void dbgPrintSignature(FILE *stream, vector<vector<cell_type>> seq)
+void dbgPrintSignature(FILE *stream, seq_type seq)
 {
     for (auto window : seq)
     {
@@ -62,7 +61,7 @@ void dbgPrintSignature(FILE *stream, vector<vector<cell_type>> seq)
     fprintf(stream, "\n");
 }
 
-void dbgPrintSignatureIdx(FILE *stream, vector<vector<cell_type>> seq)
+void dbgPrintSignatureIdx(FILE *stream, seq_type seq)
 {
     for (auto window : seq)
     {
@@ -70,7 +69,6 @@ void dbgPrintSignatureIdx(FILE *stream, vector<vector<cell_type>> seq)
     }
     fprintf(stream, "\n");
 }
-
 
 size_t countSingleSetBits(vector<cell_type> seq)
 {
@@ -298,9 +296,50 @@ distance_type calcDistance(seq_type a, seq_type b)
 
     // return calcInter(a, b);
     // return calcJaccard(a,b);
-    return calcJaccardGlobal(a, b);
+    // return calcJaccardGlobal(a, b);
 
     // return calcMatchingWindows(a, b);
+
+    // normalised to density of b
+    return calcInter(a, b) * 1.0 / countSetBits(b);
+}
+
+vector<cell_type> doSingleUnion(vector<cell_type> a, vector<cell_type> b)
+{
+    vector<cell_type> c = a;
+    for (size_t i = 0; i < signatureSize; i++)
+    {
+        c[i] = a[i] | b[i];
+    }
+    return c;
+}
+
+seq_type doUnion(seq_type a, seq_type b)
+{
+    seq_type c;
+    seq_type shorter;
+    seq_type longer;
+    if (a.size() > b.size())
+    {
+        longer = a;
+        shorter = b;
+    }
+    else
+    {
+        longer = b;
+        shorter = a;
+    }
+    // treat tail subseq as mismatch
+    for (int w = 0; w < shorter.size(); w++)
+    {
+        c.push_back(doSingleUnion(longer[w], shorter[w]));
+    }
+
+    for (int w = shorter.size(); w < longer.size(); w++)
+    {
+        c.push_back(longer[w]);
+    }
+    return c;
 }
 
 #endif
