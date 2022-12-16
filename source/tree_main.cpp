@@ -97,36 +97,36 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     fprintf(stderr, "\n\n\n\n");
 
-    for (size_t run = 0; run < iteration; run++)
-    {
-        tree.printTreeJson(stdout);
-        fprintf(stderr, "Iteration %zu\n", run);
-        tree.prepReinsert(tree.root);
-        for (size_t i = 0; i < cap; i++)
-        {
-            size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
+    // for (size_t run = 0; run < iteration; run++)
+    // {
+    //     tree.printTreeJson(stdout);
+    //     fprintf(stderr, "Iteration %zu\n", run);
+    //     tree.prepReinsert(tree.root);
+    //     for (size_t i = 0; i < cap; i++)
+    //     {
+    //         size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
 
-            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
-            // clusters[foo[i]] = tree.findAncestor(clus);
-            clusters[foo[i]] = clus;
-        }
-    }
-    
-    if (iteration == 0)
-    {
-        tree.printTreeJson(stdout);
-        tree.clearSeqId(insertionList[0]);
+    //         fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+    //         // clusters[foo[i]] = tree.findAncestor(clus);
+    //         clusters[foo[i]] = clus;
+    //     }
+    // }
 
-        for (size_t i = 0; i < cap; i++)
-        {
-            size_t clus = tree.search(seqs[foo[i]], foo[i]);
-            tree.seqIDs[clus].push_back(foo[i]);
+    // if (iteration == 0)
+    // {
+    //     tree.printTreeJson(stdout);
+    //     tree.clearSeqId(insertionList[0]);
 
-            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
-            // clusters[foo[i]] = tree.findAncestor(clus);
-            clusters[foo[i]] = clus;
-        }
-    }
+    //     for (size_t i = 0; i < cap; i++)
+    //     {
+    //         size_t clus = tree.search(seqs[foo[i]], foo[i]);
+    //         tree.seqIDs[clus].push_back(foo[i]);
+
+    //         fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+    //         // clusters[foo[i]] = tree.findAncestor(clus);
+    //         clusters[foo[i]] = clus;
+    //     }
+    // }
     // // Insert first 1 nodes single-threaded
     // for (size_t i = 0; i < firstNodes; i++)
     // {
@@ -173,6 +173,11 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
 int tree_main(int argc, char *argv[])
 {
+    split_threshold = 0.5;
+    stay_threshold = 0.8;
+    minimiser_match_threshold = 4;
+    partree_capacity = 10000;
+
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
 
@@ -191,14 +196,17 @@ int tree_main(int argc, char *argv[])
     if (args.split_threshold_given)
     {
         split_threshold = args.split_threshold_arg;
-        fprintf(stderr, "split threshold: %.2f\n", split_threshold);
     }
 
     if (args.stay_threshold_given)
     {
         stay_threshold = args.stay_threshold_arg;
-        fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
     }
+    split_node_threshold = split_threshold / 2;
+
+    fprintf(stderr, "split threshold: %.2f\n", split_threshold);
+    fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
+    fprintf(stderr, "split_node_threshold threshold: %.2f\n", split_node_threshold);
 
     if (args.minimiser_match_given)
     {

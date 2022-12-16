@@ -10,6 +10,8 @@ typedef double distance_type;
 
 double split_threshold = 1;
 double stay_threshold = 0;
+double split_node_threshold;
+
 size_t minimiser_match_threshold = 4;
 using namespace std;
 
