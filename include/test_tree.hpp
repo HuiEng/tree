@@ -1518,109 +1518,68 @@ public:
         return childLinks[parent][0] == node;
     }
 
+    bool redundant(size_t parent)
+    {
+        fprintf(stderr, "redundant %zu\n", parent);
+        if (childCounts[parent] == 0)
+        {
+            return true;
+        }
+        else if (childCounts[parent] == 1)
+        {
+            size_t child = childLinks[parent][0];
+            if (isBranchNode[child])
+            {
+                return childCounts[child] == 0;
+            }
+        }
+        return false;
+    }
+
     void trim(size_t last_idx)
     {
-        std::set<size_t> parents;
+        std::set<size_t> leaves;
         fprintf(stderr, "\nTrimming\n");
 
         // do leaves
         for (size_t i = last_idx; i > 0; i--)
         {
-
             // fprintf(stderr, "\nTrimming %zu\n", i);
             if (!isBranchNode[i])
             {
                 if (seqIDs[i].size() == 0)
                 {
-
                     size_t parent = parentLinks[i];
-                    size_t grandparent = parentLinks[parent];
-                    // if centroid is deleted, so should the entire super cluster
-
-                    if (isCentroid(parent))
+                    deleteNode(i);
+                    if (childCounts[parent] == 0)
                     {
-
-                        fprintf(stderr, "\n>> BClear %zu\n", i);
-
-                        while (isCentroid(parent))
-                        {
-                            grandparent = parentLinks[parent];
-                            clearNode(parent);
-                            parent = grandparent;
-                        }
-                        // deleteNode(parent);//?
+                        leaves.insert(parent);
                     }
-                    else
-                    {
-                        deleteNode(i);
-                        if (childCounts[parent] == 0)
-                        {
-                            fprintf(stderr, "\n>> Clear %zu\n", i);
-
-                            while (isCentroid(parent))
-                            {
-                                grandparent = parentLinks[parent];
-                                clearNode(parent);
-                                parent = grandparent;
-                            }
-                        }
-                    }
-
-                    // parents.insert(parentLinks[i]);
                 }
-                else
-                {
-                    // fprintf(stderr, "keep %zu\n", i);
-                    // size_t node = i;
-                    // while (node != root)
-                    // {
-                    //     updatePriority(node);
-                    //     node = parentLinks[node];
-                    // }
-                }
-            }
-            else
-            {
-                // parents.insert(i);
-                // for (size_t child : childLinks[i])
-                // {
-                //     fprintf(stderr, "%zu, ", child);
-                // }
-                // fprintf(stderr, "\n>>B %zu\n", i);
             }
         }
 
-        // // do parents
-        // for (auto &node : parents)
-        // {
-        //     if (node == root)
-        //     {
-        //         continue;
-        //     }
-        //     size_t parent = node;
-        //     vector<size_t> temp;
-        //     while (childCounts[parent] == 1)
-        //     {
-        //         temp.push_back(parent);
-        //         parent = parentLinks[parent];
-        //     }
-        //     if (node == parent)
-        //     {
-        //         continue;
-        //     }
-        //     fprintf(stderr, ">>>P %zu,%zu\n", node, parent);
+        // do parents
+        for (auto &n : leaves)
+        {
+            size_t node = n;
+            size_t parent = parentLinks[node];
 
-        //     for (size_t child : childLinks[node])
-        //     {
-        //         moveParent(child, parent);
-        //     }
-
-        //     deleteNode(temp[temp.size() - 1]);
-        //     for (size_t n : temp)
-        //     {
-        //         clearNode(n);
-        //     }
-        // }
+            fprintf(stderr, "Drop branch %zu, %zu\n", node, parent);
+            while (redundant(node))
+            {
+                size_t temp = parent;
+                parent = parentLinks[parent];
+                deleteNode(node);
+                clearNode(node);
+                node = temp;
+                // if (childCounts[parent] == 0)
+                // {
+                //     leaves.insert(parent);
+                // }
+            }
+            updatePriority(node);
+        }
     }
 
     size_t reinsert(data_type signature, size_t idx)
