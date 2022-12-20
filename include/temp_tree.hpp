@@ -203,14 +203,17 @@ public:
 
     void printNodeJson(FILE *stream, size_t tnode)
     {
-        fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], priority[tnode], seqIDs[tnode].size());
+        fprintf(stream, "{\"node\":\"%zu\",", tnode);
+        fprintf(stream, "\"branch\":\"%zu\",", isBranchNode[tnode]);
+        fprintf(stream, "\"priority\":\"%.2f\",", priority[tnode]);
+        fprintf(stream, "\"childCount\":\"%zu\",\"content\":\"*", seqIDs[tnode].size());
         // fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], calcNodeMaxDistance(tnode), seqIDs[tnode].size());
 
         for (size_t seq : seqIDs[tnode])
         {
             fprintf(stream, "%zu,", seq);
         }
-        fprintf(stream, "\",\"children\":[");
+        // fprintf(stream, "\",\"children\":[");
     }
 
     void printSubTreeJson(FILE *stream, size_t tnode)
@@ -218,6 +221,8 @@ public:
         if (childCounts[tnode] > 0)
         {
             printNodeJson(stream, tnode);
+            fprintf(stream, "\",\"children\":[");
+
             printSubTreeJson(stream, childLinks[tnode][0]);
 
             for (size_t i = 1; i < childLinks[tnode].size(); i++)
@@ -229,13 +234,15 @@ public:
         }
         else
         {
-            fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
-            // fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, calcNodeMaxDistance(tnode), seqIDs[tnode].size());
+            // fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
+            // // fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, calcNodeMaxDistance(tnode), seqIDs[tnode].size());
 
-            for (size_t seq : seqIDs[tnode])
-            {
-                fprintf(stream, "%zu,", seq);
-            }
+            // for (size_t seq : seqIDs[tnode])
+            // {
+            //     fprintf(stream, "%zu,", seq);
+            // }
+            printNodeJson(stream, tnode);
+
             fprintf(stream, "\"}");
         }
     }
