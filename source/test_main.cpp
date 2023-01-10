@@ -158,7 +158,7 @@ vector<size_t> clusterSignatures(const vector<data_type> &seqs)
         pFile = fopen("tree-test.csv", "w");
     }
     fprintf(pFile, "node,parent,level,isBranch,priority,x,y\n");
-    tree.printSubTreeMatrices(pFile, seqs, 0);
+    tree.printSubTreeMatrices(pFile, seqs);
 
     // tree.mergeChildren(tree.root, insertionList);
 
