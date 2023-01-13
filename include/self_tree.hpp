@@ -127,7 +127,7 @@ public:
                 for (size_t i = 0; i < childCounts[node]; i++)
                 {
                     size_t child = childLinks[node][i];
-                    size_t hd = calcDistance(&means[child * signatureSize], signature);
+                    size_t hd = calcSimilarity(&means[child * signatureSize], signature);
                     if (hd < lowestHD)
                     {
                         lowestHD = hd;
@@ -285,7 +285,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t hd = calcDistance(matrices[child][0], signature);
+                size_t hd = calcHD(matrices[child][0], signature);
                 size_t b = countSetBits(matrices[child][0]);
 
                 fprintf(stderr, " <%zu,%zu,%zu> ", child, hd, b);
@@ -343,7 +343,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t inter = calcDistance(matrices[child][0], signature);
+                size_t inter = calcInter(matrices[child][0], signature);
                 size_t b = countSetBits(matrices[child][0]);
 
                 fprintf(stderr, " <%zu,%zu,%zu> ", child, inter, b);
@@ -393,7 +393,7 @@ public:
             for (int i = 0; i < childCounts[parent]; i++)
             {
                 size_t temp = childLinks[parent][i];
-                size_t distance = calcDistance(signature, matrices[temp][0]);
+                size_t distance = calcSimilarity(signature, matrices[temp][0]);
                 //? change length later
                 if (distance > stay_threshold * signature.size() && distance < split_threshold * signature.size())
                 {
@@ -460,7 +460,7 @@ public:
         size_t entry = node;
 
         // number of matching windows, bigger better
-        size_t a = calcDistance(matrices[ancestor][0], signature);
+        size_t a = calcSimilarity(matrices[ancestor][0], signature);
 
         // while (node != root && isUnipath(node))
         while (node != root)
@@ -526,7 +526,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                double sim = calcDistance(matrices[child][0], signature);
+                double sim = calcSimilarity(matrices[child][0], signature);
                 size_t b = matrices[child][0].size();
 
                 size_t len = max(a, b);
@@ -582,7 +582,7 @@ public:
             {
                 size_t temp = getNewNodeIdx(insertionList);
                 addSigToMatrix(temp, signature);
-                // priority[temp] = calcDistance(signature, matrices[findAncestor(node)][0]);
+                // priority[temp] = calcSimilarity(signature, matrices[findAncestor(node)][0]);
                 size_t ancestor = findAncestor(node);
                 if (ancestor == root)
                 {
@@ -590,7 +590,7 @@ public:
                 }
                 else
                 {
-                    priority[temp] = calcDistance(signature, matrices[ancestor][0]);
+                    priority[temp] = calcSimilarity(signature, matrices[ancestor][0]);
                 }
 
                 parentLinks[temp] = node;
@@ -645,7 +645,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t inter = calcDistance(matrices[child][0], signature);
+                size_t inter = calcInter(matrices[child][0], signature);
                 size_t b = matrices[child][0].size();
 
                 size_t len = max(a, b);
@@ -700,7 +700,7 @@ public:
             {
                 size_t temp = getNewNodeIdx(insertionList);
                 addSigToMatrix(temp, signature);
-                // priority[temp] = calcDistance(signature, matrices[findAncestor(node)][0]);
+                // priority[temp] = calcSimilarity(signature, matrices[findAncestor(node)][0]);
                 size_t ancestor = findAncestor(node);
                 if (ancestor == root)
                 {
@@ -708,7 +708,7 @@ public:
                 }
                 else
                 {
-                    priority[temp] = calcDistance(signature, matrices[ancestor][0]);
+                    priority[temp] = calcSimilarity(signature, matrices[ancestor][0]);
                 }
 
                 parentLinks[temp] = node;
@@ -761,7 +761,7 @@ public:
             childCounts[parent]++;
             addSigToMatrix(node, signature);
             seqIDs[node].push_back(idx);
-            priority[node] = calcDistance(signature, matrices[findAncestor(node)][0]);
+            priority[node] = calcSimilarity(signature, matrices[findAncestor(node)][0]);
             // priority[node] = calcJaccard(signature, matrices[findAncestor(node)][0]);
             return node;
         }
@@ -838,7 +838,7 @@ public:
             for (size_t i = 0; i < childCounts[node]; i++)
             {
                 size_t child = childLinks[node][i];
-                size_t hd = calcDistance(matrices[child][0], signature);
+                size_t hd = calcHD(matrices[child][0], signature);
                 size_t b = countSetBits(matrices[child][0]);
 
                 // found same, move on with the next seq

@@ -90,7 +90,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
     for (size_t i = 1; i < cap; i++)
     {
-        // fprintf(stderr, "inserting %zu\n", foo[i]);
+        fprintf(stderr, "inserting %zu\n", foo[i]);
         size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
         // clusters[foo[i]] = tree.findAncestor(clus);
         clusters[foo[i]] = clus;
@@ -221,6 +221,11 @@ int tree_main(int argc, char *argv[])
 
     vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
     fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
+    if (cap == 0)
+    {
+        cap = seqs.size();
+        
+    }
 
     signatureSize = seqs[0][0].size();
     fprintf(stderr, "Building Signature...\n");

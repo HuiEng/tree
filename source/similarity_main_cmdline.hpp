@@ -370,6 +370,8 @@ public:
   bool multiple_arg;
   bool all_kmer_arg;
   bool global_arg;
+  bool local_arg;
+  bool skip_arg;
 
   enum
   {
@@ -383,7 +385,8 @@ public:
                               bf_input_given(false), output_given(false),
                               threshold_given(false), window_given(false),
                               element_given(false), multiple_arg(false),
-                              all_kmer_arg(false), global_arg(false)
+                              all_kmer_arg(false), global_arg(false),
+                              skip_arg(false), local_arg(false)
   {
   }
 
@@ -393,7 +396,8 @@ public:
                                                     bf_input_given(false), output_given(false),
                                                     threshold_given(false), window_given(false),
                                                     element_given(false), multiple_arg(false),
-                                                    all_kmer_arg(false), global_arg(false)
+                                                    all_kmer_arg(false), global_arg(false),
+                                                    skip_arg(false), local_arg(false)
   {
     parse(argc, argv);
   }
@@ -408,12 +412,14 @@ public:
         {"element", 1, 0, 's'},
         {"multiple", 0, 0, 'm'},
         {"all", 0, 0, 'A'},
+        {"skip", 0, 0, 'S'},
         {"global", 0, 0, 'G'},
+        {"local", 0, 0, 'L'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:t:w:s:mAG";
+    static const char *short_options = "hVi:o:t:w:s:mAGLS";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -477,8 +483,14 @@ public:
       case 'A':
         all_kmer_arg = true;
         break;
+      case 'S':
+        skip_arg = true;
+        break;
       case 'G':
         global_arg = true;
+        break;
+      case 'L':
+        local_arg = true;
         break;
       }
     }
@@ -555,6 +567,8 @@ public:
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            " -A, --all                                input is all kmers\n"
            " -G, --global                             count with global minimiserset\n"
+           " -L, --local                              count % matching minimsers by window\n"
+           " -S, --skip                               skip printing half the output\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
            " -V, --version                            Version";

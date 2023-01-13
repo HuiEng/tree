@@ -60,15 +60,15 @@ double calcDistortion(const vector<seq_type> clusterSigs)
 {
     return 0;
     // vector<cell_type> meanSig = createMeanSig(clusterSigs);
-    // double sumSquareDistance = 0;
+    // double sumSquaresimilarity = 0;
 
     // for (seq_type signature : clusterSigs)
     // {
     //     vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-    //     double distance = calcJaccardGlobal(meanSig, signatureData);
-    //     sumSquareDistance += distance * distance;
+    //     double similarity = calcJaccardGlobal(meanSig, signatureData);
+    //     sumSquaresimilarity += similarity * similarity;
     // }
-    // return sqrt(sumSquareDistance / clusterSigs.size());
+    // return sqrt(sumSquaresimilarity / clusterSigs.size());
 }
 
 class temp_tree
@@ -207,7 +207,7 @@ public:
         fprintf(stream, "\"branch\":\"%zu\",", isBranchNode[tnode]);
         fprintf(stream, "\"priority\":\"%.2f\",", priority[tnode]);
         fprintf(stream, "\"childCount\":\"%zu\",\"content\":\"*", seqIDs[tnode].size());
-        // fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], calcNodeMaxDistance(tnode), seqIDs[tnode].size());
+        // fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], calcNodeMaxsimilarity(tnode), seqIDs[tnode].size());
 
         for (size_t seq : seqIDs[tnode])
         {
@@ -235,7 +235,7 @@ public:
         else
         {
             // fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, priority[tnode], seqIDs[tnode].size());
-            // // fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, calcNodeMaxDistance(tnode), seqIDs[tnode].size());
+            // // fprintf(stream, "{\"node\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, calcNodeMaxsimilarity(tnode), seqIDs[tnode].size());
 
             // for (size_t seq : seqIDs[tnode])
             // {
@@ -367,7 +367,7 @@ public:
     }
 
     // add priority to the branch child
-    double calcNodeMaxDistance(size_t node)
+    double calcNodeMaxsimilarity(size_t node)
     {
         seq_type meanSig = means[node];
 
@@ -377,42 +377,42 @@ public:
             meanSig = means[childLinks[node][0]];
         }
 
-        double min_distance = 1;
+        double min_similarity = 1;
         size_t i = 0;
 
         // fprintf(stderr, ">>%f,%f\n", meanSig.first, meanSig.second);
         for (seq_type sig : matrices[node])
         {
-            double distance = calcDistance(meanSig, sig);
+            double similarity = calcSimilarity(meanSig, sig);
 
             // if (isBranchNode[node])
             // {
-            //     fprintf(stderr, "%zu,%f,%f,%f\n", childLinks[node][i], sig.first, sig.second, distance);
+            //     fprintf(stderr, "%zu,%f,%f,%f\n", childLinks[node][i], sig.first, sig.second, similarity);
             // }
             // else
             // {
-            //     fprintf(stderr, "%zu,%f,%f,%f\n", seqIDs[node][i], sig.first, sig.second, distance);
+            //     fprintf(stderr, "%zu,%f,%f,%f\n", seqIDs[node][i], sig.first, sig.second, similarity);
             // }
-            if (distance < min_distance)
+            if (similarity < min_similarity)
             {
-                min_distance = distance;
+                min_similarity = similarity;
             }
             i++;
         }
 
-        return -min_distance;
+        return -min_similarity;
     }
 
     // union mean of children
     inline void updatePriority(size_t node)
     {
         // priority[node] = calcDistortion(matrices[node]);
-        // priority[node] = calcNodeMaxDistance(node);
+        // priority[node] = calcNodeMaxsimilarity(node);
 
         // priority[node] = calcNodeDistortion(node);
     }
 
-    // priority = distance to ancestor
+    // priority = similarity to ancestor
     inline size_t rotateAnc(size_t node)
     {
         if (node == root)
@@ -526,12 +526,12 @@ public:
                 local_stay_t += priority[child];
             }
 
-            double distance = calcDistance(means[child], signature);
+            double similarity = calcSimilarity(means[child], signature);
 
-            if (distance >= local_stay_t)
+            if (similarity >= local_stay_t)
             {
                 // do not need to merge NN, should have done so in previous operation
-                fprintf(stderr, " stay in centroid %zu,%.2f \n", child, distance);
+                fprintf(stderr, " stay in centroid %zu,%.2f \n", child, similarity);
                 matchBranchCentroid = true;
             }
         }
@@ -550,23 +550,23 @@ public:
                 local_split_t += priority[child];
             }
 
-            double distance = calcDistance(means[child], signature);
+            double similarity = calcSimilarity(means[child], signature);
 
-            if (distance >= local_stay_t)
+            if (similarity >= local_stay_t)
             {
-                fprintf(stderr, "<%zu,%.2f>: %f stay\n", child, distance, local_stay_t);
+                fprintf(stderr, "<%zu,%.2f>: %f stay\n", child, similarity, local_stay_t);
                 stay.push_back(child);
                 // dest = child;
             }
 
-            else if (distance < local_split_t)
+            else if (similarity < local_split_t)
             {
-                fprintf(stderr, "<%zu,%.2f>: %f miss\n", child, distance, local_split_t);
+                fprintf(stderr, "<%zu,%.2f>: %f miss\n", child, similarity, local_split_t);
                 mismatch.push_back(child);
             }
             else
             {
-                fprintf(stderr, "<%zu,%.2f>: NN\n", child, distance);
+                fprintf(stderr, "<%zu,%.2f>: NN\n", child, similarity);
                 NN.push_back(child);
             }
         }
@@ -662,9 +662,9 @@ public:
             bool add = true;
             for (size_t centroid : temp_centroids)
             {
-                double distance = calcDistance(means[centroid], matrices[node][i]);
-                // fprintf(stderr, "%zu, %zu, %f\n", child, centroid, distance);
-                if (distance > split_node_threshold)
+                double similarity = calcSimilarity(means[centroid], matrices[node][i]);
+                // fprintf(stderr, "%zu, %zu, %f\n", child, centroid, similarity);
+                if (similarity > split_node_threshold)
                 {
                     add = false;
                     break;
@@ -694,14 +694,14 @@ public:
             size_t child = childLinks[node][n];
 
             size_t dest = 0;
-            double max_distance = 0;
+            double max_similarity = 0;
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
-                double distance = calcDistance(means[temp_centroids[i]], matrices[node][n]);
-                // fprintf(stderr, "%zu, %zu, %f\n", child, temp_centroids[i], distance);
-                if (distance >= max_distance)
+                double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
+                // fprintf(stderr, "%zu, %zu, %f\n", child, temp_centroids[i], similarity);
+                if (similarity >= max_similarity)
                 {
-                    max_distance = distance;
+                    max_similarity = similarity;
                     dest = i;
                 }
             }
@@ -821,16 +821,16 @@ public:
         vector<size_t> t;
         clusters.push_back(t);
 
-        double min_distance = 1;
+        double min_similarity = 1;
         size_t candidate = 0;
         seq_type mean0 = means[childLinks[node][0]];
         for (size_t i = childCounts[node] - 1; i > 0; i--)
         {
-            double distance = calcDistance(mean0, matrices[node][i]);
-            // fprintf(stderr, "%zu, %f\n", childLinks[node][i], distance);
-            if (distance < min_distance)
+            double similarity = calcSimilarity(mean0, matrices[node][i]);
+            // fprintf(stderr, "%zu, %f\n", childLinks[node][i], similarity);
+            if (similarity < min_similarity)
             {
-                min_distance = distance;
+                min_similarity = similarity;
                 candidate = childLinks[node][i];
             }
         }
@@ -853,14 +853,14 @@ public:
                 continue;
             }
             size_t dest = 0;
-            double max_distance = 0;
+            double max_similarity = 0;
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
-                double distance = calcDistance(means[temp_centroids[i]], matrices[node][n]);
-                // fprintf(stderr, "%zu, %f\n", temp_centroids[i], distance);
-                if (distance > max_distance)
+                double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
+                // fprintf(stderr, "%zu, %f\n", temp_centroids[i], similarity);
+                if (similarity > max_similarity)
                 {
-                    max_distance = distance;
+                    max_similarity = similarity;
                     dest = i;
                 }
             }
@@ -956,6 +956,132 @@ public:
         // }
 
         return 1;
+    }
+
+    inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
+    {
+        double offset = 1.2;
+        // check the other children
+        double local_stay_t = stay_threshold;
+        // size_t rank = findLevel(child);
+        for (size_t t = 0; t < rank; t++)
+        {
+            local_stay_t = local_stay_t + stay_threshold * offset;
+        }
+        double NN_t = local_stay_t + stay_threshold * offset;
+
+        double local_split_t = split_threshold;
+        double similarity = calcSimilarity(means[child], signature);
+
+        if (similarity <= local_stay_t)
+        {
+            fprintf(stderr, "<%zu,%.2f>: %f stay\n", child, similarity, local_stay_t);
+            return STAY_F;
+        }
+        else if (similarity >= local_split_t)
+        {
+            fprintf(stderr, "<%zu,%.2f>: %.2f miss\n", child, similarity, NN_t);
+            return SPLIT_F;
+        }
+        else
+        {
+            fprintf(stderr, "<%zu,%.2f>: %.2f NN\n", child, similarity, NN_t);
+            if (isBranchNode[child])
+            {
+                return NN_BRANCH_F;
+            }
+            else
+            {
+                return NN_LEAVE_F;
+            }
+        }
+    }
+
+    inline size_t checkRoot(seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN_leaves, vector<size_t> &NN_branches, vector<size_t> &stay, size_t node = 0)
+    {
+        size_t dest = 0;
+        size_t best_rank = numeric_limits<size_t>::max();
+        double offset = 1.2;
+        // check the other children
+        for (size_t child : childLinks[node])
+        {
+            // size_t rank = findLevel(child);
+            size_t rank = 0;
+            size_t status = similarityStatus(child, rank, signature);
+            switch (status)
+            {
+            case STAY_F:
+                stay.push_back(child);
+                if (rank < best_rank)
+                {
+                    best_rank = rank;
+                    dest = child;
+                }
+                break;
+
+            case SPLIT_F:
+                mismatch.push_back(child);
+                break;
+            case NN_LEAVE_F:
+                NN_leaves.push_back(child);
+                break;
+            case NN_BRANCH_F:
+                NN_branches.push_back(child);
+                break;
+            default:
+                break;
+            }
+        }
+        return dest;
+    }
+
+    inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    {
+        size_t node = root;
+        vector<size_t> mismatch;
+        vector<size_t> NN_leaves;
+        vector<size_t> NN_branches;
+        vector<size_t> stay;
+
+        size_t dest = checkRoot(signature, insertionList, mismatch, NN_leaves, NN_branches, stay);
+
+        if (dest != 0)
+        {
+            fprintf(stderr, "#stay in %zu from %zu\n", dest, stay.size());
+            return stayNode(signature, insertionList, idx, dest);
+        }
+
+        if (mismatch.size() == childCounts[node])
+        {
+            fprintf(stderr, "#mismatch\n");
+            return createNode(signature, insertionList, node, idx);
+        }
+
+        size_t NN_total = NN_leaves.size() + NN_branches.size();
+        if (NN_total == 1)
+        {
+            fprintf(stderr, "??NN with one without stay\n");
+            return createNode(signature, insertionList, node, idx);
+        }
+        else if (NN_total > 1)
+        {
+            fprintf(stderr, "NN with multiple without stay\n");
+            size_t t_parent = createParent(node, insertionList);
+            dest = createNode(signature, insertionList, t_parent, idx);
+            // means[t_parent] = signature;
+            // addSigToMatrix(node, means[t_parent]);
+            for (size_t child : NN_leaves)
+            {
+                moveParent(child, t_parent);
+            }
+
+            // means[t_parent] = createMeanSig(matrices[t_parent]);
+            // updatePriority(t_parent);
+            updateNodeMean(t_parent);
+            return dest;
+        }
+
+        return createNode(signature, insertionList, node, idx);
     }
 
     inline size_t tt_branch(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
@@ -1102,14 +1228,14 @@ public:
             {
                 fprintf(stderr, "#b-stay in multiple children %zu\n", stay.size());
 
-                double max_distance = 0;
+                double max_similarity = 0;
                 size_t best_child = 0;
                 for (size_t child : stay)
                 {
-                    double distance = calcDistance(means[child], signature);
-                    if (distance > max_distance)
+                    double similarity = calcSimilarity(means[child], signature);
+                    if (similarity > max_similarity)
                     {
-                        max_distance = distance;
+                        max_similarity = similarity;
                         best_child = child;
                     }
                 }
@@ -1181,14 +1307,14 @@ public:
             // updatePriority(t_parent);
             // return dest;
 
-            double max_distance = 0;
+            double max_similarity = 0;
             size_t best_child = 0;
             for (size_t child : stay)
             {
-                double distance = calcDistance(means[child], signature);
-                if (distance > max_distance)
+                double similarity = calcSimilarity(means[child], signature);
+                if (similarity > max_similarity)
                 {
-                    max_distance = distance;
+                    max_similarity = similarity;
                     best_child = child;
                 }
             }
@@ -1237,7 +1363,11 @@ public:
 
     inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (isBranchNode[node])
+        if (node == root)
+        {
+            return tt_root(signature, insertionList, idx);
+        }
+        else if (isBranchNode[node])
         {
             return tt_branch(signature, insertionList, idx, node);
         }
@@ -1258,11 +1388,11 @@ public:
 
         fprintf(stderr, "inserted %zu at %zu\n\n", idx, node);
 
-        size_t parent = parentLinks[node];
-        if (childCounts[parent] > 5)
-        {
-            forcesplitBranch(parent, insertionList);
-        }
+        // size_t parent = parentLinks[node];
+        // if (childCounts[parent] > 5)
+        // {
+        //     forcesplitBranch(parent, insertionList);
+        // }
         return node;
     }
 

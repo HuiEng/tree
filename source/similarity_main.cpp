@@ -10,6 +10,7 @@ using namespace std;
 
 static similarity_main_cmdline args; // Command line switches and arguments
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
+bool skip = false;
 
 // void toBinary(cell_type letter)
 // {
@@ -34,25 +35,70 @@ void calcAllSimilarity(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
 {
     size_t seqCount = seqs.size();
     fprintf(pFile, "i,j,similarity\n");
-    for (size_t i = 0; i < seqCount; i++)
+    if (skip)
     {
-        // // debug
-        // fprintf(stdout, "\n%zu,%zu", i, seqs[i].size());
-        // for (int w = 0; w < min(seqs[i].size(),seqs[37].size()); w++)
-        // {
-        //     size_t c = 0;
-        //     for (size_t n = 0; n < signatureSize; n++)
-        //     {
-        //         c += __builtin_popcountll(seqs[i][w][n] & seqs[37][w][n]);
-        //     }
-        //     fprintf(stdout, ",%zu", c);
-        // }
-
-        for (size_t j = i; j < seqCount; j++)
+        for (size_t i = 0; i < seqCount; i++)
         {
-            // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
-            double dist = calcJaccardLocal(seqs[i], seqs[j]) * 100.0;
-            fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            // // debug
+            // fprintf(stdout, "\n%zu,%zu", i, seqs[i].size());
+            // for (int w = 0; w < min(seqs[i].size(),seqs[37].size()); w++)
+            // {
+            //     size_t c = 0;
+            //     for (size_t n = 0; n < signatureSize; n++)
+            //     {
+            //         c += __builtin_popcountll(seqs[i][w][n] & seqs[37][w][n]);
+            //     }
+            //     fprintf(stdout, ",%zu", c);
+            // }
+
+            for (size_t j = i; j < seqCount; j++)
+            {
+                // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
+                double dist = calcJaccardLocal(seqs[i], seqs[j]) * 100.0;
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < seqCount; i++)
+        {
+
+            for (size_t j = i; j < seqCount; j++)
+            {
+                // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
+                double dist = calcJaccardLocal(seqs[i], seqs[j]) * 100.0;
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            }
+        }
+    }
+}
+
+void calcAllSimilarityLocal(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
+{
+    size_t seqCount = seqs.size();
+    fprintf(pFile, "i,j,similarity\n");
+    if (skip)
+    {
+
+        for (size_t i = 0; i < seqCount; i++)
+        {
+            for (size_t j = i; j < seqCount; j++)
+            {
+                double dist = calcMatchingMinimisers(seqs[i], seqs[j]) * 100.0;
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < seqCount; i++)
+        {
+            for (size_t j = 0; j < seqCount; j++)
+            {
+                double dist = calcMatchingMinimisers(seqs[i], seqs[j]) * 100.0;
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            }
         }
     }
 }
@@ -61,12 +107,27 @@ void calcAllSimilarityGlobal(FILE *pFile, vector<vector<vector<cell_type>>> seqs
 {
     size_t seqCount = seqs.size();
     fprintf(pFile, "i,j,similarity\n");
-    for (size_t i = 0; i < seqCount; i++)
+    if (skip)
     {
-        for (size_t j = i; j < seqCount; j++)
+
+        for (size_t i = 0; i < seqCount; i++)
         {
-            double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
-            fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            for (size_t j = i; j < seqCount; j++)
+            {
+                double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < seqCount; i++)
+        {
+            for (size_t j = 0; j < seqCount; j++)
+            {
+                double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+            }
         }
     }
 }
@@ -76,15 +137,30 @@ void calcAllSimilarityKmers(FILE *pFile, vector<cell_type> seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
     fprintf(pFile, "i,j,similarity\n");
-    for (size_t i = 0; i < seqCount; i++)
+    if (skip)
     {
-        size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
-        for (size_t j = i; j < seqCount; j++)
+        for (size_t i = 0; i < seqCount; i++)
         {
-            // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
-            // fprintf(stdout, "%zu,%zu,%zu\n", i, j, bits);
-            double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
-            fprintf(pFile, "%zu,%zu,%.2f\n", i, j, sim * 100);
+            size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
+            for (size_t j = i; j < seqCount; j++)
+            {
+                // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
+                // fprintf(stdout, "%zu,%zu,%zu\n", i, j, bits);
+                double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, sim * 100);
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < seqCount; i++)
+        {
+            size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
+            for (size_t j = 0; j < seqCount; j++)
+            {
+                double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
+                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, sim * 100);
+            }
         }
     }
 }
@@ -113,6 +189,11 @@ int similarity_main(int argc, char *argv[])
 
     if (args.threshold_given)
         minimiser_match_threshold = args.threshold_arg;
+
+    if (args.skip_arg)
+    {
+        skip = true;
+    }
 
     size_t firstindex = bfIn.find_last_of("/") + 1;
     size_t lastindex = bfIn.find_last_of(".");
@@ -154,7 +235,12 @@ int similarity_main(int argc, char *argv[])
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
 
         // calcAllSetBits(sigs);
-        if (args.global_arg)
+        if (args.local_arg)
+        {
+            FILE *pFile = fopen((rawname + "-local_sim.txt").c_str(), "w");
+            calcAllSimilarityLocal(pFile, seqs);
+        }
+        else if (args.global_arg)
         {
             FILE *pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
             calcAllSimilarityGlobal(pFile, seqs);

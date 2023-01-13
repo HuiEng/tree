@@ -15,6 +15,14 @@ double split_node_threshold;
 size_t minimiser_match_threshold = 4;
 using namespace std;
 
+enum
+{
+    STAY_F = 0,
+    SPLIT_F = 1,
+    NN_LEAVE_F = 2,
+    NN_BRANCH_F = 3
+};
+
 size_t signatureSize = 0; // Signature size (depends on element in BF, obtained while read binary)
 
 void toBinaryIdx(FILE *stream, vector<cell_type> sig)
@@ -94,7 +102,7 @@ size_t countSetBits(seq_type seq)
     return c;
 }
 
-size_t calcHD(seq_type shorter, seq_type longer)
+size_t calcHDWrao(seq_type shorter, seq_type longer)
 {
     size_t c = 0;
     // treat tail subseq as mismatch
@@ -114,6 +122,17 @@ size_t calcHD(seq_type shorter, seq_type longer)
         }
     }
     return c;
+}
+
+size_t calcHD(seq_type a, seq_type b){
+    if (a.size() < b.size())
+    {
+        return calcHDWrao(a, b);
+    }
+    else
+    {
+        return calcHDWrao(b, a);
+    }
 }
 
 size_t calcSingleInter(vector<cell_type> a, vector<cell_type> b)
@@ -191,6 +210,12 @@ size_t calcMatchingWindows(seq_type a, seq_type b)
         }
     }
     return match;
+}
+
+double calcMatchingMinimisers(seq_type a, seq_type b)
+{
+    double size = min(countSetBits(a), countSetBits(b));
+    return calcInter(a, b) / size;
 }
 
 double calcJaccard(seq_type a, seq_type b)
@@ -283,7 +308,7 @@ size_t calcPartitionBitsGlobal(seq_type a, seq_type b)
     return calcInter(x, y);
 }
 
-distance_type calcDistance(seq_type a, seq_type b)
+distance_type calcSimilarity(seq_type a, seq_type b)
 {
     // if (a.size() < b.size())
     // {
@@ -296,12 +321,12 @@ distance_type calcDistance(seq_type a, seq_type b)
 
     // return calcInter(a, b);
     // return calcJaccard(a,b);
-    // return calcJaccardGlobal(a, b);
+    return calcJaccardGlobal(a, b);
 
     // return calcMatchingWindows(a, b);
 
     // normalised to density of b
-    return calcInter(a, b) * 1.0 / countSetBits(b);
+    // return calcInter(a, b) * 1.0 / countSetBits(b);
 }
 
 vector<cell_type> doSingleUnion(vector<cell_type> a, vector<cell_type> b)
