@@ -3,33 +3,12 @@ first read fasta and convert to sigs by using pbuild
 
 
 current algorithm:
->If distance(seq,centroid)<stay_threshold
-- Insert into centroid then move one
+Introduce the "ambiguous node" to store elements that are near neighbour to the other siblings.
 
->else if distance(seq, all children of a node) > split_threshold
-- Spawn new children
-* to modify=> if the node is a branch, spawn sibling to node instead
+The ambiguous can be singleton or potentially overlapping with one or more siblings or outliers of the siblings as the node grow. The idea is that the ambiguous elements does not belong/stay to any exising clusters, but not far enough from existing clusters to form independant subtree as well. We want to avoid choosing the ambiguous elements as the centroid of a cluster because the cluster will have large distortion but small cluster size and large overlapping area with some other tight clusters.
 
->else if matching to only 1 branch
-- traverse again 
+Therefore, each node can have a list of child nodes and ONE ambiguous node. The ambiguous node stores any element that "stay" with the node/parent, but near neighbour to some or all of the other siblings. Besides the ambiguous node, the siblings must always "split" among each other to avoid overlaps at the higher level of the tree. 
 
->else
-- separate matches & mismatches
-if node is branch, dont touch matches, promote mismatches to become siblings of node
-if node is not a branch, ie is a root, create new branch to merge matches, dont touch mismatches
+When an input seq meets a branch/supercluster, it will ignore the ambiguous node for comparison. It will stay in one of the sibling if threshold is met, or create new sibling if mismatches with all siblings or form another supercluster when NN with some of the silbing. The supercluster/branch is the union of all its children. 
 
-- if NN only leaves
-create new t_parent and merge NN leaves
-
-
-- find nearest among NN
-get the distance between seq and every NN, if NN is a branch, get the distance of its children too.
-If NN is a grandchild & grandchild is branch => traverse grandchild
-If NN is a grandchild & grandchild is leaf => add level	
-if NN is a branch => all children are not closer to seq, create new sibling to NN branch
-if NN is a leaf => add level
-
-* Add level means 
-turn a leave into a branch, clear matrices & seqIDs
-copy the content the leave into a new node, make it children of the leaf
-then insert new seq as the second child of the leaf
+Then we need to reinsert the elements in the ambiguous node to see if there is any better candidate. Rotation can happen too, if not maybe the tree will be refined after reinsertion, still thinking about it. The key now is avoiding outlier to be selected as the centroid, the ambiguous node is like a place holder because NNs should be placed under the same subtree anyways, just need to find the best one, we put in the ambiguous node so that they can find a better cluster when there are more candidates later.
