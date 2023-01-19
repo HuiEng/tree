@@ -79,7 +79,7 @@ public:
     vector<int> isBranchNode;          // n entries, is this a branch node
     vector<vector<size_t>> childLinks; // n * o entries, links to children
     vector<int> isAmbiNode;            // n entries, is this a branch node
-    vector<size_t> ambiCounts;         // n * o entries, links to children
+    vector<vector<size_t>> ambiLinks;  // n * o entries, links to children
     vector<vector<size_t>> seqIDs;     // n * o entries, links to children
     vector<size_t> parentLinks;        // n entries, links to parents
     vector<distance_type> priority;    // n entries, links to parents
@@ -112,7 +112,7 @@ public:
             //#pragma omp single
             {
                 isAmbiNode.resize(capacity);
-                ambiCounts.resize(capacity);
+                ambiLinks.resize(capacity);
             }
             //#pragma omp single
             {
@@ -291,6 +291,12 @@ public:
         size_t parent = parentLinks[node];
 
         int idx = getNodeIdx(node);
+
+        if (node == 71)
+        {
+            printTreeJson(stderr, root);
+            fprintf(stderr, "ERROR  %zu  %zu!!\n", node, matrices[parent].size());
+        }
 
         if (idx == -1)
         {
@@ -655,11 +661,11 @@ public:
     // Ambi Node cannot be the first child or else update node mean will have problem
     inline size_t createAmbiNode(seq_type signature, vector<size_t> &insertionList, size_t node, size_t idx)
     {
-        size_t t_parent = createParent(node, insertionList);
+        size_t dest = createNode(signature, insertionList, node, idx);
         fprintf(stderr, ">>Ambi\n");
-        ambiCounts[node]++;
-        isAmbiNode[t_parent] = 1;
-        return createNode(signature, insertionList, t_parent, idx);
+        ambiLinks[node].push_back(dest);
+        isAmbiNode[dest] = 1;
+        return dest;
     }
 
     size_t splitBranch(size_t node, vector<size_t> &insertionList)
@@ -1065,9 +1071,13 @@ public:
         return dest;
     }
 
+    // put NN leaves and branches under the same supercluster
+    // create an ambiNode to store seqs that are NN to some or all the NN
+    // all children in this supercluster except for the ambiNode should be "split"
     inline size_t superCluster(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node, vector<size_t> NN_leaves, vector<size_t> NN_branches)
     {
         size_t t_parent = createParent(node, insertionList);
+        fprintf(stderr, "*** super\n");
         for (size_t child : NN_leaves)
         {
             moveParent(child, t_parent);
@@ -1078,11 +1088,12 @@ public:
             moveParent(child, t_parent);
         }
 
+        addSigToMatrix(node, signature); // this should be updated later
+
         size_t dest = createAmbiNode(signature, insertionList, t_parent, idx);
-
         updateNodeMean(t_parent);
-
-        if (ambiCounts[node] > 0)
+        updateNodeMean(node);
+        if (ambiLinks[node].size() > 0)
         {
             // shouldn't happen at root
             fprintf(stderr, "check ambi\n");
@@ -1106,7 +1117,7 @@ public:
             return stayNode(signature, insertionList, idx, dest);
         }
 
-        if (mismatch.size() == childCounts[node] - ambiCounts[node])
+        if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
         {
             fprintf(stderr, "#mismatch\n");
             return createNode(signature, insertionList, node, idx);
@@ -1146,7 +1157,52 @@ public:
         }
         else
         {
-            fprintf(stderr, "#match multiple branches\n");
+            fprintf(stderr, "#match multiple branches > ");
+            double max_sim = 0;
+            for (size_t c : NN_branches)
+            {
+                double similarity = calcSimilarity(means[c], signature);
+                if (c > max_sim)
+                {
+                    max_sim = similarity;
+                    dest = c;
+                }
+            }
+
+            if (NN_leaves.size() == 0)
+            {
+                // continue with nearest, might change
+                fprintf(stderr, "?without leaves\n");
+                return tt_branch(signature, insertionList, idx, dest);
+            }
+            else
+            {
+                // if there is any leaf has higher similarity than all the branches,
+                // ignore NN branches, supercluster on the NN leaves only
+                // or else, continue with the nearest branch and ignore leaves
+                // might change
+                fprintf(stderr, "?with leaves\n");
+                for (size_t c : NN_leaves)
+                {
+                    double similarity = calcSimilarity(means[c], signature);
+                    if (c > max_sim)
+                    {
+                        max_sim = similarity;
+                        dest = c;
+                        NN_branches.clear();
+                        break;
+                    }
+                }
+
+                if (isBranchNode[dest])
+                {
+                    return tt_branch(signature, insertionList, idx, dest);
+                }
+                else
+                {
+                    return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
+                }
+            }
         }
         // if (NN_total == 1)
         // {
@@ -1191,7 +1247,7 @@ public:
             return stayNode(signature, insertionList, idx, dest);
         }
 
-        if (mismatch.size() == childCounts[node] - ambiCounts[node])
+        if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
         {
             //? this might be a wrong supercluster, dissolve this branch and check from parent again
             fprintf(stderr, "//?#b- mismatch all\n");
@@ -1205,26 +1261,31 @@ public:
         }
 
         size_t NN_total = NN_leaves.size() + NN_branches.size();
-        if (NN_total == 1)
+        if (mismatch.size() == 0)
         {
-            fprintf(stderr, "??NN with one without stay\n");
-            return createNode(signature, insertionList, node, idx);
-        }
-        else if (NN_total > 1)
-        {
-            //? NN with first child, separate case
-            fprintf(stderr, "NN with multiple without stay\n");
-            size_t t_parent = createParent(node, insertionList);
-            dest = createNode(signature, insertionList, t_parent, idx);
-            // means[t_parent] = signature;
-            // addSigToMatrix(node, means[t_parent]);
-            for (size_t child : NN_leaves)
+            // NN with everything
+            fprintf(stderr, "#??NN with all\n");
+            if (ambiLinks[node].size() == 0)
             {
-                moveParent(child, t_parent);
+                return createAmbiNode(signature, insertionList, node, idx);
             }
-
-            updateNodeMean(t_parent);
-            return dest;
+            else
+            {
+                return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
+            }
+        }
+        else
+        {
+            // some mismatches
+            fprintf(stderr, "#NN with some\n");
+            if (ambiLinks[node].size() == 0)
+            {
+                return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
+            }
+            else
+            {
+                return createNode(signature, insertionList, ambiLinks[node][0], idx);
+            }
         }
         fprintf(stderr, "//?#b- wrong\n");
         return createNode(signature, insertionList, node, idx);
