@@ -989,6 +989,85 @@ public:
         return 1;
     }
 
+    size_t forceSplitRoot(vector<size_t> &insertionList)
+    {
+        fprintf(stderr, ">> Force split root\n");
+        size_t node = root;
+        vector<size_t> temp_centroids = {childLinks[node][0]};
+        vector<vector<size_t>> clusters;
+        //?
+        vector<size_t> temp;
+        clusters.push_back(temp);
+        vector<size_t> t;
+        clusters.push_back(t);
+
+        double min_similarity = 1;
+        size_t candidate = 0;
+        seq_type mean0 = means[childLinks[node][0]];
+        for (size_t i = childCounts[node] - 1; i > 0; i--)
+        {
+            size_t child = childLinks[node][i];
+            if (isAmbiNode[child])
+            {
+                continue;
+            }
+            double similarity = calcSimilarity(mean0, matrices[node][i]);
+            // fprintf(stderr, "%zu, %f\n", child, similarity);
+            if (similarity < min_similarity)
+            {
+                min_similarity = similarity;
+                candidate = child;
+            }
+        }
+
+        if (candidate == 0)
+        {
+            fprintf(stderr, "??something is wrong %zu, %f\n", node, priority[node]);
+            return 0;
+        }
+
+        temp_centroids.push_back(candidate);
+
+        for (size_t n = 0; n < matrices[node].size(); n++)
+        {
+            size_t child = childLinks[node][n];
+            size_t dest = 0;
+            double max_similarity = 0;
+            for (size_t i = 0; i < temp_centroids.size(); i++)
+            {
+                double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
+                // fprintf(stderr, "%zu, %f\n", temp_centroids[i], similarity);
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = i;
+                }
+            }
+            // fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
+            clusters[dest].push_back(child);
+        }
+
+        if (clusters[0].size() == 0 || clusters[1].size() == 0)
+        {
+            fprintf(stderr, "??something is wrong cannot split evenly\n");
+            return 0;
+        }
+
+        for (size_t i = 0; i < temp_centroids.size(); i++)
+        {
+            size_t t_parent = createParent(node, insertionList);
+            for (size_t n = 0; n < clusters[i].size(); n++)
+            {
+                moveParent(clusters[i][n], t_parent);
+                fprintf(stderr, "--- %zu,%zu\n", clusters[i][n], t_parent);
+            }
+            updatePriority(t_parent);
+            updateNodeMean(t_parent);
+        }
+
+        return 1;
+    }
+
     inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
     {
         double offset = 1.2;
@@ -1319,11 +1398,10 @@ public:
 
         fprintf(stderr, "inserted %zu at %zu\n\n", idx, node);
 
-        // size_t parent = parentLinks[node];
-        // if (childCounts[parent] > 5)
-        // {
-        //     forcesplitBranch(parent, insertionList);
-        // }
+        if (childCounts[root] > 5)
+        {
+            forceSplitRoot(insertionList);
+        }
         return node;
     }
 
