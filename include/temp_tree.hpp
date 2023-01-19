@@ -212,6 +212,7 @@ public:
     {
         fprintf(stream, "{\"node\":\"%zu\",", tnode);
         fprintf(stream, "\"branch\":\"%zu\",", isBranchNode[tnode]);
+        fprintf(stream, "\"ambi\":\"%zu\",", isAmbiNode[tnode]);
         fprintf(stream, "\"priority\":\"%.2f\",", priority[tnode]);
         fprintf(stream, "\"childCount\":\"%zu\",\"content\":\"*", seqIDs[tnode].size());
         // fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], calcNodeMaxsimilarity(tnode), seqIDs[tnode].size());
@@ -1284,7 +1285,7 @@ public:
             }
             else
             {
-                return createNode(signature, insertionList, ambiLinks[node][0], idx);
+                return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
             }
         }
         fprintf(stderr, "//?#b- wrong\n");
