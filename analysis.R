@@ -485,14 +485,36 @@ ggplot(ecoli_local_short,aes(x=score,y=similarity))+
   
 ####################################################
 
+toy<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy_needle.csv)")
+hist(toy$similarity.)
+
+ggplot(toy)+geom_tile(aes(x=aseq,y=bseq,fill=similarity.))
+ggplot(toy[1:20000,])+geom_point(aes(x=aseq,y=bseq))
 
 
+ggplot(toy)+
+  geom_density(aes(x=similarity.,colour=as.factor(floor(aseq/26))),
+                 alpha=0.6, position = 'identity')
+require(scales)
+sig<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-k9-w100-s5-test.sim-global_sim.txt)")
+seed<-sig[sig$i%%26==0 & sig$j%%26==0,]
+p<-ggplot(seed)+
+  # geom_density(aes(x=similarity))
+  # geom_bar(aes(x=similarity,y = (..count..)/sum(..count..)))
+  # geom_bar(aes(x=similarity,y = ..count..))
+  geom_histogram(aes(x=similarity))
 
+ggplot(seed, aes(x = similarity)) +
+  geom_histogram(aes(y = stat(density))) +
+  scale_y_continuous(labels = scales::percent_format())
+q<-ggplot_build(p)
 
+summary(sig$similarity)
+sd(toy$similarity)
 
+ggplot(sig)+
+  geom_histogram(aes(x=similarity,colour=as.factor(floor(i/26))),
+               alpha=0.6, position = 'identity')
 
-
-
-
-
-
+ggplot(sig)+
+  geom_histogram(aes(x=similarity))+facet_wrap(~floor(i/26))

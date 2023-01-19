@@ -1292,19 +1292,6 @@ public:
         return createNode(signature, insertionList, node, idx);
     }
 
-    inline size_t tt_node(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
-    {
-        size_t status = similarityStatus(node, 0, signature);
-        if (status == STAY_F)
-        {
-            return stayNode(signature, insertionList, idx, node);
-        }
-        size_t parent = parentLinks[node];
-        size_t dest = createNode(signature, insertionList, parent, idx);
-        updateNodeMean(parent);
-        return dest;
-    }
-
     inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
         if (node == root)
@@ -1317,7 +1304,7 @@ public:
         }
         else
         {
-            return tt_node(signature, insertionList, idx, node);
+            fprintf(stderr, "Something went wrong\n");
         }
     }
 
@@ -1338,6 +1325,193 @@ public:
         //     forcesplitBranch(parent, insertionList);
         // }
         return node;
+    }
+
+    inline size_t search(seq_type signature, size_t idx = 0)
+    {
+        size_t node = root;
+        size_t best_child = node;
+        double best_similarity = 0;
+
+        do
+        {
+            size_t local_best_child = node;
+            double local_best_similarity = 0;
+
+            for (size_t i = 0; i < childCounts[node]; i++)
+            {
+                size_t child = childLinks[node][i];
+                if (isAmbiNode[child])
+                {
+                    continue;
+                }
+
+                double similarity = calcSimilarity(means[child], signature);
+                // fprintf(stderr, " <%zu,%.2f> ", child, similarity);
+
+                // found same, move on with the next seq
+                if (similarity >= (stay_threshold))
+                {
+                    // while (isBranchNode[child])
+                    // {
+                    //     child = childLinks[child][0];
+                    // }
+                    return child;
+                }
+
+                if (similarity >= local_best_similarity)
+                {
+                    local_best_similarity = similarity;
+                    local_best_child = child;
+                }
+            }
+            if (local_best_similarity >= best_similarity)
+            {
+                best_similarity = local_best_similarity;
+                best_child = local_best_child;
+            }
+
+            node = local_best_child;
+
+        } while (isBranchNode[node]);
+
+        // seqIDs[best_child].push_back(idx);
+        return best_child;
+    }
+
+    // cluster means still remain
+    void prepReinsert(size_t node = 0)
+    {
+        if (!isBranchNode[node])
+        {
+            seqIDs[node].clear();
+        }
+
+        for (size_t child : childLinks[node])
+        {
+            prepReinsert(child);
+        }
+    }
+
+    size_t reinsert(seq_type signature, size_t idx)
+    {
+        size_t node = search(signature);
+        seqIDs[node].push_back(idx);
+        addSigToMatrix(node, signature);
+        return node;
+    }
+
+    void getEmptyLeaves(vector<size_t> &leaves, size_t node = 0)
+    {
+        for (size_t child : childLinks[node])
+        {
+            if (isBranchNode[child])
+            {
+                getEmptyLeaves(leaves, child);
+            }
+            else if (isAmbiNode[child] || seqIDs[child].size() == 0)
+            {
+                leaves.push_back(child);
+            }
+            else
+            {
+                // updatePriority(child);
+                updateNodeMean(node);
+            }
+        }
+    }
+
+    bool redundant(size_t parent)
+    {
+        fprintf(stderr, "redundant %zu\n", parent);
+        if (childCounts[parent] == 0)
+        {
+            return true;
+        }
+        else if (childCounts[parent] == 1)
+        {
+            size_t child = childLinks[parent][0];
+            if (isBranchNode[child])
+            {
+                return childCounts[child] == 0;
+            }
+        }
+        return false;
+    }
+
+    void dropBranch(size_t node = 0)
+    {
+        if (isBranchNode[node])
+        {
+            size_t centroid = node;
+            size_t parent = parentLinks[node];
+            size_t idx = getNodeIdx(node);
+            while (isBranchNode[centroid] && childCounts[centroid] == 1)
+            {
+                size_t temp = centroid;
+                centroid = childLinks[centroid][0];
+                clearNode(temp);
+            }
+
+            if (centroid != node)
+            {
+                childLinks[parent][idx] = centroid;
+                parentLinks[centroid] = parent;
+            }
+
+            for (size_t child : childLinks[centroid])
+            {
+                dropBranch(child);
+            }
+        }
+    }
+
+    void trim(size_t last_idx)
+    {
+        std::set<size_t> branches;
+        fprintf(stderr, "\nTrimming\n");
+
+        vector<size_t> leaves;
+
+        getEmptyLeaves(leaves);
+
+        // do leaves
+        for (size_t i : leaves)
+        {
+            if (seqIDs[i].size() == 0)
+            {
+                size_t parent = parentLinks[i];
+                deleteNode(i);
+                if (childCounts[parent] == 0)
+                {
+                    branches.insert(parent);
+                }
+            }
+        }
+
+        // do parents
+        for (auto &b : branches)
+        {
+            size_t node = b;
+            size_t parent = parentLinks[node];
+
+            while (redundant(node))
+            {
+                size_t temp = parent;
+                parent = parentLinks[parent];
+                deleteNode(node);
+                clearNode(node);
+                node = temp;
+            }
+            // updatePriority(node);
+            updateNodeMean(node);
+        }
+
+        // remove unitig for non-empty leaves
+        for (size_t child : childLinks[root])
+        {
+            dropBranch(child);
+        }
     }
 
     void destroyLocks(size_t node)
