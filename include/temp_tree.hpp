@@ -77,6 +77,7 @@ public:
     size_t root = 0;                   // # of root node
     vector<size_t> childCounts;        // n entries, number of children
     vector<int> isBranchNode;          // n entries, is this a branch node
+    vector<int> rootNodes;             // n entries, is this root of subtree
     vector<vector<size_t>> childLinks; // n * o entries, links to children
     vector<int> isAmbiNode;            // n entries, is this a branch node
     vector<vector<size_t>> ambiLinks;  // n * o entries, links to children
@@ -151,6 +152,7 @@ public:
         reserve(capacity);
         childCounts[root] = 0;
         isBranchNode[root] = 0;
+        rootNodes.push_back(root);
     }
 
     void printMatrix(FILE *stream, size_t node)
@@ -992,6 +994,7 @@ public:
     size_t forceSplitRoot(vector<size_t> &insertionList)
     {
         fprintf(stderr, ">> Force split root\n");
+        // rootNodes.resize(1);
         size_t node = root;
         vector<size_t> temp_centroids = {childLinks[node][0]};
         vector<vector<size_t>> clusters;
@@ -1028,6 +1031,8 @@ public:
 
         temp_centroids.push_back(candidate);
 
+        fprintf(stderr, "??something is wrong %zu,%zu,%zu \n",  matrices[node].size(), childLinks[node].size(),childCounts[node]);
+
         for (size_t n = 0; n < matrices[node].size(); n++)
         {
             size_t child = childLinks[node][n];
@@ -1056,6 +1061,7 @@ public:
         for (size_t i = 0; i < temp_centroids.size(); i++)
         {
             size_t t_parent = createParent(node, insertionList);
+            rootNodes.push_back(t_parent);
             for (size_t n = 0; n < clusters[i].size(); n++)
             {
                 moveParent(clusters[i][n], t_parent);
@@ -1063,6 +1069,7 @@ public:
             }
             updatePriority(t_parent);
             updateNodeMean(t_parent);
+            addSigToMatrix(node, means[t_parent]);
         }
 
         return 1;
@@ -1181,15 +1188,15 @@ public:
         return dest;
     }
 
-    inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        size_t node = root;
+        // size_t node = root;
         vector<size_t> mismatch;
         vector<size_t> NN_leaves;
         vector<size_t> NN_branches;
         vector<size_t> stay;
 
-        size_t dest = checkRoot(signature, insertionList, mismatch, NN_leaves, NN_branches, stay);
+        size_t dest = checkRoot(signature, insertionList, mismatch, NN_leaves, NN_branches, stay, node);
 
         if (dest != 0)
         {
@@ -1312,6 +1319,12 @@ public:
 
     inline size_t tt_branch(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
+        if (find(rootNodes.begin(), rootNodes.end(), node) != rootNodes.end())
+        {
+            fprintf(stderr, "is subtree %zu\n", node);
+            return tt_root(signature, insertionList, idx, node);
+        }
+
         size_t current_childCount = childCounts[node];
         vector<size_t> mismatch;
         vector<size_t> NN_leaves;
@@ -1400,7 +1413,9 @@ public:
 
         if (childCounts[root] > 5)
         {
+            printTreeJson(stderr);
             forceSplitRoot(insertionList);
+            printTreeJson(stderr);
         }
         return node;
     }
