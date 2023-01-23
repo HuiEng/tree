@@ -2,18 +2,36 @@ library("dplyr")
 library(DescTools)
 source("C://DataCopied/Research/R/createShiny.R")
 
-formatResult<-function(file){
-  dt<-read.csv(file)
-  ancestors<-unique(dt$ancestor)
+# formatResult<-function(file){
+#   dt<-read.csv(file)
+#   ancestors<-unique(dt$ancestor)
+#   dt<-dt%>%group_by(cluster)%>%
+#     mutate(ancestor=match(ancestor,ancestors),
+#            clu_size=length(cluster),
+#            species_id=ceiling((seqID+1)/26)-1)
+#   dt<-dt%>%group_by(ancestor)%>%
+#     mutate(anc_clu_size=length((ancestor)))
+#   dt
+# }
+
+plotEnt<-function(file){
+  dt<-read.csv(file,header=FALSE)
+  colnames(dt)<-c("seqID","cluster")
+  dt<-dt%>%mutate(species_id=ceiling((seqID+1)/26)-1)
   dt<-dt%>%group_by(cluster)%>%
-    mutate(ancestor=match(ancestor,ancestors),
-           clu_size=length(cluster),
-           species_id=ceiling((seqID+1)/26)-1)
-  dt<-dt%>%group_by(ancestor)%>%
-    mutate(anc_clu_size=length((ancestor)))
+    summarise(clu_size=length(cluster),
+              entropy=Entropy(table(species_id),base=exp(1)))
+  dt<-dt%>%mutate(clus_id=row_number())
   dt
 }
-
+{
+  dt<-plotEnt("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s60-l20.txt")
+  ggplotly(
+    ggplot(dt)+
+      geom_point(aes(x=clus_id,y=entropy,size=clu_size))
+  )
+  mean(dt$entropy)
+}
 
 formatResultMeta<-function(file, metafile){
   meta<-read.csv(metafile, header = F)
@@ -66,8 +84,10 @@ formatResultMeta<-function(file, metafile){
   # metafile<-r"(C:\DataCopied\Research\tree\data\controlled-silva\controlled-silva-meta.csv)"
   # tree<-formatResultMeta(file,metafile)
   
+  file<-("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s60-l20.txt")
+  
   # tree<-formatResult("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s50-l30.txt")
-  tree<-formatResult("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s50-l30-random.txt")
+  # tree<-formatResult("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s50-l30-random.txt")
 # search<-formatResult("C://DataCopied/Research/tree/data/data-s2-l5-search.txt")
 
 singleton<-tree[tree$clu_size==1,]
