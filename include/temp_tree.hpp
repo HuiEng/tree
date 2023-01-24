@@ -1031,7 +1031,7 @@ public:
 
         temp_centroids.push_back(candidate);
 
-        fprintf(stderr, "??something is wrong %zu,%zu,%zu \n",  matrices[node].size(), childLinks[node].size(),childCounts[node]);
+        fprintf(stderr, "??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
 
         for (size_t n = 0; n < matrices[node].size(); n++)
         {
@@ -1411,65 +1411,95 @@ public:
 
         fprintf(stderr, "inserted %zu at %zu\n\n", idx, node);
 
-        if (childCounts[root] > 5)
-        {
-            printTreeJson(stderr);
-            forceSplitRoot(insertionList);
-            printTreeJson(stderr);
-        }
+        // if (childCounts[root] > 5)
+        // {
+        //     printTreeJson(stderr);
+        //     forceSplitRoot(insertionList);
+        //     printTreeJson(stderr);
+        // }
         return node;
     }
 
-    inline size_t search(seq_type signature, size_t idx = 0)
+    inline size_t search(seq_type signature, size_t idx = 0, size_t node = 0)
     {
-        size_t node = root;
-        size_t best_child = node;
-        double best_similarity = 0;
+        // size_t node = root;
 
-        do
+        size_t local_best_child = node;
+        double local_best_similarity = 0;
+        double local_best_similarity_b = 0;
+        size_t local_best_child_b = node;
+
+        for (size_t i = 0; i < childCounts[node]; i++)
         {
-            size_t local_best_child = node;
-            double local_best_similarity = 0;
-
-            for (size_t i = 0; i < childCounts[node]; i++)
+            size_t child = childLinks[node][i];
+            if (isAmbiNode[child])
             {
-                size_t child = childLinks[node][i];
-                if (isAmbiNode[child])
+                continue;
+            }
+
+            double similarity = calcSimilarity(means[child], signature);
+            fprintf(stderr, " <%zu,%.2f> ", child, similarity);
+
+            // found same, move on with the next seq
+            if (similarity >= (stay_threshold))
+            {
+                // while (isBranchNode[child])
+                // {
+                //     child = childLinks[child][0];
+                // }
+                if (isBranchNode[child])
                 {
-                    continue;
+                    if (local_best_similarity_b == 1)
+                    {
+                        return search(signature, idx, child);
+                    }
+                    else if (similarity >= local_best_similarity_b)
+                    {
+                        local_best_similarity_b = similarity;
+                        local_best_child_b = child;
+                    }
                 }
-
-                double similarity = calcSimilarity(means[child], signature);
-                // fprintf(stderr, " <%zu,%.2f> ", child, similarity);
-
-                // found same, move on with the next seq
-                if (similarity >= (stay_threshold))
+                else
                 {
-                    // while (isBranchNode[child])
-                    // {
-                    //     child = childLinks[child][0];
-                    // }
                     return child;
                 }
+            }
+            else
+            {
 
-                if (similarity >= local_best_similarity)
+                if (isBranchNode[child])
                 {
-                    local_best_similarity = similarity;
-                    local_best_child = child;
+                    if (similarity >= local_best_similarity_b)
+                    {
+                        local_best_similarity_b = similarity;
+                        local_best_child_b = child;
+                    }
+                }
+                else
+                {
+                    if (similarity >= local_best_similarity)
+                    {
+                        local_best_similarity = similarity;
+                        local_best_child = child;
+                    }
                 }
             }
-            if (local_best_similarity >= best_similarity)
-            {
-                best_similarity = local_best_similarity;
-                best_child = local_best_child;
-            }
+        }
 
-            node = local_best_child;
+        // // stay in branch, proceed with children
+        // if (local_best_child_b != node)
+        // {
+        //     return search(signature, idx, local_best_child_b);
+        // }
 
-        } while (isBranchNode[node]);
-
-        // seqIDs[best_child].push_back(idx);
-        return best_child;
+        if (local_best_similarity >= local_best_similarity_b)
+        {
+            return local_best_child;
+        }
+        else
+        {
+            return search(signature, idx, local_best_child_b);
+        }
     }
 
     // cluster means still remain

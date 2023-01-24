@@ -3,7 +3,7 @@ first read fasta and convert to sigs by using pbuild
 
 
 current algorithm:
-Divide the children of root if the count is create than the limit (5 for now)
-use the first child as the first seed, and its furthest sibling as the second seed, group the children to their nearest seed
+create ambi node to store NN (neither stay or split), ancestor only union non-ambi nodes.
+Ambi nodes will be deleted/ignored for reinsertion, seqs previously in ambi nodes (and other nodes) will find the best suited nodes during reinsertion.
 
-the seeds are independent subtree, not fair to be treated as normal branch due to its distortion, need to compare them in a different way, especially for the NNs. (haven't fully implement)
+find closest leaves & branch, prioritise leaf, if not proceed with closest branch, prune if distance >= stay threshold for leaf
