@@ -656,6 +656,41 @@ public:
         }
     }
 
+    inline size_t stayAmbi(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node)
+    {
+        size_t ambi = ambiLinks[node][0];
+        vector<seq_type> tempSigs;
+        vector<size_t> tempSeqIDs;
+
+        vector<seq_type> tempSigs_m;
+        vector<size_t> tempSeqIDs_m;
+
+        size_t i = 0;
+        for (seq_type matrix : matrices[ambi])
+        {
+            size_t status = similarityStatus(matrix, signature);
+            switch (status)
+            {
+            case STAY_F:
+                tempSigs_m.push_back(matrix);
+                tempSeqIDs_m.push_back(seqIDs[ambi][i]);
+                break;
+            case SPLIT_F:
+                fprintf(stderr, "***??? %zu\n", seqIDs[ambi][i]);
+                tempSigs.push_back(matrix);
+                tempSeqIDs.push_back(seqIDs[ambi][i]);
+                break;
+            default:
+                tempSigs.push_back(matrix);
+                tempSeqIDs.push_back(seqIDs[ambi][i]);
+                break;
+            }
+            i++;
+        }
+
+        return stayNode(signature, insertionList, idx, ambi);
+    }
+
     void moveParent(size_t child, size_t new_parent, bool d = true)
     {
         childCounts[new_parent]++;
@@ -1123,15 +1158,16 @@ public:
 
     inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
     {
-        double offset = 1.2;
         // check the other children
         double local_stay_t = stay_threshold;
-        // size_t rank = findLevel(child);
-        for (size_t t = 0; t < rank; t++)
-        {
-            local_stay_t = local_stay_t + stay_threshold * offset;
-        }
-        double NN_t = local_stay_t + stay_threshold * offset;
+
+        // double offset = 1.2;
+        // // size_t rank = findLevel(child);
+        // for (size_t t = 0; t < rank; t++)
+        // {
+        //     local_stay_t = local_stay_t + stay_threshold * offset;
+        // }
+        // // double NN_t = local_stay_t + stay_threshold * offset;
 
         double local_split_t = split_threshold;
         double similarity = calcSimilarity(means[child], signature);
@@ -1157,6 +1193,35 @@ public:
             {
                 return NN_LEAVE_F;
             }
+        }
+    }
+
+    inline size_t similarityStatus(seq_type sig1, seq_type sig2)
+    {
+        double offset = 1.2;
+        // check the other children
+        double local_stay_t = stay_threshold;
+        // // size_t rank = findLevel(child);
+        // for (size_t t = 0; t < rank; t++)
+        // {
+        //     local_stay_t = local_stay_t + stay_threshold * offset;
+        // }
+        // // double NN_t = local_stay_t + stay_threshold * offset;
+
+        double local_split_t = split_threshold;
+        double similarity = calcSimilarity(sig1, sig2);
+
+        if (similarity >= local_stay_t)
+        {
+            return STAY_F;
+        }
+        else if (similarity <= local_split_t)
+        {
+            return SPLIT_F;
+        }
+        else
+        {
+            return NN_F;
         }
     }
 
@@ -1419,7 +1484,7 @@ public:
             }
             else
             {
-                return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
+                return stayAmbi(signature, insertionList, idx, node);
             }
         }
         else
@@ -1432,7 +1497,7 @@ public:
             }
             else
             {
-                return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
+                return stayAmbi(signature, insertionList, idx, node);
             }
         }
         fprintf(stderr, "//?#b- wrong\n");

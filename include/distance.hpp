@@ -20,7 +20,8 @@ enum
     STAY_F = 0,
     SPLIT_F = 1,
     NN_LEAVE_F = 2,
-    NN_BRANCH_F = 3
+    NN_BRANCH_F = 3,
+    NN_F = 4
 };
 
 size_t signatureSize = 0; // Signature size (depends on element in BF, obtained while read binary)
