@@ -56,7 +56,8 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 {
     size_t seqCount = seqs.size();
     // seqCount = 300;
-    vector<size_t> clusters(seqCount);
+    // vector<size_t> clusters(seqCount);
+    vector<size_t> clusters(cap);
     tree_type tree(partree_capacity);
 
     size_t firstNodes = 1;
@@ -197,6 +198,10 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     tree.destroyLocks();
 
     tree.printTreeJson(stdout);
+
+    FILE *hFile = fopen("hierarchy.txt", "w");
+    fprintf(hFile, "parent,child,rank\n");
+    tree.outputHierarchy(hFile);
 
     return clusters;
 }

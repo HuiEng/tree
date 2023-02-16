@@ -41,13 +41,15 @@ cluQuality<-function(dt,sim){
   clu
 }
 
+
+######################## iterations ##################################
 path<-"C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s60-l20"
 cluQ<-NULL
 nodeDistance<-NULL
+water<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-waterall.csv)")
+
 for (r in seq(0,9)){
-  
   dt<-plotEnt(paste(path,"/clusters-r",r,".txt",sep=""))
-  water<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-waterall.csv)")
   temp<-cluQuality(dt,water)
   temp$run<-r
   cluQ<-rbind(cluQ,temp)
@@ -66,10 +68,60 @@ meanNodeDistance<-nodeDistance%>%group_by(run)%>%summarise(HD=mean(HD))
 meanCluQ<-cluQ%>%group_by(run)%>%summarise(avg_sim=mean(avg_sim))
 save.image("C:/DataCopied/Research/tree/data/toy/clusQ.RData")
 
+load("C:/DataCopied/Research/tree/data/toy/clusQ-r.RData")
+meanNodeDistance_r<-meanNodeDistance
+meanCluQ_r<-meanCluQ
 load("C:/DataCopied/Research/tree/data/toy/clusQ.RData")
+ggplot()+
+  geom_line(data=meanNodeDistance,aes(x=run,y=HD,color="ordered"))+
+  geom_line(data=meanNodeDistance_r,aes(x=run,y=HD,color = "random"))+
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10))
 
 ggplot()+
-  geom_line(meanNodeDistance,aes(x=run,y=mean(HD)))
+  geom_line(data=meanCluQ,aes(x=run,y=avg_sim,color="ordered"))+
+  geom_line(data=meanCluQ_r,aes(x=run,y=avg_sim,color = "random"))+
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10))
+
+ggplot()+
+  geom_line(data=meanNodeDistance,aes(x=run,y=HD,color="HD"))+
+  geom_line(data=meanCluQ,aes(x=run,y=avg_sim-60,color="avg_sim"))+
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10))+
+  scale_y_continuous(
+    name = "HD",
+    sec.axis = sec_axis(~.+60, name="avg_sim")
+  )
+######################## //iterations ##################################
+
+path<-"C://DataCopied/Research/tree/data/toy"
+water<-read.csv(paste(path,"/toy-waterall.csv",sep=""))
+
+hierarchy<-read.csv(paste(path,"/hierarchy.txt",sep=""))
+hierarchy<-hierarchy%>%mutate(parent=case_when((rank == 0 & parent == 0 & !child %in% parent) ~ child, TRUE ~ parent))
+
+dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
+dt<-merge(dt,hierarchy,by.x="cluster",by.y="child")
+
+
+cluQuality<-function(dt,sim){
+  temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
+  temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
+  
+  temp<-temp%>%filter(parent.x==parent.y & aseq!=bseq)
+
+  # clu<-temp%>%group_by(cluster.y)%>%
+  clu<-temp%>%group_by(parent.y)%>%
+    summarise(avg_sim=mean(similarity.),
+              size=length(unique(bseq))+1,
+              rank=max(rank.y))
+  names(clu)[names(clu) == 'parent.y'] <- 'clus_id'
+  clu$clu<-seq.int(nrow(clu))-1
+  clu
+}
+# temp<-cluQuality(dt,water)
+cluQ<-cluQuality(dt,water)
+
+cluQ<-temp%>%group_by(parent.y)%>%
+  summarise(avg_sim=min(similarity.))
 
 (
   ggplot(cluQ)+

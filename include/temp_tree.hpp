@@ -345,6 +345,59 @@ public:
         parentLinks[node] = 0;
     }
 
+    inline void avgCentroid(size_t node)
+    {
+        // find the smallest windows count
+        size_t winNum = matrices[node][0].size();
+        for (seq_type matrix : matrices[node])
+        {
+            if (matrix.size() < winNum)
+            {
+                winNum = matrix.size();
+            }
+        }
+        seq_type meanSig;
+        vector<vector<size_t>> counters;
+        for (size_t w = 0; w < winNum; w++)
+        {
+            vector<size_t> counter(signatureSize * bits_per_char);
+            counters.push_back(counter);
+
+            vector<cell_type> temp(signatureSize * bits_per_char);
+            meanSig.push_back(temp);
+        }
+
+        for (seq_type signatureData : matrices[node])
+        {
+            for (size_t w = 0; w < winNum; w++)
+            {
+                for (size_t i = 0; i < signatureSize; i++)
+                {
+                    for (int n = 0; n < bits_per_char; n++)
+                    {
+                        if ((signatureData[w][i] >> n) & 1)
+                        {
+                            counters[w][i * bits_per_char + n]++;
+                        }
+                    }
+                }
+            }
+        }
+        for (size_t w = 0; w < winNum; w++)
+        {
+            vector<size_t> counter = counters[w];
+            for (int i = 0; i < counter.size(); i++)
+            {
+                // make it upperbound
+                if (counter[i] >= (matrices[node].size() + 1) / 2)
+                {
+                    meanSig[w][i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
+                }
+            }
+        }
+        means[node] = meanSig;
+    }
+
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
@@ -363,99 +416,11 @@ public:
                 }
                 meanSig = doUnion(meanSig, means[child]);
             }
-
-            // size_t winNum = meanSig.size();
-
-            // vector<vector<size_t>> counters;
-            // for (size_t w = 0; w < winNum; w++)
-            // {
-            //     vector<size_t> counter(signatureSize * bits_per_char);
-            //     counters.push_back(counter);
-            // }
-
-            // for (size_t c = 1; c < childCounts[node]; c++)
-            // {
-            //     seq_type signatureData = means[childLinks[node][c]];
-            //     for (size_t w = 0; w < min(winNum, signatureData.size()); w++)
-            //     {
-            //         for (size_t i = 0; i < signatureSize; i++)
-            //         {
-            //             for (int n = 0; n < bits_per_char; n++)
-            //             {
-            //                 if ((signatureData[w][i] >> n) & 1)
-            //                 {
-            //                     counters[w][i * bits_per_char + n]++;
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-
-            // for (size_t w = 0; w < winNum; w++)
-            // {
-            //     vector<size_t> counter = counters[w];
-            //     for (int i = 0; i < counter.size(); i++)
-            //     {
-            //         // make it upperbound
-            //         if (counter[i] >= (childCounts[node] + 1) / 2)
-            //         {
-            //             meanSig[w][i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-            //         }
-            //     }
-            // }
             means[node] = meanSig;
         }
         else
         {
-            // find the smallest windows count
-            size_t winNum = matrices[node][0].size();
-            for (seq_type matrix : matrices[node])
-            {
-                if (matrix.size() < winNum)
-                {
-                    winNum = matrix.size();
-                }
-            }
-            seq_type meanSig;
-            vector<vector<size_t>> counters;
-            for (size_t w = 0; w < winNum; w++)
-            {
-                vector<size_t> counter(signatureSize * bits_per_char);
-                counters.push_back(counter);
-
-                vector<cell_type> temp(signatureSize * bits_per_char);
-                meanSig.push_back(temp);
-            }
-
-            for (seq_type signatureData:matrices[node])
-            {
-                for (size_t w = 0; w < winNum; w++)
-                {
-                    for (size_t i = 0; i < signatureSize; i++)
-                    {
-                        for (int n = 0; n < bits_per_char; n++)
-                        {
-                            if ((signatureData[w][i] >> n) & 1)
-                            {
-                                counters[w][i * bits_per_char + n]++;
-                            }
-                        }
-                    }
-                }
-            }
-            for (size_t w = 0; w < winNum; w++)
-            {
-                vector<size_t> counter = counters[w];
-                for (int i = 0; i < counter.size(); i++)
-                {
-                    // make it upperbound
-                    if (counter[i] >= (matrices[node].size() + 1) / 2)
-                    {
-                        meanSig[w][i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-                    }
-                }
-            }
-            means[node] = meanSig;
+            avgCentroid(node);
         }
     }
 
@@ -1737,6 +1702,18 @@ public:
         for (size_t child : childLinks[root])
         {
             dropBranch(child);
+        }
+    }
+
+    void outputHierarchy(FILE *pFile, size_t node = 0, size_t rank = 0)
+    {
+        for (size_t child : childLinks[node])
+        {
+            fprintf(pFile, "%zu,%zu,%zu\n", node, child, rank);
+            if (isBranchNode[child])
+            {
+                outputHierarchy(pFile, child, rank + 1);
+            }
         }
     }
 
