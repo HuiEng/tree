@@ -102,7 +102,7 @@ size_t countSetBits(seq_type seq)
     return c;
 }
 
-size_t calcHDWrao(seq_type shorter, seq_type longer)
+size_t calcHDWrap(seq_type shorter, seq_type longer)
 {
     size_t c = 0;
     // treat tail subseq as mismatch
@@ -127,11 +127,11 @@ size_t calcHDWrao(seq_type shorter, seq_type longer)
 size_t calcHD(seq_type a, seq_type b){
     if (a.size() < b.size())
     {
-        return calcHDWrao(a, b);
+        return calcHDWrap(a, b);
     }
     else
     {
-        return calcHDWrao(b, a);
+        return calcHDWrap(b, a);
     }
 }
 

@@ -373,11 +373,14 @@ public:
   bool query_given;
   bool split_threshold_given;
   bool stay_threshold_given;
+  bool debug_arg;
+  bool force_split_arg;
 
   enum
   {
     START_OPT = 1000,
-    USAGE_OPT
+    USAGE_OPT,
+    DEBUG_OPT = 'd'
   };
 
   tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false),
@@ -387,7 +390,8 @@ public:
                         random_arg(false), iteration_arg(0),
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
-                        stay_threshold_given(false), stay_threshold_arg(0)
+                        stay_threshold_given(false), stay_threshold_arg(0),
+                        debug_arg(false), force_split_arg(false)
   {
   }
 
@@ -398,7 +402,8 @@ public:
                                               random_arg(false), iteration_arg(0),
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
-                                              stay_threshold_given(false), stay_threshold_arg(0)
+                                              stay_threshold_given(false), stay_threshold_arg(0),
+                                              debug_arg(false), force_split_arg(false)
   {
     parse(argc, argv);
   }
@@ -407,6 +412,7 @@ public:
   {
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
+        {"debug", 0, 0, DEBUG_OPT},
         {"tag", 1, 0, 'T'},
         {"capacity", 1, 0, 'c'},
         {"minimiser_match", 1, 0, 'm'},
@@ -419,7 +425,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:RI:q:S:L:m:T:";
+    static const char *short_options = "hVi:o:c:RdfI:q:S:L:m:T:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -448,6 +454,12 @@ public:
       case USAGE_OPT:
         ::std::cout << usage() << "\nUse --help for more information." << std::endl;
         exit(0);
+      case DEBUG_OPT:
+        debug_arg = true;
+        break;
+      case 'f':
+        force_split_arg = true;
+        break;
       case 'V':
         print_version();
         exit(0);
@@ -563,6 +575,8 @@ public:
   {
     return "Read minimisers BF and get all-against-all Jaccard tree\n\n"
            "Options (default value in (), *required):\n"
+           " -d, --debug                              print debug files\n"
+           " -f,                                      force split root [default=false]\n"
            " -i, --input                              input file or folder\n"
            " -T, --tag                                [optional] tag for output cluster file\n"
            " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"

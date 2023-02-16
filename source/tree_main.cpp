@@ -7,6 +7,8 @@ bool random_ = false;
 size_t cap = 0;
 size_t iteration = 0;
 using namespace std;
+bool debug_ = false;
+bool force_split_ = false;
 
 static tree_main_cmdline args; // Command line switches and arguments
 
@@ -88,12 +90,25 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
 
     clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
-    for (size_t i = 1; i < cap; i++)
+    if (force_split_)
     {
-        fprintf(stderr, "inserting %zu\n", foo[i]);
-        size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
-        // clusters[foo[i]] = tree.findAncestor(clus);
-        clusters[foo[i]] = clus;
+        for (size_t i = 1; i < cap; i++)
+        {
+            fprintf(stderr, "inserting %zu\n", foo[i]);
+            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]);
+            // clusters[foo[i]] = tree.findAncestor(clus);
+            clusters[foo[i]] = clus;
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i < cap; i++)
+        {
+            fprintf(stderr, "inserting %zu\n", foo[i]);
+            size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
+            // clusters[foo[i]] = tree.findAncestor(clus);
+            clusters[foo[i]] = clus;
+        }
     }
     fprintf(stderr, "\n\n\n\n");
 
@@ -111,7 +126,21 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
             clusters[foo[i]] = clus;
         }
         tree.trim(insertionList[insertionList.size() - 1] - 1);
+
+        if (debug_)
+        {
+            auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
+            FILE *nFile = fopen(fileName.c_str(), "w");
+            tree.printNodeDistance(nFile, seqs, clusters);
+
+            fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+            FILE *cFile = fopen(fileName.c_str(), "w");
+            outputClusters(cFile, clusters);
+        }
     }
+
+    FILE *pFile = fopen("nodeDistance.txt", "w");
+    tree.printNodeDistance(pFile, seqs, clusters);
 
     // if (iteration == 0)
     // {
@@ -218,6 +247,9 @@ int tree_main(int argc, char *argv[])
     cap = args.capacity_arg;
     iteration = args.iteration_arg;
 
+    debug_ = args.debug_arg;
+    force_split_ = args.force_split_arg;
+
     string inputFile = args.input_arg;
 
     vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
@@ -225,7 +257,6 @@ int tree_main(int argc, char *argv[])
     if (cap == 0)
     {
         cap = seqs.size();
-        
     }
 
     signatureSize = seqs[0][0].size();

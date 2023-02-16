@@ -18,20 +18,66 @@ plotEnt<-function(file){
   dt<-read.csv(file,header=FALSE)
   colnames(dt)<-c("seqID","cluster")
   dt<-dt%>%mutate(species_id=ceiling((seqID+1)/26)-1)
-  dt<-dt%>%group_by(cluster)%>%
-    summarise(clu_size=length(cluster),
-              entropy=Entropy(table(species_id),base=exp(1)))
-  dt<-dt%>%mutate(clus_id=row_number())
+  # dt<-dt%>%group_by(cluster)%>%
+  #   summarise(clu_size=length(cluster),
+  #             entropy=Entropy(table(species_id),base=exp(1)))
+  # dt<-dt%>%mutate(clus_id=row_number())
   dt
 }
-{
-  dt<-plotEnt("C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s60-l20.txt")
-  ggplotly(
-    ggplot(dt)+
-      geom_point(aes(x=clus_id,y=entropy,size=clu_size))
-  )
-  mean(dt$entropy)
+
+cluQuality<-function(dt,sim){
+  temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
+  names(temp)[names(temp) == 'cluster'] <- 'clusterB'
+  temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
+  names(temp)[names(temp) == 'cluster'] <- 'clusterA'
+  
+  temp<-temp%>%filter(clusterA==clusterB & aseq!=bseq)
+  
+  clu<-temp%>%group_by(clusterA)%>%
+    summarise(avg_sim=mean(similarity.),
+              size=length(unique(bseq))+1)
+  names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
+  clu$clu<-seq.int(nrow(clu))-1
+  clu
 }
+
+path<-"C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s60-l20"
+cluQ<-NULL
+nodeDistance<-NULL
+for (r in seq(0,9)){
+  
+  dt<-plotEnt(paste(path,"/clusters-r",r,".txt",sep=""))
+  water<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-waterall.csv)")
+  temp<-cluQuality(dt,water)
+  temp$run<-r
+  cluQ<-rbind(cluQ,temp)
+  
+  temp<-read.csv(paste(path,"/nodeDistance-r",r,".txt",sep=""))
+  temp$run<-r
+  nodeDistance<-rbind(nodeDistance,temp)
+  # ggplotly(ggplot(nodeDistance)+
+  #            geom_density(aes(x=HD))
+  #   # geom_density(aes(x=HD,colour=as.factor(clu)))
+  # )
+  # mean(nodeDistance$HD)
+  # mean(cluQ$avg_sim)
+}
+meanNodeDistance<-nodeDistance%>%group_by(run)%>%summarise(HD=mean(HD))
+meanCluQ<-cluQ%>%group_by(run)%>%summarise(avg_sim=mean(avg_sim))
+save.image("C:/DataCopied/Research/tree/data/toy/clusQ.RData")
+
+load("C:/DataCopied/Research/tree/data/toy/clusQ.RData")
+
+ggplot()+
+  geom_line(meanNodeDistance,aes(x=run,y=mean(HD)))
+
+(
+  ggplot(cluQ)+
+    geom_point(aes(x=clu,y=avg_sim,size=size))
+)
+
+
+load("C:/DataCopied/Research/tree/data/toy/clusQ-1.RData")
 
 formatResultMeta<-function(file, metafile){
   meta<-read.csv(metafile, header = F)
@@ -505,8 +551,9 @@ ggplot(ecoli_local_short,aes(x=score,y=similarity))+
   
 ####################################################
 
-toy<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy_needle.csv)")
+toy<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-waterall.csv)")
 hist(toy$similarity.)
+toy[toy$bseq==15,]
 
 ggplot(toy)+geom_tile(aes(x=aseq,y=bseq,fill=similarity.))
 ggplot(toy[1:20000,])+geom_point(aes(x=aseq,y=bseq))

@@ -77,7 +77,7 @@ public:
     size_t root = 0;                   // # of root node
     vector<size_t> childCounts;        // n entries, number of children
     vector<int> isBranchNode;          // n entries, is this a branch node
-    vector<int> rootNodes;             // n entries, is this root of subtree
+    vector<int> isRootNode;            // n entries, is this root of subtree
     vector<vector<size_t>> childLinks; // n * o entries, links to children
     vector<int> isAmbiNode;            // n entries, is this a branch node
     vector<vector<size_t>> ambiLinks;  // n * o entries, links to children
@@ -114,6 +114,7 @@ public:
             {
                 isAmbiNode.resize(capacity);
                 ambiLinks.resize(capacity);
+                isRootNode.reserve(capacity);
             }
             //#pragma omp single
             {
@@ -152,7 +153,7 @@ public:
         reserve(capacity);
         childCounts[root] = 0;
         isBranchNode[root] = 0;
-        rootNodes.push_back(root);
+        isRootNode[root] = 1;
     }
 
     void printMatrix(FILE *stream, size_t node)
@@ -254,6 +255,23 @@ public:
             printNodeJson(stream, tnode);
 
             fprintf(stream, "\"}");
+        }
+    }
+
+    void calcNodeDistance(FILE *stream, size_t tnode, size_t idx, seq_type sig)
+    {
+        double distance = calcHD(means[tnode], sig);
+        fprintf(stream, "%zu,%zu,%.4f", tnode, idx, distance);
+    }
+
+    void printNodeDistance(FILE *stream, const vector<seq_type> &seqs, vector<size_t> &clusters)
+    {
+        fprintf(stream, "seq_id,clu,HD\n");
+        for (size_t i = 0; i < clusters.size(); i++)
+        {
+            size_t tnode = clusters[i];
+            double distance = calcHD(means[tnode], seqs[i]);
+            fprintf(stream, "%zu,%zu,%.4f\n", i, tnode, distance);
         }
     }
 
@@ -386,6 +404,67 @@ public:
             //     }
             // }
             means[node] = meanSig;
+        }
+        else
+        {
+            // find the smallest windows count
+            size_t winNum = matrices[node][0].size();
+            for (seq_type matrix : matrices[node])
+            {
+                if (matrix.size() < winNum)
+                {
+                    winNum = matrix.size();
+                }
+            }
+            seq_type meanSig;
+            vector<vector<size_t>> counters;
+            for (size_t w = 0; w < winNum; w++)
+            {
+                vector<size_t> counter(signatureSize * bits_per_char);
+                counters.push_back(counter);
+
+                vector<cell_type> temp(signatureSize * bits_per_char);
+                meanSig.push_back(temp);
+            }
+
+            for (seq_type signatureData:matrices[node])
+            {
+                for (size_t w = 0; w < winNum; w++)
+                {
+                    for (size_t i = 0; i < signatureSize; i++)
+                    {
+                        for (int n = 0; n < bits_per_char; n++)
+                        {
+                            if ((signatureData[w][i] >> n) & 1)
+                            {
+                                counters[w][i * bits_per_char + n]++;
+                            }
+                        }
+                    }
+                }
+            }
+            for (size_t w = 0; w < winNum; w++)
+            {
+                vector<size_t> counter = counters[w];
+                for (int i = 0; i < counter.size(); i++)
+                {
+                    // make it upperbound
+                    if (counter[i] >= (matrices[node].size() + 1) / 2)
+                    {
+                        meanSig[w][i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
+                    }
+                }
+            }
+            means[node] = meanSig;
+        }
+    }
+
+    inline void updateParentMean(size_t node)
+    {
+        while (node != root)
+        {
+            updateNodeMean(node);
+            node = parentLinks[node];
         }
     }
 
@@ -1031,7 +1110,7 @@ public:
 
         temp_centroids.push_back(candidate);
 
-        fprintf(stderr, "??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
+        // fprintf(stderr, "??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
 
         for (size_t n = 0; n < matrices[node].size(); n++)
         {
@@ -1061,7 +1140,7 @@ public:
         for (size_t i = 0; i < temp_centroids.size(); i++)
         {
             size_t t_parent = createParent(node, insertionList);
-            rootNodes.push_back(t_parent);
+            isRootNode[t_parent] = 1;
             for (size_t n = 0; n < clusters[i].size(); n++)
             {
                 moveParent(clusters[i][n], t_parent);
@@ -1071,6 +1150,8 @@ public:
             updateNodeMean(t_parent);
             addSigToMatrix(node, means[t_parent]);
         }
+
+        updateParentMean(node);
 
         return 1;
     }
@@ -1179,7 +1260,7 @@ public:
 
         size_t dest = createAmbiNode(signature, insertionList, t_parent, idx);
         updateNodeMean(t_parent);
-        updateNodeMean(node);
+        updateParentMean(node);
         if (ambiLinks[node].size() > 0)
         {
             // shouldn't happen at root
@@ -1287,6 +1368,15 @@ public:
                 }
                 else
                 {
+                    // // do not merge NN root branch
+                    // NN_branches.clear();
+                    // for (size_t c : NN_branches)
+                    // {
+                    //     if (!isRootNode[c])
+                    //     {
+                    //         NN_branches.push_back(c);
+                    //     }
+                    // }
                     return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
                 }
             }
@@ -1319,7 +1409,7 @@ public:
 
     inline size_t tt_branch(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (find(rootNodes.begin(), rootNodes.end(), node) != rootNodes.end())
+        if (isRootNode[node])
         {
             fprintf(stderr, "is subtree %zu\n", node);
             return tt_root(signature, insertionList, idx, node);
@@ -1345,7 +1435,7 @@ public:
             //? this might be a wrong supercluster, dissolve this branch and check from parent again
             fprintf(stderr, "//?#b- mismatch all\n");
             dest = createNode(signature, insertionList, node, idx);
-            updateNodeMean(node);
+            updateParentMean(node);
             return dest;
         }
         else if (mismatch.size() > 0)
@@ -1417,6 +1507,18 @@ public:
         //     forceSplitRoot(insertionList);
         //     printTreeJson(stderr);
         // }
+        return node;
+    }
+
+    inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    {
+        size_t node = insert(signature, insertionList, idx);
+        if (childCounts[root] > 5)
+        {
+            printTreeJson(stderr);
+            forceSplitRoot(insertionList);
+            printTreeJson(stderr);
+        }
         return node;
     }
 
@@ -1507,6 +1609,7 @@ public:
     {
         if (!isBranchNode[node])
         {
+            updateNodeMean(node);
             seqIDs[node].clear();
         }
 
@@ -1539,7 +1642,7 @@ public:
             else
             {
                 // updatePriority(child);
-                updateNodeMean(node);
+                updateParentMean(node);
             }
         }
     }
@@ -1627,7 +1730,7 @@ public:
                 node = temp;
             }
             // updatePriority(node);
-            updateNodeMean(node);
+            updateParentMean(node);
         }
 
         // remove unitig for non-empty leaves
