@@ -31,13 +31,23 @@ cluQuality<-function(dt,sim){
   temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
   names(temp)[names(temp) == 'cluster'] <- 'clusterA'
   
-  temp<-temp%>%filter(clusterA==clusterB & aseq!=bseq)
+  # temp<-temp%>%filter(clusterA==clusterB & aseq!=bseq)
+  # clu<-temp%>%group_by(clusterA)%>%
+  #   summarise(avg_sim=mean(identity.),
+  #             size=length(unique(bseq))+1)
   
+  temp<-temp%>%filter(clusterA==clusterB)
   clu<-temp%>%group_by(clusterA)%>%
-    summarise(avg_sim=mean(similarity.),
-              size=length(unique(bseq))+1)
+    summarise(avg_sim=mean(identity.),
+              size=length(unique(bseq)))
+  
   names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
   clu$clu<-seq.int(nrow(clu))-1
+  
+  nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
+  nodeDistance<-nodeDistance%>%group_by(clu)%>%
+    summarise(avg_nodeDistance=mean(HD))
+  clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
   clu
 }
 
@@ -94,6 +104,34 @@ ggplot()+
 
 path<-"C://DataCopied/Research/tree/data/toy"
 water<-read.csv(paste(path,"/toy-waterall.csv",sep=""))
+dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
+cluQ<-cluQuality(dt,water)
+
+
+
+
+(
+  ggplot(cluQ)+
+  # geom_point(aes(x=clu,y=avg_sim,size=size))+
+    geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+    # ylim(50,100)+
+    xlim(0,57)
+  )
+
+(
+  ggplot(cluQ)+
+    geom_line(aes(x=clu,y=avg_sim,colour="avg_sim"))+
+    geom_line(aes(x=clu,y=avg_nodeDistance,colour="avg_nodeDistance"))+
+    ylim(0,100)+
+    
+    # scale_y_continuous(
+    #   name = "avg_sim",
+    #   sec.axis = sec_axis(~.-60, name="avg_nodeDistance")
+    # )+
+    xlim(0,57)
+)
+
+
 
 hierarchy<-read.csv(paste(path,"/hierarchy.txt",sep=""))
 hierarchy<-hierarchy%>%mutate(parent=case_when((rank == 0 & parent == 0 & !child %in% parent) ~ child, TRUE ~ parent))
@@ -102,7 +140,7 @@ dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
 dt<-merge(dt,hierarchy,by.x="cluster",by.y="child")
 
 
-cluQuality<-function(dt,sim){
+cluQualityParent<-function(dt,sim){
   temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
   temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
   
@@ -110,18 +148,18 @@ cluQuality<-function(dt,sim){
 
   # clu<-temp%>%group_by(cluster.y)%>%
   clu<-temp%>%group_by(parent.y)%>%
-    summarise(avg_sim=mean(similarity.),
+    summarise(avg_sim=mean(identity.),
               size=length(unique(bseq))+1,
               rank=max(rank.y))
   names(clu)[names(clu) == 'parent.y'] <- 'clus_id'
   clu$clu<-seq.int(nrow(clu))-1
   clu
 }
-# temp<-cluQuality(dt,water)
-cluQ<-cluQuality(dt,water)
+# temp<-cluQualityParent(dt,water)
+cluQ<-cluQualityParent(dt,water)
 
 cluQ<-temp%>%group_by(parent.y)%>%
-  summarise(avg_sim=min(similarity.))
+  summarise(avg_sim=min(identity.))
 
 (
   ggplot(cluQ)+
@@ -604,15 +642,15 @@ ggplot(ecoli_local_short,aes(x=score,y=similarity))+
 ####################################################
 
 toy<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-waterall.csv)")
-hist(toy$similarity.)
+hist(toy$identity.)
 toy[toy$bseq==15,]
 
-ggplot(toy)+geom_tile(aes(x=aseq,y=bseq,fill=similarity.))
+ggplot(toy)+geom_tile(aes(x=aseq,y=bseq,fill=identity.))
 ggplot(toy[1:20000,])+geom_point(aes(x=aseq,y=bseq))
 
 
 ggplot(toy)+
-  geom_density(aes(x=similarity.,colour=as.factor(floor(aseq/26))),
+  geom_density(aes(x=identity.,colour=as.factor(floor(aseq/26))),
                  alpha=0.6, position = 'identity')
 require(scales)
 sig<-read.csv(r"(C:\DataCopied\Research\tree\data\toy\toy-k9-w100-s5-test.sim-global_sim.txt)")

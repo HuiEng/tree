@@ -656,39 +656,95 @@ public:
         }
     }
 
+    // check against all ambiNode
+    // create "dest" (non-ambi) and move all matrices that stay with input sig from the ambi nodes
+    // no nothing stay, delete dest AND
+    // create new ambi if there is at least one split in all ambi nodes
+    // else store in the first ambiNode
     inline size_t stayAmbi(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node)
     {
-        size_t ambi = ambiLinks[node][0];
-        vector<seq_type> tempSigs;
-        vector<size_t> tempSeqIDs;
+        // return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
 
-        vector<seq_type> tempSigs_m;
-        vector<size_t> tempSeqIDs_m;
+        // size_t ambi = ambiLinks[node][0];
+        size_t newAmbi = 0;
 
-        size_t i = 0;
-        for (seq_type matrix : matrices[ambi])
+        vector<seq_type> staySigs;
+        vector<size_t> staySeqIDs;
+
+        for (size_t ambi : ambiLinks[node])
         {
-            size_t status = similarityStatus(matrix, signature);
-            switch (status)
+            fprintf(stderr, "*** stayAmbi %zu\n", ambi);
+            bool newAmbi_F = false;
+            vector<seq_type> tempSigs;
+            vector<size_t> tempSeqIDs;
+            size_t i = 0;
+
+            for (seq_type matrix : matrices[ambi])
             {
-            case STAY_F:
-                tempSigs_m.push_back(matrix);
-                tempSeqIDs_m.push_back(seqIDs[ambi][i]);
-                break;
-            case SPLIT_F:
-                fprintf(stderr, "***??? %zu\n", seqIDs[ambi][i]);
-                tempSigs.push_back(matrix);
-                tempSeqIDs.push_back(seqIDs[ambi][i]);
-                break;
-            default:
-                tempSigs.push_back(matrix);
-                tempSeqIDs.push_back(seqIDs[ambi][i]);
-                break;
+                size_t status = similarityStatus(matrix, signature);
+                if (status == STAY_F)
+                {
+                    staySigs.push_back(matrix);
+                    staySeqIDs.push_back(seqIDs[ambi][i]);
+                }
+                else
+                {
+                    if (status == SPLIT_F)
+                    {
+                        newAmbi_F = true;
+                    }
+                    tempSigs.push_back(matrix);
+                    tempSeqIDs.push_back(seqIDs[ambi][i]);
+                }
+                i++;
             }
-            i++;
+
+            if (tempSeqIDs.size() != seqIDs[ambi].size())
+            {
+                matrices[ambi] = tempSigs;
+                seqIDs[ambi] = tempSeqIDs;
+            }
+
+            if (newAmbi_F)
+            {
+                newAmbi++;
+            }
         }
 
-        return stayNode(signature, insertionList, idx, ambi);
+        for (size_t ambi : ambiLinks[node])
+        {
+            if (seqIDs[ambi].size() == 0)
+            {
+                deleteNode(ambi);
+            }
+        }
+
+        if (staySeqIDs.size() == 0)
+        {
+            if (newAmbi == ambiLinks[node].size())
+            {
+
+                fprintf(stderr, "***???\n");
+                return createAmbiNode(signature, insertionList, node, idx);
+            }
+            else
+            {
+                return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
+            }
+        }
+        else
+        {
+            fprintf(stderr, "***---\n");
+            size_t dest = createNode(signature, insertionList, node, idx);
+            matrices[dest] = staySigs;
+            seqIDs[dest] = staySeqIDs;
+            matrices[dest].push_back(signature);
+            seqIDs[dest].push_back(idx);
+            means[dest] = matrices[dest][0];
+
+            updateParentMean(node);
+            return dest;
+        }
     }
 
     void moveParent(size_t child, size_t new_parent, bool d = true)
@@ -1156,7 +1212,7 @@ public:
         return 1;
     }
 
-    inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
+    inline size_t similarityStatus(seq_type sig1, seq_type sig2)
     {
         // check the other children
         double local_stay_t = stay_threshold;
@@ -1170,21 +1226,34 @@ public:
         // // double NN_t = local_stay_t + stay_threshold * offset;
 
         double local_split_t = split_threshold;
-        double similarity = calcSimilarity(means[child], signature);
+        double similarity = calcSimilarity(sig1, sig2);
+
+        fprintf(stderr, "%.2f", similarity);
 
         if (similarity >= local_stay_t)
         {
-            fprintf(stderr, "<%zu,%.2f>: %f stay\n", child, similarity, local_stay_t);
+            fprintf(stderr, ": STAY>\n");
             return STAY_F;
         }
         else if (similarity <= local_split_t)
         {
-            fprintf(stderr, "<%zu,%.2f>: %.2f miss\n", child, similarity, split_threshold);
+            fprintf(stderr, ": SPLIT>\n");
             return SPLIT_F;
         }
         else
         {
-            fprintf(stderr, "<%zu,%.2f>: NN\n", child, similarity);
+            fprintf(stderr, ": NN>\n");
+            return NN_F;
+        }
+    }
+
+    inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
+    {
+        size_t status = similarityStatus(means[child], signature);
+        fprintf(stderr, "<%zu", child);
+
+        if (status == NN_F)
+        {
             if (isBranchNode[child])
             {
                 return NN_BRANCH_F;
@@ -1194,35 +1263,7 @@ public:
                 return NN_LEAVE_F;
             }
         }
-    }
-
-    inline size_t similarityStatus(seq_type sig1, seq_type sig2)
-    {
-        double offset = 1.2;
-        // check the other children
-        double local_stay_t = stay_threshold;
-        // // size_t rank = findLevel(child);
-        // for (size_t t = 0; t < rank; t++)
-        // {
-        //     local_stay_t = local_stay_t + stay_threshold * offset;
-        // }
-        // // double NN_t = local_stay_t + stay_threshold * offset;
-
-        double local_split_t = split_threshold;
-        double similarity = calcSimilarity(sig1, sig2);
-
-        if (similarity >= local_stay_t)
-        {
-            return STAY_F;
-        }
-        else if (similarity <= local_split_t)
-        {
-            return SPLIT_F;
-        }
-        else
-        {
-            return NN_F;
-        }
+        return status;
     }
 
     inline size_t checkRoot(seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN_leaves, vector<size_t> &NN_branches, vector<size_t> &stay, size_t node = 0)
