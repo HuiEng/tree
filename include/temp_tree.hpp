@@ -25,35 +25,6 @@ bloom_parameters parameters;
 size_t partree_capacity = 100;
 size_t singleton = 2;
 
-// vector<cell_type> createMeanSig(const vector<seq_type> clusterSigs)
-// {
-//     vector<cell_type> meanSig(signatureSize * bits_per_char);
-//     vector<size_t> counter(signatureSize * bits_per_char);
-
-//     for (seq_type signature : clusterSigs)
-//     {
-//         seq_type signatureData = getMinimiseSet(signature);
-//         for (size_t i = 0; i < signatureSize; i++)
-//         {
-//             for (int n = 0; n < bits_per_char; n++)
-//             {
-//                 if ((signatureData[0][i] >> n) & 1)
-//                 {
-//                     counter[i * bits_per_char + n]++;
-//                 }
-//             }
-//         }
-//     }
-
-//     for (int i = 0; i < counter.size(); i++)
-//     {
-//         if (counter[i] >= clusterSigs.size() / 2)
-//         {
-//             meanSig[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-//         }
-//     }
-//     return meanSig;
-// }
 
 seq_type createMeanSig(const vector<seq_type> clusterSigs)
 {
@@ -106,22 +77,6 @@ seq_type createMeanSig(const vector<seq_type> clusterSigs)
         }
     }
     return meanSig;
-}
-
-// RMSD
-double calcDistortion(const vector<seq_type> clusterSigs)
-{
-    return 0;
-    // vector<cell_type> meanSig = createMeanSig(clusterSigs);
-    // double sumSquaresimilarity = 0;
-
-    // for (seq_type signature : clusterSigs)
-    // {
-    //     vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-    //     double similarity = calcJaccardGlobal(meanSig, signatureData);
-    //     sumSquaresimilarity += similarity * similarity;
-    // }
-    // return sqrt(sumSquaresimilarity / clusterSigs.size());
 }
 
 class temp_tree
@@ -473,17 +428,16 @@ public:
     // RMSD
     double calcDistortion(size_t node)
     {
-        return 0;
-        // vector<cell_type> meanSig = createMeanSig(clusterSigs);
-        // double sumSquaresimilarity = 0;
+        vector<cell_type> meanSig = getMinimiseSet(createMeanSig(matrices[node]))[0];
+        double sumSquaresimilarity = 0;
 
-        // for (seq_type signature : clusterSigs)
-        // {
-        //     vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-        //     double similarity = calcJaccardGlobal(meanSig, signatureData);
-        //     sumSquaresimilarity += similarity * similarity;
-        // }
-        // return sqrt(sumSquaresimilarity / clusterSigs.size());
+        for (seq_type signature : matrices[node])
+        {
+            vector<cell_type> signatureData = getMinimiseSet(signature)[0];
+            double similarity = calcJaccardGlobal(meanSig, signatureData);
+            sumSquaresimilarity += similarity * similarity;
+        }
+        return sqrt(sumSquaresimilarity / matrices[node].size());
     }
 
     // union mean of children
@@ -571,92 +525,6 @@ public:
         return parent;
     }
 
-    // return if match with branch centroid
-    // return false if node is not branch
-    // user set thresholds for leaves
-    // thresholds for branch = threshold set by user + priority or distortion of children
-    // if stay is leave, just add new seq in; if stay is branch, can choose to check it again
-    // else return node, the vectors will be updated as well
-    inline bool checkNode(size_t node, seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN, vector<size_t> &stay)
-    {
-        // if (childCounts[node] > 5)
-        // {
-        //     forcesplitBranch(node, insertionList);
-        // }
-
-        while (splitBranch(node, insertionList))
-        {
-            // splitBranch(node, insertionList);
-            // return checkNode(node, signature, insertionList, mismatch, NN, stay);
-        }
-
-        bool matchBranchCentroid = false;
-        size_t i = 0;
-        if (isBranchNode[node])
-        {
-            // skip first child later;
-            i++;
-
-            // first child is the centroid, deal with it separately
-            size_t child = childLinks[node][0];
-            fprintf(stderr, "checking %zu \n", child);
-            splitBranch(child, insertionList);
-            double local_stay_t = stay_threshold;
-
-            // increase stay threshold of a node
-            if (isBranchNode[child])
-            {
-                local_stay_t += priority[child];
-            }
-
-            double similarity = calcSimilarity(means[child], signature);
-
-            if (similarity >= local_stay_t)
-            {
-                // do not need to merge NN, should have done so in previous operation
-                fprintf(stderr, " stay in centroid %zu,%.2f \n", child, similarity);
-                matchBranchCentroid = true;
-            }
-        }
-
-        // check the other children
-        for (i; i < childCounts[node]; i++)
-        {
-            size_t child = childLinks[node][i];
-            double local_stay_t = stay_threshold;
-            double local_split_t = split_threshold;
-
-            // increase stay threshold of a node
-            if (isBranchNode[child])
-            {
-                local_stay_t += priority[child];
-                local_split_t += priority[child];
-            }
-
-            double similarity = calcSimilarity(means[child], signature);
-
-            if (similarity >= local_stay_t)
-            {
-                fprintf(stderr, "<%zu,%.2f>: %f stay\n", child, similarity, local_stay_t);
-                stay.push_back(child);
-                // dest = child;
-            }
-
-            else if (similarity < local_split_t)
-            {
-                fprintf(stderr, "<%zu,%.2f>: %f miss\n", child, similarity, local_split_t);
-                mismatch.push_back(child);
-            }
-            else
-            {
-                fprintf(stderr, "<%zu,%.2f>: NN\n", child, similarity);
-                NN.push_back(child);
-            }
-        }
-
-        return matchBranchCentroid;
-    }
-
     inline size_t stayNode(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node)
     {
         if (isBranchNode[node])
@@ -667,7 +535,7 @@ public:
         {
             seqIDs[node].push_back(idx);
             addSigToMatrix(node, signature);
-            updatePriority(node);
+            // updatePriority(node);
             return node;
         }
     }
@@ -822,134 +690,6 @@ public:
         return dest;
     }
 
-    size_t splitBranch(size_t node, vector<size_t> &insertionList)
-    {
-
-        if (!isBranchNode[node])
-        {
-            return 0;
-        }
-        else if (priority[node] < split_node_threshold)
-        {
-            return 0;
-        }
-        fprintf(stderr, "splitbranch node %zu, %f\n", node, priority[node]);
-
-        vector<size_t> temp_centroids = {childLinks[node][0]};
-        vector<vector<size_t>> clusters;
-        vector<size_t> temp;
-        clusters.push_back(temp);
-        vector<size_t> candidates_idx;
-        for (size_t i = childCounts[node] - 1; i > 0; i--)
-        {
-            size_t child = childLinks[node][i];
-            bool add = true;
-            for (size_t centroid : temp_centroids)
-            {
-                double similarity = calcSimilarity(means[centroid], matrices[node][i]);
-                // fprintf(stderr, "%zu, %zu, %f\n", child, centroid, similarity);
-                if (similarity > split_node_threshold)
-                {
-                    add = false;
-                    break;
-                }
-            }
-            if (add)
-            {
-                // fprintf(stderr, "----- %zu\n", child);
-                temp_centroids.push_back(child);
-                vector<size_t> t;
-                clusters.push_back(t);
-            }
-            else
-            {
-                candidates_idx.push_back(i);
-            }
-        }
-
-        if (temp_centroids.size() == 1)
-        {
-            fprintf(stderr, "??cannot splitbranch node %zu, %f\n", node, priority[node]);
-            return 0;
-        }
-
-        for (size_t n : candidates_idx)
-        {
-            size_t child = childLinks[node][n];
-
-            size_t dest = 0;
-            double max_similarity = 0;
-            for (size_t i = 0; i < temp_centroids.size(); i++)
-            {
-                double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
-                // fprintf(stderr, "%zu, %zu, %f\n", child, temp_centroids[i], similarity);
-                if (similarity >= max_similarity)
-                {
-                    max_similarity = similarity;
-                    dest = i;
-                }
-            }
-
-            // fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
-            clusters[dest].push_back(child);
-        }
-
-        if (temp_centroids.size() == 2)
-        {
-            for (vector<size_t> cluster : clusters)
-            {
-                if (cluster.size() == 0)
-                {
-                    fprintf(stderr, ">>??something is wrong cannot split evenly\n");
-                    return 0;
-                }
-            }
-        }
-        // prepare newBranch for valid clusters
-        size_t parent = parentLinks[node];
-        for (size_t i = 1; i < temp_centroids.size(); i++)
-        {
-            size_t centroid = temp_centroids[i];
-            // fprintf(stderr, "*** %zu\n", centroid);
-            if (isBranchNode[centroid])
-            {
-                moveParent(centroid, parent);
-            }
-            else if (clusters[i].size() > 0)
-            {
-                size_t t_parent = createParent(parent, insertionList);
-                moveParent(centroid, t_parent);
-                means[t_parent] = means[centroid];
-                addSigToMatrix(parent, means[t_parent]);
-            }
-            else
-            {
-                // leaf & no NN
-                moveParent(centroid, parent);
-            }
-        }
-
-        // new centroid should have been move out at this stage
-        for (size_t i = 1; i < temp_centroids.size(); i++)
-        {
-            size_t t_parent = parentLinks[temp_centroids[i]];
-            for (size_t n = 0; n < clusters[i].size(); n++)
-            {
-                moveParent(clusters[i][n], t_parent);
-            }
-            updatePriority(t_parent);
-        }
-
-        updatePriority(node);
-        if (isBranchNode[parent])
-        {
-            updatePriority(parent);
-        }
-
-        fprintf(stderr, ">> %f\n", priority[node]);
-        return 1;
-    }
-
     void prep()
     {
         for (size_t i = 0; i < childCounts[root]; i++)
@@ -984,162 +724,6 @@ public:
                 }
             }
         }
-    }
-
-    size_t forcesplitBranch(size_t node, vector<size_t> &insertionList)
-    {
-        if (node != root)
-        {
-            return 0;
-        }
-
-        // printTreeJson(stderr);
-        prep();
-        // printTreeJson(stderr);
-
-        fprintf(stderr, "force split node %zu, %f\n", node, priority[node]);
-        vector<size_t> temp_centroids = {childLinks[node][0]};
-        vector<vector<size_t>> clusters;
-        vector<size_t> temp;
-        clusters.push_back(temp);
-        vector<size_t> t;
-        clusters.push_back(t);
-
-        double min_similarity = 1;
-        size_t candidate = 0;
-        seq_type mean0 = means[childLinks[node][0]];
-        for (size_t i = childCounts[node] - 1; i > 0; i--)
-        {
-            double similarity = calcSimilarity(mean0, matrices[node][i]);
-            // fprintf(stderr, "%zu, %f\n", childLinks[node][i], similarity);
-            if (similarity < min_similarity)
-            {
-                min_similarity = similarity;
-                candidate = childLinks[node][i];
-            }
-        }
-
-        if (candidate == 0)
-        {
-            fprintf(stderr, "??something is wrong %zu, %f\n", node, priority[node]);
-            return 0;
-        }
-
-        temp_centroids.push_back(candidate);
-        // fprintf(stderr, ">??%zu, %zu\n", matrices[node].size(), childCounts[node]);
-
-        // cluster the rest of the matrices, centroid will not be in clusters
-        for (size_t n = 1; n < matrices[node].size(); n++)
-        {
-            size_t child = childLinks[node][n];
-            if (child == candidate)
-            {
-                continue;
-            }
-            size_t dest = 0;
-            double max_similarity = 0;
-            for (size_t i = 0; i < temp_centroids.size(); i++)
-            {
-                double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
-                // fprintf(stderr, "%zu, %f\n", temp_centroids[i], similarity);
-                if (similarity > max_similarity)
-                {
-                    max_similarity = similarity;
-                    dest = i;
-                }
-            }
-            // fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
-            clusters[dest].push_back(child);
-        }
-
-        if (clusters[0].size() == 0 || clusters[1].size() == 0)
-        {
-            fprintf(stderr, "??something is wrong cannot split evenly\n");
-            return 0;
-        }
-
-        // prepare newBranch for valid clusters
-
-        // size_t parent = createParent(node, insertionList);
-        // means[parent] = means[childLinks[node][0]];
-        if (isBranchNode[node])
-        {
-            // promote the other clusters
-            fprintf(stderr, "??promote\n");
-            size_t parent = parentLinks[node];
-            for (size_t i = 1; i < temp_centroids.size(); i++)
-            {
-                size_t centroid = temp_centroids[i];
-                size_t t_parent = createParent(parent, insertionList);
-                means[t_parent] = means[centroid];
-                moveParent(centroid, t_parent);
-                addSigToMatrix(parent, means[t_parent]);
-            }
-            // //?
-            // for (size_t i = 1; i < temp_centroids.size(); i++)
-            // {
-            //     size_t centroid = temp_centroids[i];
-            //     fprintf(stderr, "*** %zu\n", centroid);
-            //     if (isBranchNode[centroid])
-            //     {
-            //         moveParent(centroid, parent);
-            //     }
-            //     else if (clusters[i].size() > 1)
-            //     {
-            //         size_t t_parent = createParent(parent, insertionList);
-            //         moveParent(centroid, t_parent);
-            //         means[t_parent] = means[centroid];
-            //         addSigToMatrix(parent, means[t_parent]);
-            //     }
-            //     else
-            //     {
-            //         // leaf & no NN
-            //         moveParent(centroid, parent);
-            //     }
-            // }
-        }
-        else
-        {
-            for (size_t i = 0; i < temp_centroids.size(); i++)
-            {
-                size_t centroid = temp_centroids[i];
-                size_t t_parent = createParent(node, insertionList);
-                means[t_parent] = means[centroid];
-                moveParent(centroid, t_parent);
-                addSigToMatrix(node, means[t_parent]);
-            }
-        }
-
-        // new centroid should have been move out at this stage
-        for (size_t i = 0; i < temp_centroids.size(); i++)
-        {
-
-            size_t centroid = temp_centroids[i];
-            size_t t_parent = parentLinks[centroid];
-            fprintf(stderr, "*** %zu\n", centroid);
-            for (size_t n = 0; n < clusters[i].size(); n++)
-            {
-                moveParent(clusters[i][n], t_parent);
-                fprintf(stderr, "--- %zu,%zu\n", clusters[i][n], t_parent);
-            }
-            updatePriority(t_parent);
-        }
-
-        updatePriority(node);
-
-        // fprintf(stderr, ">?? done %zu, %zu\n", matrices[node].size(), childCounts[node]);
-
-        // for (size_t i = 0; i < childCounts[root]; i++)
-        // {
-        //     if (matrices[root][i].first != means[childLinks[root][i]].first || matrices[root][i].second != means[childLinks[root][i]].second)
-        //     {
-        //         fprintf(stderr, "++ %zu, %zu\n", i, childLinks[root][i]);
-        //         fprintf(stderr, "> %f, %f\n", matrices[root][i].first, matrices[root][i].second);
-        //         fprintf(stderr, "* %f, %f\n\n", means[childLinks[root][i]].first, means[childLinks[root][i]].second);
-        //     }
-        // }
-
-        return 1;
     }
 
     size_t forceSplitRoot(vector<size_t> &insertionList)
@@ -1455,41 +1039,10 @@ public:
                 }
                 else
                 {
-                    // // do not merge NN root branch
-                    // NN_branches.clear();
-                    // for (size_t c : NN_branches)
-                    // {
-                    //     if (!isRootNode[c])
-                    //     {
-                    //         NN_branches.push_back(c);
-                    //     }
-                    // }
                     return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
                 }
             }
         }
-        // if (NN_total == 1)
-        // {
-        //     fprintf(stderr, "??NN with one without stay\n");
-        //     return createNode(signature, insertionList, node, idx);
-        // }
-        // else if (NN_total > 1)
-        // {
-        //     fprintf(stderr, "NN with multiple without stay\n");
-        //     size_t t_parent = createParent(node, insertionList);
-        //     dest = createNode(signature, insertionList, t_parent, idx);
-        //     // means[t_parent] = signature;
-        //     // addSigToMatrix(node, means[t_parent]);
-        //     for (size_t child : NN_leaves)
-        //     {
-        //         moveParent(child, t_parent);
-        //     }
-
-        //     // means[t_parent] = createMeanSig(matrices[t_parent]);
-        //     // updatePriority(t_parent);
-        //     updateNodeMean(t_parent);
-        //     return dest;
-        // }
 
         return createNode(signature, insertionList, node, idx);
     }
@@ -1728,7 +1281,7 @@ public:
             }
             else
             {
-                // updatePriority(child);
+                updatePriority(child);
                 updateParentMean(node);
             }
         }
@@ -1816,7 +1369,7 @@ public:
                 clearNode(node);
                 node = temp;
             }
-            // updatePriority(node);
+            updatePriority(node);
             updateParentMean(node);
         }
 
