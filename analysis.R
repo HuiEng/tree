@@ -112,9 +112,9 @@ cluQ<-cluQuality(dt,water)
 
 (
   ggplot(cluQ)+
-  # geom_point(aes(x=clu,y=avg_sim,size=size))+
-    geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
-    # ylim(50,100)+
+  geom_point(aes(x=clu,y=avg_sim,size=size))+
+    # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+    ylim(50,100)+
     xlim(0,57)
   )
 
@@ -131,8 +131,12 @@ cluQ<-cluQuality(dt,water)
     xlim(0,57)
 )
 
+avg<- cluQ %>% summarise(across(everything(), list(mean)))
+# save.image("C:/DataCopied/Research/tree/data/toy/clusQ-multiAmbi.RData")
 
+load("C:/DataCopied/Research/tree/data/toy/clusQ-1Ambi.RData")
 
+#######################################################
 hierarchy<-read.csv(paste(path,"/hierarchy.txt",sep=""))
 hierarchy<-hierarchy%>%mutate(parent=case_when((rank == 0 & parent == 0 & !child %in% parent) ~ child, TRUE ~ parent))
 
