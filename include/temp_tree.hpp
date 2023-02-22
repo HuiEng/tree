@@ -850,7 +850,7 @@ public:
     inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
     {
         size_t status = similarityStatus(means[child], signature);
-        fprintf(stderr, "<%zu", child);
+        fprintf(stderr, "<%zu, ", child);
 
         if (status == NN_F)
         {
