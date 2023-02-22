@@ -104,18 +104,16 @@ ggplot()+
 
 path<-"C://DataCopied/Research/tree/data/toy"
 water<-read.csv(paste(path,"/toy-waterall.csv",sep=""))
+
 dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
 cluQ<-cluQuality(dt,water)
-
-
-
+mean(cluQ$avg_sim)
 
 (
   ggplot(cluQ)+
   geom_point(aes(x=clu,y=avg_sim,size=size))+
     # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
-    ylim(50,100)+
-    xlim(0,57)
+    ylim(50,100)
   )
 
 (

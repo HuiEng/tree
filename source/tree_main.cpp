@@ -140,6 +140,8 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         }
     }
 
+    tree.updatePriority(22);
+
     FILE *pFile = fopen("nodeDistance.txt", "w");
     tree.printNodeDistance(pFile, seqs, clusters);
 

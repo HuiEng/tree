@@ -330,6 +330,13 @@ distance_type calcSimilarity(seq_type a, seq_type b)
     // return calcInter(a, b) * 1.0 / countSetBits(b);
 }
 
+double calcOverlap(seq_type query, seq_type refer)
+{
+    seq_type x = getMinimiseSet(query);
+    seq_type y = getMinimiseSet(refer);
+    return calcInter(x, y) * 1.0 /countSetBits(x);
+}
+
 vector<cell_type> doSingleUnion(vector<cell_type> a, vector<cell_type> b)
 {
     vector<cell_type> c = a;

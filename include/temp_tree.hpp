@@ -25,7 +25,6 @@ bloom_parameters parameters;
 size_t partree_capacity = 100;
 size_t singleton = 2;
 
-
 seq_type createMeanSig(const vector<seq_type> clusterSigs)
 {
     // find the smallest windows count
@@ -377,6 +376,9 @@ public:
         {
             means[node] = createMeanSig(matrices[node]);
         }
+
+        // size_t parent = parentLinks[node];
+        // matrices[parent][getNodeIdx(node)] = means[node];
     }
 
     inline void updateParentMean(size_t node)
@@ -440,10 +442,25 @@ public:
         return sqrt(sumSquaresimilarity / matrices[node].size());
     }
 
+    // RMSD
+    double calcDistortionHD(size_t node)
+    {
+        seq_type meanSig = (createMeanSig(matrices[node]));
+        double sumSquareHD = 0;
+
+        for (seq_type signature : matrices[node])
+        {
+            double similarity = calcHD(meanSig, signature);
+            sumSquareHD += similarity * similarity;
+        }
+        return sqrt(sumSquareHD / matrices[node].size());
+    }
+
     // union mean of children
     inline void updatePriority(size_t node)
     {
-        priority[node] = calcDistortion(node);
+        // priority[node] = calcDistortion(node);
+        priority[node] = calcDistortionHD(node);
         // priority[node] = calcNodeMaxsimilarity(node);
 
         // priority[node] = calcNodeDistortion(node);
@@ -547,7 +564,7 @@ public:
     // else store in the first ambiNode
     inline size_t stayAmbi(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node)
     {
-        // return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
+        return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
 
         // size_t ambi = ambiLinks[node][0];
         size_t newAmbi = 0;
@@ -683,8 +700,14 @@ public:
     // Ambi Node cannot be the first child or else update node mean will have problem
     inline size_t createAmbiNode(seq_type signature, vector<size_t> &insertionList, size_t node, size_t idx)
     {
-        size_t dest = createNode(signature, insertionList, node, idx);
+        // size_t dest = createNode(signature, insertionList, node, idx);
+
+
         fprintf(stderr, ">>Ambi\n");
+        size_t dest = getNewNodeIdx(insertionList);
+        parentLinks[dest] = node;
+        childLinks[node].push_back(dest);
+        seqIDs[dest].push_back(idx);
         ambiLinks[node].push_back(dest);
         isAmbiNode[dest] = 1;
         return dest;
@@ -812,10 +835,10 @@ public:
         return 1;
     }
 
-    inline size_t similarityStatus(seq_type sig1, seq_type sig2)
+    inline size_t similarityStatus(seq_type sig1, seq_type sig2, double offset = 0)
     {
         // check the other children
-        double local_stay_t = stay_threshold;
+        double local_stay_t = stay_threshold - offset;
 
         // double offset = 1.2;
         // // size_t rank = findLevel(child);
@@ -850,8 +873,19 @@ public:
     inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
     {
         fprintf(stderr, "<%zu, ", child);
-        size_t status = similarityStatus(means[child], signature);
-        
+        size_t status;
+
+        if (isBranchNode[child])
+        {
+            // double offset = 0.1 * rank;
+            double offset = 0;
+            status = similarityStatus(means[child], signature, offset);
+        }
+        else
+        {
+            status = similarityStatus(means[child], signature);
+        }
+
         if (status == NN_F)
         {
             if (isBranchNode[child])
@@ -880,8 +914,7 @@ public:
                 fprintf(stderr, "Ambi: %zu\n", child);
                 continue;
             }
-            // size_t rank = findLevel(child);
-            size_t rank = 0;
+            size_t rank = findLevel(child);
             size_t status = similarityStatus(child, rank, signature);
             switch (status)
             {
@@ -956,7 +989,7 @@ public:
             return stayNode(signature, insertionList, idx, dest);
         }
 
-        if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
+        if (mismatch.size() == childCounts[node])
         {
             fprintf(stderr, "#mismatch\n");
             return createNode(signature, insertionList, node, idx);
@@ -1070,7 +1103,7 @@ public:
             return stayNode(signature, insertionList, idx, dest);
         }
 
-        if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
+        if (mismatch.size() == childCounts[node])
         {
             //? this might be a wrong supercluster, dissolve this branch and check from parent again
             fprintf(stderr, "//?#b- mismatch all\n");
@@ -1162,14 +1195,95 @@ public:
         return node;
     }
 
+    // inline size_t search(seq_type signature, size_t idx = 0, size_t node = 0)
+    // {
+    //     // size_t node = root;
+
+    //     size_t local_best_child = node;
+    //     double local_best_similarity = 0;
+    //     double local_best_similarity_b = 0;
+    //     size_t local_best_child_b = node;
+
+    //     for (size_t i = 0; i < childCounts[node]; i++)
+    //     {
+    //         size_t child = childLinks[node][i];
+    //         if (isAmbiNode[child])
+    //         {
+    //             continue;
+    //         }
+
+    //         // double similarity = calcSimilarity(means[child], signature);
+    //         double similarity = calcOverlap(signature, means[child]);
+    //         fprintf(stderr, " <%zu,%.2f> ", child, similarity);
+
+    //         // found same, move on with the next seq
+    //         if (similarity >= (stay_threshold))
+    //         {
+    //             // while (isBranchNode[child])
+    //             // {
+    //             //     child = childLinks[child][0];
+    //             // }
+    //             if (isBranchNode[child])
+    //             {
+    //                 if (local_best_similarity_b == 1)
+    //                 {
+    //                     return search(signature, idx, child);
+    //                 }
+    //                 else if (similarity >= local_best_similarity_b)
+    //                 {
+    //                     local_best_similarity_b = similarity;
+    //                     local_best_child_b = child;
+    //                 }
+    //             }
+    //             else
+    //             {
+    //                 return child;
+    //             }
+    //         }
+    //         else
+    //         {
+
+    //             if (isBranchNode[child])
+    //             {
+    //                 if (similarity >= local_best_similarity_b)
+    //                 {
+    //                     local_best_similarity_b = similarity;
+    //                     local_best_child_b = child;
+    //                 }
+    //             }
+    //             else
+    //             {
+    //                 if (similarity >= local_best_similarity)
+    //                 {
+    //                     local_best_similarity = similarity;
+    //                     local_best_child = child;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // // stay in branch, proceed with children
+    //     // if (local_best_child_b != node)
+    //     // {
+    //     //     return search(signature, idx, local_best_child_b);
+    //     // }
+
+    //     if (local_best_similarity >= local_best_similarity_b)
+    //     {
+    //         return local_best_child;
+    //     }
+    //     else
+    //     {
+    //         return search(signature, idx, local_best_child_b);
+    //     }
+    // }
+
+    // find highest overlap among children
+    // break tie by checking similarity of the finals
     inline size_t search(seq_type signature, size_t idx = 0, size_t node = 0)
     {
-        // size_t node = root;
-
-        size_t local_best_child = node;
-        double local_best_similarity = 0;
-        double local_best_similarity_b = 0;
-        size_t local_best_child_b = node;
+        double best_similarity = 0;
+        vector<size_t> candidates;
 
         for (size_t i = 0; i < childCounts[node]; i++)
         {
@@ -1180,67 +1294,64 @@ public:
             }
 
             double similarity = calcSimilarity(means[child], signature);
+            similarity += calcOverlap(signature, means[child]);
             fprintf(stderr, " <%zu,%.2f> ", child, similarity);
 
-            // found same, move on with the next seq
-            if (similarity >= (stay_threshold))
+            fprintf(stderr, " (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
+
+            if (similarity > best_similarity)
             {
-                // while (isBranchNode[child])
-                // {
-                //     child = childLinks[child][0];
-                // }
-                if (isBranchNode[child])
-                {
-                    if (local_best_similarity_b == 1)
-                    {
-                        return search(signature, idx, child);
-                    }
-                    else if (similarity >= local_best_similarity_b)
-                    {
-                        local_best_similarity_b = similarity;
-                        local_best_child_b = child;
-                    }
-                }
-                else
-                {
-                    return child;
-                }
+                best_similarity = similarity;
+                candidates.clear();
+                // best_child = child;
+            }
+
+            if (similarity == best_similarity)
+            {
+                candidates.push_back(child);
+            }
+        }
+
+        size_t best_child = candidates[0];
+
+        if (candidates.size() == 1)
+        {
+            if (isBranchNode[best_child])
+            {
+                fprintf(stderr, "\n");
+                return search(signature, idx, best_child);
             }
             else
             {
-
-                if (isBranchNode[child])
-                {
-                    if (similarity >= local_best_similarity_b)
-                    {
-                        local_best_similarity_b = similarity;
-                        local_best_child_b = child;
-                    }
-                }
-                else
-                {
-                    if (similarity >= local_best_similarity)
-                    {
-                        local_best_similarity = similarity;
-                        local_best_child = child;
-                    }
-                }
+                return best_child;
             }
-        }
-
-        // // stay in branch, proceed with children
-        // if (local_best_child_b != node)
-        // {
-        //     return search(signature, idx, local_best_child_b);
-        // }
-
-        if (local_best_similarity >= local_best_similarity_b)
-        {
-            return local_best_child;
         }
         else
         {
-            return search(signature, idx, local_best_child_b);
+
+            fprintf(stderr, "\n*** here\n");
+            double best_dest_similarity = 0;
+            for (size_t child : candidates)
+            {
+                fprintf(stderr, "child %zu\n", child);
+                size_t leaf = child;
+                double similarity = best_similarity;
+                if (isBranchNode[child])
+                {
+                    leaf = search(signature, idx, child);
+                    similarity = calcSimilarity(means[child], signature);
+                    similarity += calcOverlap(signature, means[leaf]);
+                    fprintf(stderr, "> leaf %zu\n", leaf);
+                }
+
+                if (similarity > best_dest_similarity)
+                {
+                    best_dest_similarity = similarity;
+                    best_child = leaf;
+                }
+            }
+
+            return best_child;
         }
     }
 
