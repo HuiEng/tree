@@ -24,6 +24,7 @@ using namespace std;
 bloom_parameters parameters;
 size_t partree_capacity = 100;
 size_t singleton = 2;
+size_t tree_order = 5;
 
 seq_type createMeanSig(const vector<seq_type> clusterSigs)
 {
@@ -301,7 +302,7 @@ public:
     {
         size_t parent = parentLinks[node];
         int idx = -1;
-        for (size_t i = 0; i < childCounts[parent]; i++)
+        for (size_t i = 0; i < childLinks[parent].size(); i++)
         {
             if (childLinks[parent][i] == node)
             {
@@ -320,15 +321,13 @@ public:
 
         int idx = getNodeIdx(node);
 
-        if (node == 71)
-        {
-            printTreeJson(stderr, root);
-            fprintf(stderr, "ERROR  %zu  %zu!!\n", node, matrices[parent].size());
-        }
-
         if (idx == -1)
         {
             fprintf(stderr, "ERROR deleting %zu from %zu!!\n", node, parent);
+        }
+        else if (isAmbiNode[node])
+        {
+            childLinks[parent].erase(childLinks[parent].begin() + idx);
         }
         else
         {
@@ -702,7 +701,6 @@ public:
     {
         // size_t dest = createNode(signature, insertionList, node, idx);
 
-
         fprintf(stderr, ">>Ambi\n");
         size_t dest = getNewNodeIdx(insertionList);
         parentLinks[dest] = node;
@@ -749,11 +747,26 @@ public:
         }
     }
 
-    size_t forceSplitRoot(vector<size_t> &insertionList)
+    size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0)
     {
         fprintf(stderr, ">> Force split root\n");
         // rootNodes.resize(1);
-        size_t node = root;
+        // size_t node = root;
+
+        // unpack previous subtree
+        for (size_t subtree : childLinks[node])
+        {
+            if (isRootNode[subtree])
+            {
+                for (size_t child : childLinks[subtree])
+                {
+                    moveParent(child, root, false);
+                }
+                deleteNode(subtree);
+            }
+        }
+        printTreeJson(stderr);
+
         vector<size_t> temp_centroids = {childLinks[node][0]};
         vector<vector<size_t>> clusters;
         //?
@@ -1080,11 +1093,33 @@ public:
         return createNode(signature, insertionList, node, idx);
     }
 
+    size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
+    {
+        if (childCounts[node] <= tree_order)
+        {
+            return 0;
+        }
+
+        fprintf(stderr, ">> Force split subtree %zu\n", node);
+        forceSplitRoot(insertionList, node);
+        printTreeJson(stderr);
+        size_t parent = parentLinks[node];
+        for (size_t child : childLinks[node])
+        {
+            moveParent(child, parent, false);
+        }
+        deleteNode(node);
+        printTreeJson(stderr);
+
+        return 1;
+    }
+
     inline size_t tt_branch(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
         if (isRootNode[node])
         {
             fprintf(stderr, "is subtree %zu\n", node);
+            forceSplitSubtree(insertionList, node);
             return tt_root(signature, insertionList, idx, node);
         }
 
@@ -1186,7 +1221,7 @@ public:
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         size_t node = insert(signature, insertionList, idx);
-        if (childCounts[root] > 5)
+        if (childCounts[root] > tree_order)
         {
             printTreeJson(stderr);
             forceSplitRoot(insertionList);
@@ -1358,6 +1393,7 @@ public:
     // cluster means still remain
     void prepReinsert(size_t node = 0)
     {
+        updatePriority(node);
         if (!isBranchNode[node])
         {
             updateNodeMean(node);
@@ -1449,7 +1485,6 @@ public:
         fprintf(stderr, "\nTrimming\n");
 
         vector<size_t> leaves;
-
         getEmptyLeaves(leaves);
 
         // do leaves
