@@ -1034,6 +1034,11 @@ public:
                 fprintf(stderr, "?no NN leaves\n");
                 return tt_branch(signature, insertionList, idx, dest);
             }
+            else if (isRootNode[dest]){
+                fprintf(stderr, "?with NN leaves & is subtree\n");
+                // ignore leaves for now
+                return tt_root(signature, insertionList, idx, dest);
+            }
             else
             {
                 fprintf(stderr, "?with NN leaves\n");
