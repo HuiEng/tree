@@ -28,6 +28,7 @@ size_t tree_order = 5;
 
 seq_type createMeanSig(const vector<seq_type> clusterSigs)
 {
+    seq_type meanSig;
     // find the smallest windows count
     size_t winNum = clusterSigs[0].size();
     for (seq_type matrix : clusterSigs)
@@ -37,7 +38,6 @@ seq_type createMeanSig(const vector<seq_type> clusterSigs)
             winNum = matrix.size();
         }
     }
-    seq_type meanSig;
     vector<vector<size_t>> counters;
     for (size_t w = 0; w < winNum; w++)
     {
@@ -325,10 +325,6 @@ public:
         {
             fprintf(stderr, "ERROR deleting %zu from %zu!!\n", node, parent);
         }
-        else if (isAmbiNode[node])
-        {
-            childLinks[parent].erase(childLinks[parent].begin() + idx);
-        }
         else
         {
             matrices[parent].erase(matrices[parent].begin() + idx);
@@ -349,6 +345,23 @@ public:
         means[node].clear(); //?
         priority[node] = 0;
         parentLinks[node] = 0;
+    }
+
+    inline vector<seq_type> getNonAmbiMatrix(size_t node)
+    {
+        vector<seq_type> temp_matrix;
+        for (size_t c = 0; c < childCounts[node]; c++)
+        {
+            size_t child = childLinks[node][c];
+            // skip ambi
+            if (!isAmbiNode[child])
+            {
+                temp_matrix.push_back(means[child]);
+                // temp_matrix.push_back(matrices[node][c]);
+            }
+        }
+        
+        return temp_matrix;
     }
 
     // union mean of children
@@ -429,6 +442,7 @@ public:
     // RMSD
     double calcDistortion(size_t node)
     {
+        //? get non ambi
         vector<cell_type> meanSig = getMinimiseSet(createMeanSig(matrices[node]))[0];
         double sumSquaresimilarity = 0;
 
@@ -444,15 +458,23 @@ public:
     // RMSD
     double calcDistortionHD(size_t node)
     {
-        seq_type meanSig = (createMeanSig(matrices[node]));
+
+        vector<seq_type> temp_matrix = getNonAmbiMatrix(node);
+        if (temp_matrix.size() <= 1)
+        {
+            return 0;
+        }
+
+        seq_type meanSig = createMeanSig(temp_matrix);
+
         double sumSquareHD = 0;
 
-        for (seq_type signature : matrices[node])
+        for (seq_type signature : temp_matrix)
         {
             double similarity = calcHD(meanSig, signature);
             sumSquareHD += similarity * similarity;
         }
-        return sqrt(sumSquareHD / matrices[node].size());
+        return sqrt(sumSquareHD / temp_matrix.size());
     }
 
     // union mean of children
@@ -565,86 +587,86 @@ public:
     {
         return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
 
-        // size_t ambi = ambiLinks[node][0];
-        size_t newAmbi = 0;
+        // // size_t ambi = ambiLinks[node][0];
+        // size_t newAmbi = 0;
 
-        vector<seq_type> staySigs;
-        vector<size_t> staySeqIDs;
+        // vector<seq_type> staySigs;
+        // vector<size_t> staySeqIDs;
 
-        for (size_t ambi : ambiLinks[node])
-        {
-            fprintf(stderr, "*** stayAmbi %zu\n", ambi);
-            bool newAmbi_F = false;
-            vector<seq_type> tempSigs;
-            vector<size_t> tempSeqIDs;
-            size_t i = 0;
+        // for (size_t ambi : ambiLinks[node])
+        // {
+        //     fprintf(stderr, "*** stayAmbi %zu\n", ambi);
+        //     bool newAmbi_F = false;
+        //     vector<seq_type> tempSigs;
+        //     vector<size_t> tempSeqIDs;
+        //     size_t i = 0;
 
-            for (seq_type matrix : matrices[ambi])
-            {
-                size_t status = similarityStatus(matrix, signature);
-                if (status == STAY_F)
-                {
-                    staySigs.push_back(matrix);
-                    staySeqIDs.push_back(seqIDs[ambi][i]);
-                }
-                else
-                {
-                    if (status == SPLIT_F)
-                    {
-                        newAmbi_F = true;
-                    }
-                    tempSigs.push_back(matrix);
-                    tempSeqIDs.push_back(seqIDs[ambi][i]);
-                }
-                i++;
-            }
+        //     for (seq_type matrix : matrices[ambi])
+        //     {
+        //         size_t status = similarityStatus(matrix, signature);
+        //         if (status == STAY_F)
+        //         {
+        //             staySigs.push_back(matrix);
+        //             staySeqIDs.push_back(seqIDs[ambi][i]);
+        //         }
+        //         else
+        //         {
+        //             if (status == SPLIT_F)
+        //             {
+        //                 newAmbi_F = true;
+        //             }
+        //             tempSigs.push_back(matrix);
+        //             tempSeqIDs.push_back(seqIDs[ambi][i]);
+        //         }
+        //         i++;
+        //     }
 
-            if (tempSeqIDs.size() != seqIDs[ambi].size())
-            {
-                matrices[ambi] = tempSigs;
-                seqIDs[ambi] = tempSeqIDs;
-            }
+        //     if (tempSeqIDs.size() != seqIDs[ambi].size())
+        //     {
+        //         matrices[ambi] = tempSigs;
+        //         seqIDs[ambi] = tempSeqIDs;
+        //     }
 
-            if (newAmbi_F)
-            {
-                newAmbi++;
-            }
-        }
+        //     if (newAmbi_F)
+        //     {
+        //         newAmbi++;
+        //     }
+        // }
 
-        for (size_t ambi : ambiLinks[node])
-        {
-            if (seqIDs[ambi].size() == 0)
-            {
-                deleteNode(ambi);
-            }
-        }
+        // for (size_t ambi : ambiLinks[node])
+        // {
+        //     if (seqIDs[ambi].size() == 0)
+        //     {
+        //         deleteNode(ambi);
+        //     }
+        // }
 
-        if (staySeqIDs.size() == 0)
-        {
-            if (newAmbi == ambiLinks[node].size())
-            {
+        // if (staySeqIDs.size() == 0)
+        // {
+        //     if (newAmbi == ambiLinks[node].size())
+        //     {
 
-                fprintf(stderr, "***???\n");
-                return createAmbiNode(signature, insertionList, node, idx);
-            }
-            else
-            {
-                return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
-            }
-        }
-        else
-        {
-            fprintf(stderr, "***---\n");
-            size_t dest = createNode(signature, insertionList, node, idx);
-            matrices[dest] = staySigs;
-            seqIDs[dest] = staySeqIDs;
-            matrices[dest].push_back(signature);
-            seqIDs[dest].push_back(idx);
-            means[dest] = matrices[dest][0];
+        //         fprintf(stderr, "***???\n");
+        //         return createAmbiNode(signature, insertionList, node, idx);
+        //     }
+        //     else
+        //     {
+        //         return stayNode(signature, insertionList, idx, ambiLinks[node][0]);
+        //     }
+        // }
+        // else
+        // {
+        //     fprintf(stderr, "***---\n");
+        //     size_t dest = createNode(signature, insertionList, node, idx);
+        //     matrices[dest] = staySigs;
+        //     seqIDs[dest] = staySeqIDs;
+        //     matrices[dest].push_back(signature);
+        //     seqIDs[dest].push_back(idx);
+        //     means[dest] = matrices[dest][0];
 
-            updateParentMean(node);
-            return dest;
-        }
+        //     updateParentMean(node);
+        //     return dest;
+        // }
     }
 
     void moveParent(size_t child, size_t new_parent, bool d = true)
@@ -699,74 +721,40 @@ public:
     // Ambi Node cannot be the first child or else update node mean will have problem
     inline size_t createAmbiNode(seq_type signature, vector<size_t> &insertionList, size_t node, size_t idx)
     {
-        // size_t dest = createNode(signature, insertionList, node, idx);
+        size_t dest = createNode(signature, insertionList, node, idx);
 
         fprintf(stderr, ">>Ambi\n");
-        size_t dest = getNewNodeIdx(insertionList);
-        parentLinks[dest] = node;
-        childLinks[node].push_back(dest);
-        seqIDs[dest].push_back(idx);
+        // size_t dest = getNewNodeIdx(insertionList);
+        // parentLinks[dest] = node;
+        // childLinks[node].push_back(dest);
+        // seqIDs[dest].push_back(idx);
         ambiLinks[node].push_back(dest);
         isAmbiNode[dest] = 1;
         return dest;
     }
 
-    void prep()
-    {
-        for (size_t i = 0; i < childCounts[root]; i++)
-        {
-            size_t child = childLinks[root][i];
-            // priority>split_threshold good enough?
-            if (isBranchNode[child] && priority[child] > split_node_threshold)
-            {
-                size_t centroid = childLinks[child][0];
-                if (isBranchNode[centroid])
-                {
-                    // dissolve this branch
-                    childLinks[root][i] = centroid;
-                    parentLinks[centroid] = root;
-
-                    for (size_t j = 1; j < childCounts[child]; j++)
-                    {
-                        moveParent(childLinks[child][j], root, false);
-                    }
-                    clearNode(child); // doesn't do anything now, just clear memory; can insert back to insertionList
-                }
-                else
-                {
-                    for (size_t grandchild : childLinks[child])
-                    {
-                        if (isBranchNode[grandchild] && priority[grandchild] > split_node_threshold)
-                        {
-                            moveParent(grandchild, root);
-                        }
-                    }
-                    updatePriority(child);
-                }
-            }
-        }
-    }
-
     size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0)
     {
-        fprintf(stderr, ">> Force split root\n");
+        fprintf(stderr, ">> Force split root %zu\n", node);
         // rootNodes.resize(1);
         // size_t node = root;
 
         // unpack previous subtree
-        for (size_t subtree : childLinks[node])
+        vector<size_t> tempChildLinks = childLinks[node];
+        for (size_t subtree : tempChildLinks)
         {
             if (isRootNode[subtree])
             {
                 for (size_t child : childLinks[subtree])
                 {
-                    moveParent(child, root, false);
+                    moveParent(child, node, false);
                 }
                 deleteNode(subtree);
             }
         }
         printTreeJson(stderr);
 
+        //? assume the first child is never ambi
         vector<size_t> temp_centroids = {childLinks[node][0]};
         vector<vector<size_t>> clusters;
         //?
@@ -778,7 +766,7 @@ public:
         double min_similarity = 1;
         size_t candidate = 0;
         seq_type mean0 = means[childLinks[node][0]];
-        for (size_t i = childCounts[node] - 1; i > 0; i--)
+        for (size_t i = childLinks[node].size() - 1; i > 0; i--)
         {
             size_t child = childLinks[node][i];
             if (isAmbiNode[child])
@@ -1005,7 +993,7 @@ public:
             return stayNode(signature, insertionList, idx, dest);
         }
 
-        if (mismatch.size() == childCounts[node])
+        if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
         {
             fprintf(stderr, "#mismatch\n");
             return createNode(signature, insertionList, node, idx);
@@ -1109,9 +1097,9 @@ public:
             return 0;
         }
 
+        printTreeJson(stderr);
         fprintf(stderr, ">> Force split subtree %zu\n", node);
         forceSplitRoot(insertionList, node);
-        printTreeJson(stderr);
         size_t parent = parentLinks[node];
         for (size_t child : childLinks[node])
         {
@@ -1147,7 +1135,7 @@ public:
             return stayNode(signature, insertionList, idx, dest);
         }
 
-        if (mismatch.size() == childCounts[node])
+        if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
         {
             //? this might be a wrong supercluster, dissolve this branch and check from parent again
             fprintf(stderr, "//?#b- mismatch all\n");
@@ -1215,15 +1203,7 @@ public:
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         size_t node = tt(signature, insertionList, idx);
-
         fprintf(stderr, "inserted %zu at %zu\n\n", idx, node);
-
-        // if (childCounts[root] > 5)
-        // {
-        //     printTreeJson(stderr);
-        //     forceSplitRoot(insertionList);
-        //     printTreeJson(stderr);
-        // }
         return node;
     }
 
