@@ -316,7 +316,7 @@ public:
     // delete a child from its parent, need to format the child separately
     inline void deleteNode(size_t node)
     {
-        fprintf(stderr, "deleting %zu\n", node);
+        // fprintf(stderr, "deleting %zu\n", node);
         size_t parent = parentLinks[node];
 
         int idx = getNodeIdx(node);
@@ -360,7 +360,7 @@ public:
                 // temp_matrix.push_back(matrices[node][c]);
             }
         }
-        
+
         return temp_matrix;
     }
 
@@ -383,6 +383,8 @@ public:
                 meanSig = doUnion(meanSig, means[child]);
             }
             means[node] = meanSig;
+
+            // means[node] = createMeanSig(getNonAmbiMatrix(node));
         }
         else
         {
@@ -398,6 +400,7 @@ public:
         while (node != root)
         {
             updateNodeMean(node);
+            updatePriority(node);
             node = parentLinks[node];
         }
     }
@@ -442,17 +445,23 @@ public:
     // RMSD
     double calcDistortion(size_t node)
     {
-        //? get non ambi
-        vector<cell_type> meanSig = getMinimiseSet(createMeanSig(matrices[node]))[0];
-        double sumSquaresimilarity = 0;
+        vector<seq_type> temp_matrix = getNonAmbiMatrix(node);
+        if (temp_matrix.size() <= 1)
+        {
+            return 0;
+        }
 
-        for (seq_type signature : matrices[node])
+        double sumSquaredistance = 0;
+        vector<cell_type> meanSig = getMinimiseSet(createMeanSig(temp_matrix))[0];
+
+        for (seq_type signature : temp_matrix)
         {
             vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-            double similarity = calcJaccardGlobal(meanSig, signatureData);
-            sumSquaresimilarity += similarity * similarity;
+            double distance = calcJaccardGlobal(meanSig, signatureData);
+            sumSquaredistance += distance * distance;
         }
-        return sqrt(sumSquaresimilarity / matrices[node].size());
+
+        return sqrt(sumSquaredistance / temp_matrix.size());
     }
 
     // RMSD
@@ -480,8 +489,8 @@ public:
     // union mean of children
     inline void updatePriority(size_t node)
     {
-        // priority[node] = calcDistortion(node);
-        priority[node] = calcDistortionHD(node);
+        priority[node] = calcDistortion(node);
+        // priority[node] = calcDistortionHD(node);
         // priority[node] = calcNodeMaxsimilarity(node);
 
         // priority[node] = calcNodeDistortion(node);
@@ -733,26 +742,29 @@ public:
         return dest;
     }
 
-    size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0)
+    size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0, bool unpack = false)
     {
+        printTreeJson(stderr);
         fprintf(stderr, ">> Force split root %zu\n", node);
         // rootNodes.resize(1);
         // size_t node = root;
 
         // unpack previous subtree
-        vector<size_t> tempChildLinks = childLinks[node];
-        for (size_t subtree : tempChildLinks)
+        if (unpack)
         {
-            if (isRootNode[subtree])
+            vector<size_t> tempChildLinks = childLinks[node];
+            for (size_t subtree : tempChildLinks)
             {
-                for (size_t child : childLinks[subtree])
+                if (isRootNode[subtree])
                 {
-                    moveParent(child, node, false);
+                    for (size_t child : childLinks[subtree])
+                    {
+                        moveParent(child, node, false);
+                    }
+                    deleteNode(subtree);
                 }
-                deleteNode(subtree);
             }
         }
-        printTreeJson(stderr);
 
         //? assume the first child is never ambi
         vector<size_t> temp_centroids = {childLinks[node][0]};
@@ -824,17 +836,14 @@ public:
             for (size_t n = 0; n < clusters[i].size(); n++)
             {
                 moveParent(clusters[i][n], t_parent);
-                fprintf(stderr, "--- %zu,%zu\n", clusters[i][n], t_parent);
+                // fprintf(stderr, "--- %zu,%zu\n", clusters[i][n], t_parent);
             }
-            updatePriority(t_parent);
             updateNodeMean(t_parent);
+            updatePriority(t_parent);
             addSigToMatrix(node, means[t_parent]);
-
-            //?
-            forceSplitSubtree(insertionList, t_parent);
         }
-
         updateParentMean(node);
+        printTreeJson(stderr);
 
         return 1;
     }
@@ -879,7 +888,21 @@ public:
         fprintf(stderr, "<%zu, ", child);
         size_t status;
 
-        if (isBranchNode[child])
+        if (isRootNode[child])
+        {
+            // root can be stay or split only
+            double similarity = calcOverlap(signature, means[child]);
+            fprintf(stderr, "%.2f> r\n ", similarity);
+            if (similarity >= stay_threshold)
+            {
+                return STAY_F;
+            }
+            else
+            {
+                return SPLIT_F;
+            }
+        }
+        else if (isBranchNode[child])
         {
             // double offset = 0.1 * rank;
             double offset = 0;
@@ -1097,16 +1120,14 @@ public:
             return 0;
         }
 
-        printTreeJson(stderr);
         fprintf(stderr, ">> Force split subtree %zu\n", node);
-        forceSplitRoot(insertionList, node);
+        forceSplitRoot(insertionList, node, false);
         size_t parent = parentLinks[node];
         for (size_t child : childLinks[node])
         {
             moveParent(child, parent, false);
         }
         deleteNode(node);
-        printTreeJson(stderr);
 
         return 1;
     }
@@ -1212,9 +1233,14 @@ public:
         size_t node = insert(signature, insertionList, idx);
         if (childCounts[root] > tree_order)
         {
-            printTreeJson(stderr);
             forceSplitRoot(insertionList);
-            printTreeJson(stderr);
+
+            //?
+            vector<size_t> subtrees = childLinks[root];
+            for (size_t t_parent : subtrees)
+            {
+                forceSplitSubtree(insertionList, t_parent);
+            }
         }
         return node;
     }
@@ -1319,9 +1345,8 @@ public:
 
             double similarity = calcSimilarity(means[child], signature);
             similarity += calcOverlap(signature, means[child]);
-            fprintf(stderr, " <%zu,%.2f> ", child, similarity);
-
-            fprintf(stderr, " (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
+            // fprintf(stderr, " <%zu,%.2f> ", child, similarity);
+            // fprintf(stderr, " (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
 
             if (similarity > best_similarity)
             {
@@ -1394,6 +1419,23 @@ public:
         for (size_t child : childLinks[node])
         {
             prepReinsert(child);
+        }
+    }
+
+
+    void updateTree (size_t node = 0)
+    {
+        if (!isAmbiNode[node])
+        {
+            updatePriority(node);
+            if (!isBranchNode[node])
+            {
+                updateNodeMean(node);
+            }
+        }
+        for (size_t child : childLinks[node])
+        {
+            updateTree(child);
         }
     }
 

@@ -117,7 +117,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     {
         tree.printTreeJson(stdout);
         fprintf(stderr, "Iteration %zu\n", run);
-        tree.prepReinsert(tree.root);
+        tree.prepReinsert();
         for (size_t i = 0; i < cap; i++)
         {
             size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
@@ -139,7 +139,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
             outputClusters(cFile, clusters);
         }
     }
-
+    tree.updateTree();
 
     FILE *pFile = fopen("nodeDistance.txt", "w");
     tree.printNodeDistance(pFile, seqs, clusters);
