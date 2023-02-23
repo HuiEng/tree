@@ -742,6 +742,34 @@ public:
         return dest;
     }
 
+    size_t findFurthest(size_t node, seq_type mean0)
+    {
+        double min_similarity = 1;
+        size_t candidate = 0;
+        // seq_type mean0 = means[childLinks[node][0]];
+        for (size_t i = 0; i < childCounts[node]; i++)
+        {
+            size_t child = childLinks[node][i];
+            if (isAmbiNode[child])
+            {
+                continue;
+            }
+            double similarity = calcSimilarity(mean0, matrices[node][i]);
+            // fprintf(stderr, "%zu, %f\n", child, similarity);
+            if (similarity < min_similarity)
+            {
+                min_similarity = similarity;
+                candidate = child;
+            }
+        }
+
+        if (candidate == 0)
+        {
+            fprintf(stderr, "??cannot find candidate %zu, %f\n", node, priority[node]);
+        }
+        return candidate;
+    }
+
     size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0, bool unpack = false)
     {
         printTreeJson(stderr);
@@ -767,7 +795,7 @@ public:
         }
 
         //? assume the first child is never ambi
-        vector<size_t> temp_centroids = {childLinks[node][0]};
+        vector<size_t> temp_centroids;
         vector<vector<size_t>> clusters;
         //?
         vector<size_t> temp;
@@ -775,32 +803,11 @@ public:
         vector<size_t> t;
         clusters.push_back(t);
 
-        double min_similarity = 1;
-        size_t candidate = 0;
-        seq_type mean0 = means[childLinks[node][0]];
-        for (size_t i = childLinks[node].size() - 1; i > 0; i--)
-        {
-            size_t child = childLinks[node][i];
-            if (isAmbiNode[child])
-            {
-                continue;
-            }
-            double similarity = calcSimilarity(mean0, matrices[node][i]);
-            // fprintf(stderr, "%zu, %f\n", child, similarity);
-            if (similarity < min_similarity)
-            {
-                min_similarity = similarity;
-                candidate = child;
-            }
-        }
+        // size_t candidate = findFurthest(node, createMeanSig(getNonAmbiMatrix(node)));
 
-        if (candidate == 0)
-        {
-            fprintf(stderr, "??something is wrong %zu, %f\n", node, priority[node]);
-            return 0;
-        }
-
+        size_t candidate = findFurthest(node, means[node]);
         temp_centroids.push_back(candidate);
+        temp_centroids.push_back(findFurthest(node, means[candidate]));
 
         // fprintf(stderr, "??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
 
@@ -812,18 +819,18 @@ public:
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
                 double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
-                // fprintf(stderr, "%zu, %f\n", temp_centroids[i], similarity);
+                fprintf(stderr, "%zu, %f\n", temp_centroids[i], similarity);
                 if (similarity > max_similarity)
                 {
                     max_similarity = similarity;
                     dest = i;
                 }
             }
-            // fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
+            fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
             clusters[dest].push_back(child);
         }
 
-        if (clusters[0].size() == 0 || clusters[1].size() == 0)
+        if (clusters[0].size() <= 1 || clusters[1].size() <= 1)
         {
             fprintf(stderr, "??something is wrong cannot split evenly\n");
             return 0;
@@ -1115,7 +1122,8 @@ public:
 
     inline size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
     {
-        if (childCounts[node] <= tree_order)
+        updatePriority(node);
+        if (childCounts[node] <= tree_order && priority[node] < 0.5)
         {
             return 0;
         }
@@ -1422,8 +1430,7 @@ public:
         }
     }
 
-
-    void updateTree (size_t node = 0)
+    void updateTree(size_t node = 0)
     {
         if (!isAmbiNode[node])
         {
