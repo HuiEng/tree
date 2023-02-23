@@ -841,6 +841,9 @@ public:
             updatePriority(t_parent);
             updateNodeMean(t_parent);
             addSigToMatrix(node, means[t_parent]);
+
+            //?
+            forceSplitSubtree(insertionList, t_parent);
         }
 
         updateParentMean(node);
@@ -1034,7 +1037,8 @@ public:
                 fprintf(stderr, "?no NN leaves\n");
                 return tt_branch(signature, insertionList, idx, dest);
             }
-            else if (isRootNode[dest]){
+            else if (isRootNode[dest])
+            {
                 fprintf(stderr, "?with NN leaves & is subtree\n");
                 // ignore leaves for now
                 return tt_root(signature, insertionList, idx, dest);
@@ -1098,7 +1102,7 @@ public:
         return createNode(signature, insertionList, node, idx);
     }
 
-    size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
+    inline size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
     {
         if (childCounts[node] <= tree_order)
         {
@@ -1398,13 +1402,15 @@ public:
     // cluster means still remain
     void prepReinsert(size_t node = 0)
     {
-        updatePriority(node);
-        if (!isBranchNode[node])
+        if (!isAmbiNode[node])
         {
-            updateNodeMean(node);
-            seqIDs[node].clear();
+            updatePriority(node);
+            if (!isBranchNode[node])
+            {
+                updateNodeMean(node);
+            }
         }
-
+        seqIDs[node].clear();
         for (size_t child : childLinks[node])
         {
             prepReinsert(child);
