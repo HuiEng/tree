@@ -374,6 +374,7 @@ public:
   bool size_given;
   bool debug;
   bool set_arg;
+  bool folder_arg;
 
   enum
   {
@@ -389,7 +390,7 @@ public:
                                    kmer_given(false), window_given(false),step_given(false),
                                    element_given(false), multiple_arg(false),
                                    canonical_arg(false), size_given(false),
-                                   size_arg(0), debug(false), set_arg(false)
+                                   size_arg(0), debug(false), set_arg(false), folder_arg(false)
   {
   }
 
@@ -399,7 +400,7 @@ public:
                                                          kmer_given(false), window_given(false),step_given(false),
                                                          element_given(false), multiple_arg(false),
                                                          canonical_arg(false), size_given(false),
-                                                         size_arg(0), debug(false), set_arg(false)
+                                                         size_arg(0), debug(false), set_arg(false), folder_arg(false)
   {
     parse(argc, argv);
   }
@@ -408,6 +409,7 @@ public:
   {
     static struct option long_options[] = {
         {"output", 1, 0, 'o'},
+        {"folder", 1, 0, 'f'},
         {"element", 1, 0, 'e'},
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
@@ -420,7 +422,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVo:k:w:mCs:de:";
+    static const char *short_options = "hVo:k:w:mCs:de:f";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -466,6 +468,9 @@ public:
         break;
       case SET_OPT:
         set_arg = true;
+        break;
+      case 'f':
+        folder_arg = true;
         break;
       case 'k':
         kmer_given = true;
@@ -565,6 +570,7 @@ public:
   {
     return "partition input seq(s) into window of length w and select s minimisers per window and store in a bf\n\n"
            "Options (default value in (), *required):\n"
+           " -f, --folder                             input is all files in folder [default=false]\n"
            " -o, --output                             output path\n"
            "     --output                             print as minimiser set\n"
            " -e, --element                            expected number of element in BF [default=1000]\n"

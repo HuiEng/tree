@@ -8,6 +8,7 @@
 // using namespace bf;
 
 using namespace std;
+namespace fs = std::experimental::filesystem;
 
 static build_main_cmdline args;   // Command line switches and arguments
 static uint8_t kmerLength = 4;    // Kmer length
@@ -199,6 +200,60 @@ void generateSig(bloom_parameters parameters, string filename, string outname, b
     }
 }
 
+template <typename view>
+void generateSigFolder(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
+{
+    seqan3::sequence_file_input<dna4_traits> file_in{filename};
+
+    bloom_filter bf(parameters);
+    // Retrieve the sequences and ids.
+    for (auto &[seq, id, qual] : file_in)
+    {
+        // for each seq, Instantiate Bloom Filter
+        for (auto &&hash : seq | minimiser_view)
+        {
+            bf.insert(hash);
+        }
+
+        bf.print(wf);
+        bf.clear();
+    }
+}
+
+void generateSigFolder(bloom_parameters parameters, string filename, ofstream &wf)
+{
+    // to get minimisers with w=8,k=4
+    // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
+    size_t temp = windowLength - kmerLength + 1;
+    auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::minimiser(temp);
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(1, numeric_limits<size_t>::max() / 2); // distribution in range [1, 6]
+    seed = dist(rng);
+
+    auto minimiser_view_rand = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | std::views::transform([seed](uint64_t i)
+                                                                                                                             { return i ^ seed; }) |
+                               seqan3::views::minimiser(temp);
+
+    seqan3::sequence_file_input<dna4_traits> file_in{filename};
+
+    bloom_filter bf(parameters);
+
+    // Retrieve the sequences and ids.
+    for (auto &[seq, id, qual] : file_in)
+    {
+
+        // for each seq, Instantiate Bloom Filter
+        for (auto &&hash : seq | minimiser_view)
+        {
+            bf.insert(hash);
+        }
+
+        bf.print(wf);
+        bf.clear();
+    }
+}
+
 int build_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -244,6 +299,91 @@ int build_main(int argc, char *argv[])
     parameters.compute_optimal_parameters();
 
     std::cout << "done setting bf param" << std::endl;
+
+    if (args.folder_arg)
+    {
+        string inputFile = args.input_arg;
+        string delimiter = "/*";
+        string folder = inputFile.substr(0, inputFile.find(delimiter));
+        string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
+        fprintf(stderr, "Reading folder %s\n", folder.c_str());
+
+        char buffer[50];
+        sprintf(buffer, "/input-k%zu-w%zu.bin", kmerLength, windowLength);
+
+        string outfile = folder + buffer;
+
+        ofstream wf(outfile, ios::out | ios::binary);
+
+        bloom_filter bf(parameters);
+        writeInt(wf, bf.table_size());
+        std::cout << "bf size: " << bf.table_size() * bits_per_char << "\n";
+
+        if (kmerLength == windowLength)
+        {
+            fprintf(stderr, "Generating all k-mers...\n");
+            if (args.canonical_arg)
+            {
+                auto minimiser_view = seqan3::views::minimiser_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
+                                                                    seqan3::window_size{windowLength},
+                                                                    seqan3::seed{0});
+
+                for (const auto &entry : fs::directory_iterator(folder))
+                {
+                    if (entry.path().extension() == ext)
+                    {
+                        cout << entry.path().stem().string() << '\n';
+                        generateSigFolder(minimiser_view, parameters, entry.path(), wf);
+                    }
+                }
+            }
+            else
+            {
+                auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}});
+                for (const auto &entry : fs::directory_iterator(folder))
+                {
+                    if (entry.path().extension() == ext)
+                    {
+                        cout << entry.path().stem().string() << '\n';
+                        generateSigFolder(minimiser_view, parameters, entry.path(), wf);
+                    }
+                }
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Generating minimisers...\n");
+
+            if (args.canonical_arg)
+            {
+                auto minimiser_view = seqan3::views::minimiser_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
+                                                                    seqan3::window_size{windowLength},
+                                                                    seqan3::seed{0});
+                for (const auto &entry : fs::directory_iterator(folder))
+                {
+                    if (entry.path().extension() == ext)
+                    {
+                        cout << entry.path().stem().string() << '\n';
+                        generateSigFolder(minimiser_view, parameters, entry.path(), wf);
+                    }
+                }
+            }
+            else
+            {
+                for (const auto &entry : fs::directory_iterator(folder))
+                {
+                    if (entry.path().extension() == ext)
+                    {
+                        cout << entry.path().stem().string() << '\n';
+                        generateSigFolder(parameters, entry.path(), wf);
+                    }
+                }
+            }
+        }
+
+        wf.close();
+        return 0;
+    }
 
     if (kmerLength == windowLength)
     {

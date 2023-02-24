@@ -772,7 +772,7 @@ public:
 
     size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0, bool unpack = false)
     {
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
         fprintf(stderr, ">> Force split root %zu\n", node);
         // rootNodes.resize(1);
         // size_t node = root;
@@ -850,7 +850,7 @@ public:
             addSigToMatrix(node, means[t_parent]);
         }
         updateParentMean(node);
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
 
         return 1;
     }
@@ -1353,8 +1353,8 @@ public:
 
             double similarity = calcSimilarity(means[child], signature);
             similarity += calcOverlap(signature, means[child]);
-            // fprintf(stderr, " <%zu,%.2f> ", child, similarity);
-            // fprintf(stderr, " (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
+            fprintf(stderr, " <%zu,%.2f> ", child, similarity);
+            fprintf(stderr, " (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
 
             if (similarity > best_similarity)
             {
@@ -1375,7 +1375,7 @@ public:
         {
             if (isBranchNode[best_child])
             {
-                fprintf(stderr, "\n");
+                fprintf(stderr, "\n>%zu\n",best_child);
                 return search(signature, idx, best_child);
             }
             else
