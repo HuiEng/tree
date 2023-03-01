@@ -6,6 +6,8 @@
 #include "read.hpp"
 #include "self_tree.hpp"
 
+#include <regex>
+
 using namespace std;
 
 static stats_main_cmdline args; // Command line switches and arguments
@@ -70,6 +72,14 @@ int stats_main(int argc, char *argv[])
     {
         rawname = rawname + "-" + args.output_arg;
     }
+
+    char str[] = "The woman you were looking for!";
+
+cmatch m;
+
+if (regex_search(str, m, regex("w.m.n")))
+
+  cout << m[0] << endl;
 
     if (args.all_kmer_arg)
     {
