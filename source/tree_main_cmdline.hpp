@@ -374,6 +374,7 @@ public:
   bool split_threshold_given;
   bool stay_threshold_given;
   bool debug_arg;
+  bool print_arg;
   bool force_split_arg;
 
   enum
@@ -391,7 +392,7 @@ public:
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
                         stay_threshold_given(false), stay_threshold_arg(0),
-                        debug_arg(false), force_split_arg(false)
+                        debug_arg(false), print_arg(false), force_split_arg(false)
   {
   }
 
@@ -403,7 +404,7 @@ public:
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
                                               stay_threshold_given(false), stay_threshold_arg(0),
-                                              debug_arg(false), force_split_arg(false)
+                                              debug_arg(false), print_arg(false), force_split_arg(false)
   {
     parse(argc, argv);
   }
@@ -413,6 +414,7 @@ public:
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
         {"debug", 0, 0, DEBUG_OPT},
+        {"print", 0, 0, 'p'},
         {"tag", 1, 0, 'T'},
         {"capacity", 1, 0, 'c'},
         {"minimiser_match", 1, 0, 'm'},
@@ -425,7 +427,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:RdfI:q:S:L:m:T:";
+    static const char *short_options = "hVi:o:c:RdfI:q:S:L:m:T:p";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -456,6 +458,9 @@ public:
         exit(0);
       case DEBUG_OPT:
         debug_arg = true;
+        break;
+      case 'p':
+        print_arg = true;
         break;
       case 'f':
         force_split_arg = true;
@@ -576,6 +581,7 @@ public:
     return "Read minimisers BF and get all-against-all Jaccard tree\n\n"
            "Options (default value in (), *required):\n"
            " -d, --debug                              print debug files\n"
+           " -p, --print                              print debug msg to stderr [default = false]\n"
            " -f,                                      force split root [default=false]\n"
            " -i, --input                              input file or folder\n"
            " -T, --tag                                [optional] tag for output cluster file\n"

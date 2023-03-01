@@ -17,6 +17,8 @@
 #include <set>
 #include "read.hpp"
 #include "distance.hpp"
+#include <stdarg.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -25,6 +27,18 @@ bloom_parameters parameters;
 size_t partree_capacity = 100;
 size_t singleton = 2;
 size_t tree_order = 5;
+bool print_ = false;
+
+void printMsg(const char *format, ...)
+{
+    if (print_)
+    {
+        va_list args;
+        va_start(args, format);
+        vfprintf(stderr, format, args);
+        va_end(args);
+    }
+}
 
 seq_type createMeanSig(const vector<seq_type> clusterSigs)
 {
@@ -316,14 +330,14 @@ public:
     // delete a child from its parent, need to format the child separately
     inline void deleteNode(size_t node)
     {
-        // fprintf(stderr, "deleting %zu\n", node);
+        // printMsg("deleting %zu\n", node);
         size_t parent = parentLinks[node];
 
         int idx = getNodeIdx(node);
 
         if (idx == -1)
         {
-            fprintf(stderr, "ERROR deleting %zu from %zu!!\n", node, parent);
+            printMsg("ERROR deleting %zu from %zu!!\n", node, parent);
         }
         else
         {
@@ -419,18 +433,18 @@ public:
         double min_similarity = 1;
         size_t i = 0;
 
-        // fprintf(stderr, ">>%f,%f\n", meanSig.first, meanSig.second);
+        // printMsg(">>%f,%f\n", meanSig.first, meanSig.second);
         for (seq_type sig : matrices[node])
         {
             double similarity = calcSimilarity(meanSig, sig);
 
             // if (isBranchNode[node])
             // {
-            //     fprintf(stderr, "%zu,%f,%f,%f\n", childLinks[node][i], sig.first, sig.second, similarity);
+            //     printMsg("%zu,%f,%f,%f\n", childLinks[node][i], sig.first, sig.second, similarity);
             // }
             // else
             // {
-            //     fprintf(stderr, "%zu,%f,%f,%f\n", seqIDs[node][i], sig.first, sig.second, similarity);
+            //     printMsg("%zu,%f,%f,%f\n", seqIDs[node][i], sig.first, sig.second, similarity);
             // }
             if (similarity < min_similarity)
             {
@@ -515,11 +529,11 @@ public:
             return 0; // heap order, larger priority on top
         }
 
-        fprintf(stderr, ">%zu; priority: %.1f,%.1f\n", parent, priority[parent], priority[node]);
+        printMsg(">%zu; priority: %.1f,%.1f\n", parent, priority[parent], priority[node]);
 
         size_t grandparent = parentLinks[parent];
         vector<size_t> &siblings = childLinks[parent];
-        fprintf(stderr, "\nrotate: %zu,%zu,%zu\n", grandparent, parent, node);
+        printMsg("\nrotate: %zu,%zu,%zu\n", grandparent, parent, node);
 
         // remove(siblings.begin(), siblings.end(), node);
         siblings.erase(remove(siblings.begin(), siblings.end(), node), siblings.end());
@@ -531,7 +545,7 @@ public:
         childCounts[grandparent] += siblings.size();
         for (size_t sibling : siblings)
         {
-            fprintf(stderr, "\nSibling: %zu\n", sibling);
+            printMsg("\nSibling: %zu\n", sibling);
             childLinks[grandparent].push_back(sibling);
             parentLinks[sibling] = grandparent;
         }
@@ -541,15 +555,15 @@ public:
 
         for (size_t grand : childLinks[node])
         {
-            fprintf(stderr, "%zu,", grand);
+            printMsg("%zu,", grand);
         }
-        fprintf(stderr, "\n");
+        printMsg("\n");
         childLinks[node].push_back(parent);
         for (size_t grand : childLinks[node])
         {
-            fprintf(stderr, "%zu,", grand);
+            printMsg("%zu,", grand);
         }
-        fprintf(stderr, "\n");
+        printMsg("\n");
 
         parentLinks[parent] = node;
 
@@ -557,16 +571,16 @@ public:
         isBranchNode[parent] = isBranchNode[node];
         isBranchNode[node] = temp;
 
-        fprintf(stderr, "finish: %zu\n", grandparent);
+        printMsg("finish: %zu\n", grandparent);
 
         for (size_t child : childLinks[grandparent])
         {
-            fprintf(stderr, "%zu>", child);
+            printMsg("%zu>", child);
             for (size_t grand : childLinks[child])
             {
-                fprintf(stderr, "%zu,", grand);
+                printMsg("%zu,", grand);
             }
-            fprintf(stderr, "\n");
+            printMsg("\n");
         }
 
         return parent;
@@ -604,7 +618,7 @@ public:
 
         // for (size_t ambi : ambiLinks[node])
         // {
-        //     fprintf(stderr, "*** stayAmbi %zu\n", ambi);
+        //     printMsg("*** stayAmbi %zu\n", ambi);
         //     bool newAmbi_F = false;
         //     vector<seq_type> tempSigs;
         //     vector<size_t> tempSeqIDs;
@@ -655,7 +669,7 @@ public:
         //     if (newAmbi == ambiLinks[node].size())
         //     {
 
-        //         fprintf(stderr, "***???\n");
+        //         printMsg("***???\n");
         //         return createAmbiNode(signature, insertionList, node, idx);
         //     }
         //     else
@@ -665,7 +679,7 @@ public:
         // }
         // else
         // {
-        //     fprintf(stderr, "***---\n");
+        //     printMsg("***---\n");
         //     size_t dest = createNode(signature, insertionList, node, idx);
         //     matrices[dest] = staySigs;
         //     seqIDs[dest] = staySeqIDs;
@@ -701,7 +715,7 @@ public:
         childCounts[node]++;
         childLinks[node].push_back(t_parent);
 
-        fprintf(stderr, "create t_parent %zu\n", t_parent);
+        printMsg("create t_parent %zu\n", t_parent);
         return t_parent;
     }
 
@@ -723,7 +737,7 @@ public:
             updatePriority(t_parent);
         }
 
-        fprintf(stderr, "create new node %zu\n", new_node);
+        printMsg("create new node %zu\n", new_node);
         return new_node;
     }
 
@@ -732,7 +746,7 @@ public:
     {
         size_t dest = createNode(signature, insertionList, node, idx);
 
-        fprintf(stderr, ">>Ambi\n");
+        printMsg(">>Ambi\n");
         // size_t dest = getNewNodeIdx(insertionList);
         // parentLinks[dest] = node;
         // childLinks[node].push_back(dest);
@@ -755,7 +769,7 @@ public:
                 continue;
             }
             double similarity = calcSimilarity(mean0, matrices[node][i]);
-            // fprintf(stderr, "%zu, %f\n", child, similarity);
+            // printMsg("%zu, %f\n", child, similarity);
             if (similarity < min_similarity)
             {
                 min_similarity = similarity;
@@ -765,7 +779,7 @@ public:
 
         if (candidate == 0)
         {
-            fprintf(stderr, "??cannot find candidate %zu, %f\n", node, priority[node]);
+            printMsg("??cannot find candidate %zu, %f\n", node, priority[node]);
         }
         return candidate;
     }
@@ -773,7 +787,7 @@ public:
     size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0, bool unpack = false)
     {
         // printTreeJson(stderr);
-        fprintf(stderr, ">> Force split root %zu\n", node);
+        printMsg(">> Force split root %zu\n", node);
         // rootNodes.resize(1);
         // size_t node = root;
 
@@ -809,7 +823,7 @@ public:
         temp_centroids.push_back(candidate);
         temp_centroids.push_back(findFurthest(node, means[candidate]));
 
-        // fprintf(stderr, "??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
+        // printMsg("??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
 
         for (size_t n = 0; n < matrices[node].size(); n++)
         {
@@ -819,20 +833,20 @@ public:
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
                 double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
-                fprintf(stderr, "%zu, %f\n", temp_centroids[i], similarity);
+                printMsg("%zu, %f\n", temp_centroids[i], similarity);
                 if (similarity > max_similarity)
                 {
                     max_similarity = similarity;
                     dest = i;
                 }
             }
-            fprintf(stderr, "--- %zu goes to %zu\n", child, dest);
+            printMsg("--- %zu goes to %zu\n", child, dest);
             clusters[dest].push_back(child);
         }
 
         if (clusters[0].size() <= 1 || clusters[1].size() <= 1)
         {
-            fprintf(stderr, "??something is wrong cannot split evenly\n");
+            printMsg("??something is wrong cannot split evenly\n");
             return 0;
         }
 
@@ -843,7 +857,7 @@ public:
             for (size_t n = 0; n < clusters[i].size(); n++)
             {
                 moveParent(clusters[i][n], t_parent);
-                // fprintf(stderr, "--- %zu,%zu\n", clusters[i][n], t_parent);
+                // printMsg("--- %zu,%zu\n", clusters[i][n], t_parent);
             }
             updateNodeMean(t_parent);
             updatePriority(t_parent);
@@ -871,35 +885,35 @@ public:
         double local_split_t = split_threshold;
         double similarity = calcSimilarity(sig1, sig2);
 
-        fprintf(stderr, "%.2f", similarity);
+        printMsg("%.2f", similarity);
 
         if (similarity >= local_stay_t)
         {
-            fprintf(stderr, ": STAY>\n");
+            printMsg(": STAY>\n");
             return STAY_F;
         }
         else if (similarity <= local_split_t)
         {
-            fprintf(stderr, ": SPLIT>\n");
+            printMsg(": SPLIT>\n");
             return SPLIT_F;
         }
         else
         {
-            fprintf(stderr, ": NN>\n");
+            printMsg(": NN>\n");
             return NN_F;
         }
     }
 
     inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
     {
-        fprintf(stderr, "<%zu, ", child);
+        printMsg("<%zu, ", child);
         size_t status;
 
         if (isRootNode[child])
         {
             // root can be stay or split only
             double similarity = calcOverlap(signature, means[child]);
-            fprintf(stderr, "%.2f> r\n ", similarity);
+            printMsg("%.2f> r\n ", similarity);
             if (similarity >= stay_threshold)
             {
                 return STAY_F;
@@ -945,7 +959,7 @@ public:
             // skip ambiNode
             if (isAmbiNode[child])
             {
-                fprintf(stderr, "Ambi: %zu\n", child);
+                printMsg("Ambi: %zu\n", child);
                 continue;
             }
             size_t rank = findLevel(child);
@@ -983,7 +997,7 @@ public:
     inline size_t superCluster(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node, vector<size_t> NN_leaves, vector<size_t> NN_branches)
     {
         size_t t_parent = createParent(node, insertionList);
-        fprintf(stderr, "*** super\n");
+        printMsg("*** super\n");
         for (size_t child : NN_leaves)
         {
             moveParent(child, t_parent);
@@ -1002,7 +1016,7 @@ public:
         if (ambiLinks[node].size() > 0)
         {
             // shouldn't happen at root
-            fprintf(stderr, "check ambi\n");
+            printMsg("check ambi\n");
         }
         return dest;
     }
@@ -1019,13 +1033,13 @@ public:
 
         if (dest != 0)
         {
-            fprintf(stderr, "#stay in %zu from %zu\n", dest, stay.size());
+            printMsg("#stay in %zu from %zu\n", dest, stay.size());
             return stayNode(signature, insertionList, idx, dest);
         }
 
         if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
         {
-            fprintf(stderr, "#mismatch\n");
+            printMsg("#mismatch\n");
             return createNode(signature, insertionList, node, idx);
         }
 
@@ -1035,7 +1049,7 @@ public:
         {
             // if (NN_leaves.size() > 1)
             {
-                fprintf(stderr, "NN leaves\n");
+                printMsg("NN leaves\n");
                 return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
 
                 // dbgPrintSignatureIdx(stderr, means[t_parent]);
@@ -1047,29 +1061,29 @@ public:
         }
         else if (NN_branches.size() == 1)
         {
-            fprintf(stderr, "#match ONE branch > ");
+            printMsg("#match ONE branch > ");
             dest = NN_branches[0];
             if (NN_total == 1)
             {
                 // no NN leaves
-                fprintf(stderr, "?no NN leaves\n");
+                printMsg("?no NN leaves\n");
                 return tt_branch(signature, insertionList, idx, dest);
             }
             else if (isRootNode[dest])
             {
-                fprintf(stderr, "?with NN leaves & is subtree\n");
+                printMsg("?with NN leaves & is subtree\n");
                 // ignore leaves for now
                 return tt_root(signature, insertionList, idx, dest);
             }
             else
             {
-                fprintf(stderr, "?with NN leaves\n");
+                printMsg("?with NN leaves\n");
                 return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
             }
         }
         else
         {
-            fprintf(stderr, "#match multiple branches > ");
+            printMsg("#match multiple branches > ");
             double max_sim = 0;
             for (size_t c : NN_branches)
             {
@@ -1084,7 +1098,7 @@ public:
             if (NN_leaves.size() == 0)
             {
                 // continue with nearest, might change
-                fprintf(stderr, "?without leaves\n");
+                printMsg("?without leaves\n");
                 return tt_branch(signature, insertionList, idx, dest);
             }
             else
@@ -1093,7 +1107,7 @@ public:
                 // ignore NN branches, supercluster on the NN leaves only
                 // or else, continue with the nearest branch and ignore leaves
                 // might change
-                fprintf(stderr, "?with leaves\n");
+                printMsg("?with leaves\n");
                 for (size_t c : NN_leaves)
                 {
                     double similarity = calcSimilarity(means[c], signature);
@@ -1128,7 +1142,7 @@ public:
             return 0;
         }
 
-        fprintf(stderr, ">> Force split subtree %zu\n", node);
+        printMsg(">> Force split subtree %zu\n", node);
         forceSplitRoot(insertionList, node, false);
         size_t parent = parentLinks[node];
         for (size_t child : childLinks[node])
@@ -1144,7 +1158,7 @@ public:
     {
         if (isRootNode[node])
         {
-            fprintf(stderr, "is subtree %zu\n", node);
+            printMsg("is subtree %zu\n", node);
             forceSplitSubtree(insertionList, node);
             return tt_root(signature, insertionList, idx, node);
         }
@@ -1156,32 +1170,32 @@ public:
         vector<size_t> stay;
 
         size_t dest = checkRoot(signature, insertionList, mismatch, NN_leaves, NN_branches, stay, node);
-        fprintf(stderr, "tt_branch %zu\n", node);
+        printMsg("tt_branch %zu\n", node);
 
         if (dest != 0)
         {
-            fprintf(stderr, "#b- stay in %zu from %zu\n", dest, stay.size());
+            printMsg("#b- stay in %zu from %zu\n", dest, stay.size());
             return stayNode(signature, insertionList, idx, dest);
         }
 
         if (mismatch.size() == childCounts[node] - ambiLinks[node].size())
         {
             //? this might be a wrong supercluster, dissolve this branch and check from parent again
-            fprintf(stderr, "//?#b- mismatch all\n");
+            printMsg("//?#b- mismatch all\n");
             dest = createNode(signature, insertionList, node, idx);
             updateParentMean(node);
             return dest;
         }
         else if (mismatch.size() > 0)
         {
-            fprintf(stderr, "//?#b- mismatch, promote\n");
+            printMsg("//?#b- mismatch, promote\n");
         }
 
         size_t NN_total = NN_leaves.size() + NN_branches.size();
         if (mismatch.size() == 0)
         {
             // NN with everything
-            fprintf(stderr, "#??NN with all\n");
+            printMsg("#??NN with all\n");
             if (ambiLinks[node].size() == 0)
             {
                 return createAmbiNode(signature, insertionList, node, idx);
@@ -1194,7 +1208,7 @@ public:
         else
         {
             // some mismatches
-            fprintf(stderr, "#NN with some\n");
+            printMsg("#NN with some\n");
             if (ambiLinks[node].size() == 0)
             {
                 return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
@@ -1204,7 +1218,7 @@ public:
                 return stayAmbi(signature, insertionList, idx, node);
             }
         }
-        fprintf(stderr, "//?#b- wrong\n");
+        printMsg("//?#b- wrong\n");
         return createNode(signature, insertionList, node, idx);
     }
 
@@ -1220,7 +1234,7 @@ public:
         }
         else
         {
-            fprintf(stderr, "Something went wrong\n");
+            printMsg("Something went wrong\n");
         }
     }
 
@@ -1232,7 +1246,7 @@ public:
     inline size_t insert(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         size_t node = tt(signature, insertionList, idx);
-        fprintf(stderr, "inserted %zu at %zu\n\n", idx, node);
+        printMsg("inserted %zu at %zu\n\n", idx, node);
         return node;
     }
 
@@ -1272,7 +1286,7 @@ public:
 
     //         // double similarity = calcSimilarity(means[child], signature);
     //         double similarity = calcOverlap(signature, means[child]);
-    //         fprintf(stderr, " <%zu,%.2f> ", child, similarity);
+    //         printMsg(" <%zu,%.2f> ", child, similarity);
 
     //         // found same, move on with the next seq
     //         if (similarity >= (stay_threshold))
@@ -1353,8 +1367,8 @@ public:
 
             double similarity = calcSimilarity(means[child], signature);
             similarity += calcOverlap(signature, means[child]);
-            fprintf(stderr, " <%zu,%.2f> ", child, similarity);
-            fprintf(stderr, " (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
+            printMsg(" <%zu,%.2f> ", child, similarity);
+            printMsg(" (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
 
             if (similarity > best_similarity)
             {
@@ -1375,7 +1389,7 @@ public:
         {
             if (isBranchNode[best_child])
             {
-                fprintf(stderr, "\n>%zu\n",best_child);
+                printMsg("\n>%zu\n", best_child);
                 return search(signature, idx, best_child);
             }
             else
@@ -1386,11 +1400,11 @@ public:
         else
         {
 
-            fprintf(stderr, "\n*** here\n");
+            printMsg("\n*** here\n");
             double best_dest_similarity = 0;
             for (size_t child : candidates)
             {
-                fprintf(stderr, "child %zu\n", child);
+                printMsg("child %zu\n", child);
                 size_t leaf = child;
                 double similarity = best_similarity;
                 if (isBranchNode[child])
@@ -1398,7 +1412,7 @@ public:
                     leaf = search(signature, idx, child);
                     similarity = calcSimilarity(means[child], signature);
                     similarity += calcOverlap(signature, means[leaf]);
-                    fprintf(stderr, "> leaf %zu\n", leaf);
+                    printMsg("> leaf %zu\n", leaf);
                 }
 
                 if (similarity > best_dest_similarity)
@@ -1476,7 +1490,7 @@ public:
 
     bool redundant(size_t parent)
     {
-        fprintf(stderr, "redundant %zu\n", parent);
+        printMsg("redundant %zu\n", parent);
         if (childCounts[parent] == 0)
         {
             return true;
@@ -1522,7 +1536,7 @@ public:
     void trim(size_t last_idx)
     {
         std::set<size_t> branches;
-        fprintf(stderr, "\nTrimming\n");
+        printMsg("\nTrimming\n");
 
         vector<size_t> leaves;
         getEmptyLeaves(leaves);
@@ -1530,14 +1544,11 @@ public:
         // do leaves
         for (size_t i : leaves)
         {
-            if (seqIDs[i].size() < singleton)
+            size_t parent = parentLinks[i];
+            deleteNode(i);
+            if (childCounts[parent] == 0)
             {
-                size_t parent = parentLinks[i];
-                deleteNode(i);
-                if (childCounts[parent] == 0)
-                {
-                    branches.insert(parent);
-                }
+                branches.insert(parent);
             }
         }
 

@@ -1,29 +1,7 @@
 library("dplyr")
 library(DescTools)
+library(patchwork) # To display 2 charts together
 source("C://DataCopied/Research/R/createShiny.R")
-
-# formatResult<-function(file){
-#   dt<-read.csv(file)
-#   ancestors<-unique(dt$ancestor)
-#   dt<-dt%>%group_by(cluster)%>%
-#     mutate(ancestor=match(ancestor,ancestors),
-#            clu_size=length(cluster),
-#            species_id=ceiling((seqID+1)/26)-1)
-#   dt<-dt%>%group_by(ancestor)%>%
-#     mutate(anc_clu_size=length((ancestor)))
-#   dt
-# }
-
-plotEnt<-function(file){
-  dt<-read.csv(file,header=FALSE)
-  colnames(dt)<-c("seqID","cluster")
-  dt<-dt%>%mutate(species_id=ceiling((seqID+1)/26)-1)
-  # dt<-dt%>%group_by(cluster)%>%
-  #   summarise(clu_size=length(cluster),
-  #             entropy=Entropy(table(species_id),base=exp(1)))
-  # dt<-dt%>%mutate(clus_id=row_number())
-  dt
-}
 
 cluQuality<-function(dt,sim){
   temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
@@ -100,15 +78,27 @@ ggplot()+
     name = "HD",
     sec.axis = sec_axis(~.+60, name="avg_sim")
   )
-######################## //iterations ##################################
+######################## toy ##################################
+plotEnt<-function(file){
+  dt<-read.csv(file,header=FALSE)
+  colnames(dt)<-c("seqID","cluster")
+  dt<-dt%>%mutate(species_id=ceiling((seqID+1)/26)-1)
+  # dt<-dt%>%group_by(cluster)%>%
+  #   summarise(clu_size=length(cluster),
+  #             entropy=Entropy(table(species_id),base=exp(1)))
+  # dt<-dt%>%mutate(clus_id=row_number())
+  dt
+}
+
 
 path<-"C://DataCopied/Research/tree/data/toy"
 water<-read.csv(paste(path,"/toy-waterall.csv",sep=""))
+# ggplot(water)+geom_tile(aes(x=aseq,y=bseq,fill=similarity.))
 
 dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
 cluQ<-cluQuality(dt,water)
 mean(cluQ$avg_sim)
-
+avg<- cluQ %>% summarise(across(everything(), list(mean)))
 (
   ggplot(cluQ)+
   geom_point(aes(x=clu,y=avg_sim,size=size))+
@@ -129,12 +119,11 @@ mean(cluQ$avg_sim)
     xlim(0,57)
 )
 
-avg<- cluQ %>% summarise(across(everything(), list(mean)))
-# save.image("C:/DataCopied/Research/tree/data/toy/clusQ-multiAmbi.RData")
+# save.image("C:/DataCopied/Research/tree/data/toy/clusQ-f89e5e9-unbound.RData")
 
 load("C:/DataCopied/Research/tree/data/toy/clusQ-1Ambi.RData")
 
-#######################################################
+######################## hierarchy ###############################
 hierarchy<-read.csv(paste(path,"/hierarchy.txt",sep=""))
 hierarchy<-hierarchy%>%mutate(parent=case_when((rank == 0 & parent == 0 & !child %in% parent) ~ child, TRUE ~ parent))
 
@@ -171,6 +160,181 @@ cluQ<-temp%>%group_by(parent.y)%>%
 
 load("C:/DataCopied/Research/tree/data/toy/clusQ-1.RData")
 
+
+######################## staph ################################
+mirror<-function(dt){
+  temp<-dt
+  n<-colnames(temp)[2:1]
+  colnames(temp)[1:2]<-n
+  dt<-rbind(dt,temp)
+  dt<-unique(dt)
+}
+
+waterStaph<-function(simFile,metaFile,skip=15){
+  water<-read.csv(simFile, skip = skip)
+  meta<-read.csv(metaFile)
+  
+  # mirrorring
+  water<-mirror(water)
+  # temp<-water
+  # colnames(temp)[1:2]<-c("bseq","aseq")
+  # water<-rbind(water,temp)
+  # water<-unique(water)
+  # 
+  water<-merge(water,meta,by.x="aseq",by.y="name")
+  merge(water,meta,by.x="bseq",by.y="name")
+}
+
+simStaph<-function(simFile,metaFile,skip=15){
+  sim<-read.csv(simFile, skip = skip)
+  meta<-read.csv(metaFile)
+  
+  # mirrorring
+  sim<-mirror(sim)
+  
+  colnames(sim)<-c("seqID.x","seqID.y","identity.")
+  sim<-merge(sim,meta,by.x="seqID.x",by.y="seqID")
+  merge(sim,meta,by.x="seqID.y",by.y="seqID")
+}
+
+cluQualityStaph<-function(dt,sim,ND=TRUE){
+  temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("seqID.y"))
+  names(temp)[names(temp) == 'cluster'] <- 'clusterB'
+  temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("seqID.x"))
+  names(temp)[names(temp) == 'cluster'] <- 'clusterA'
+  
+  temp<-temp%>%filter(clusterA==clusterB)
+  clu<-temp%>%group_by(clusterA)%>%
+    summarise(ent=Entropy(table(mlst.x),base=exp(1)),
+              avg_sim=mean(identity.),
+              size=length(unique(seqID.y)))
+  
+  names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
+  clu<-clu%>% arrange(desc(avg_sim),desc(size))
+  clu$clu<-seq.int(nrow(clu))-1
+  
+  if (ND){
+    nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
+    nodeDistance<-nodeDistance%>%group_by(clu)%>%
+      summarise(avg_nodeDistance=mean(HD))
+    clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
+    clu<-clu%>% arrange(clu)
+  }
+  clu
+}
+
+# cluQSim<-cluQualityStaph(dt,sim)
+plotStaph(cluQ)+ theme(legend.position="none")+
+  plotStaph(cluQsigClust)
+
+
+plotStaph<-function(cluQ){
+  labs<-colnames(cluQ)[2:3]
+  m<-max(cluQ[labs[2]])
+  coeff <- m/max(cluQ[labs[1]])
+  p<-ggplot(cluQ, aes(x=clu)) +
+    geom_point( aes(y=.data[[labs[1]]],size=size,color=labs[1])) +
+    geom_point( aes(y=(m-.data[[labs[2]]]) / coeff,size=size,color=labs[2])) +
+    
+    geom_line( aes(y=.data[[labs[1]]],color=labs[1])) +
+    geom_line( aes(y=(m-.data[[labs[2]]]) / coeff,color=labs[2])) +
+    scale_y_reverse(
+      # Features of the first axis
+      name = labs[1],
+      # Add a second axis and specify its features
+      sec.axis = sec_axis(~m-(.)*coeff, name=labs[2])
+    )+
+    labs(color='data type') +
+    scale_x_discrete(limits=factor(cluQ$clu))
+  p
+}
+
+path<-"C://DataCopied/Research/tree/data/staphopia-contigs"
+water<-waterStaph(paste(path,"/sample_needle.txt",sep=""),
+                  paste(path,"/sample_meta.csv",sep=""))
+
+sim<-simStaph(paste(path,"/sample-k9-w100-s5-global_sim.txt",sep=""),
+              paste(path,"/sample_meta.csv",sep=""),0)
+              
+# temp<-waterAll%>%
+#   # filter(mlst.x==mlst.y)%>%
+#   group_by(mlst.x,mlst.y)%>%summarise(mean=mean(similarity.))
+
+# ggplot()+
+#   geom_density(data=water,aes(x=similarity.))+
+#   geom_density(data=waterAll,aes(x=similarity.))
+# 
+# ggplot(sim)+geom_tile(aes(x=aseq,y=bseq,fill=identity.))
+
+
+
+dt<-read.csv(paste(path,"/sample-k9-w100-s5-s80-l50.txt",sep=""),header=FALSE)
+colnames(dt)<-c("seqID","cluster")
+cluQ<-cluQualityStaph(dt,water)
+avg<- cluQ %>% summarise(across(everything(), list(mean)))
+
+plotStaph(cluQ)
+
+
+sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
+colnames(sigClust)<-c("seqID","cluster")
+cluQsigClust<-cluQualityStaph(sigClust,water,FALSE)
+avgsigClust<- cluQsigClust %>% summarise(across(everything(), list(mean)))
+
+plotStaph(cluQsigClust)
+
+# cluQSim<-cluQualityStaph(dt,sim)
+plotStaph(cluQ)+ theme(legend.position="none")+
+  plotStaph(cluQsigClust)
+
+plotTwo<-function(a,b,range){
+  labs<-colnames(a)[range]
+  dataName<-deparse(substitute(a))
+  y<-deparse(substitute(b))
+  
+  do.call(patchwork::wrap_plots, lapply(labs, function(lab) {
+    ggplot()+
+      geom_point(data=a,aes(x=clu,y=.data[[lab]],size=size,color=dataName))+
+      geom_line(data=a,aes(x=clu,y=.data[[lab]],color=dataName))+
+      geom_point(data=b,aes(x=clu,y=.data[[lab]],size=size,color=y))+
+      geom_line(data=b,aes(x=clu,y=.data[[lab]],color=y))+
+      scale_x_discrete(limits=factor(a$clu))
+  }))
+}
+
+plotTwo(cluQ,cluQsigClust,3:2)
+
+######################## ecoli ########################
+waterEcoli<-function(simFile,metaFile){
+  water<-read.csv(simFile)
+  meta<-read.csv(metaFile,header=FALSE)
+  water<-water%>%mutate(aseq=meta[match(aseq,meta$V2),1],
+                        bseq=meta[match(bseq,meta$V2),1])
+  water
+}
+
+path<-"C://DataCopied/Research/tree/data/ecoli"
+water<-waterEcoli(paste(path,"/gene-2500-5000.waterall",sep=""),
+             paste(path,"/gene-2500-5000-meta.csv",sep=""))
+
+
+dt<-read.csv(paste(path,"/gene-2500-5000-k9-w100-s5-s40-l5.txt",sep=""),header=FALSE)
+colnames(dt)<-c("seqID","cluster")
+cluQ<-cluQuality(dt,water)
+avg<- cluQ %>% summarise(across(everything(), list(mean)))
+
+
+(
+  ggplot(cluQ)+
+    geom_point(aes(x=clu,y=avg_sim,size=size))+
+    # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+    ylim(50,100)
+)
+
+
+#############################################################
+
+######################## old ###############################
 formatResultMeta<-function(file, metafile){
   meta<-read.csv(metafile, header = F)
   
@@ -421,7 +585,6 @@ ggplot(sim)+
   xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)+
   xlab("alignment similarity")+ylab("Jaccard Similarity with windows minimiser")
 
-####################################################################
 #############################
 allkmer<-formatSim(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_needle.csv)",
                 r"(C:\DataCopied\Research\tree\data\controlled-silva\sample_k9_sim.txt)")
@@ -429,11 +592,6 @@ ggplot(allkmer)+
   geom_point(aes(x=`similarity%`,y=similarity))+
   xlab("NW similarity")+ylab("Jaccard Similarity with MinimiserSet")+
   xlim(0,100)+ylim(0,100)+ coord_fixed(ratio = 1)
-
-#############################
-
-
-
 
 ##########################################################
 silva<-read.csv(r"(C:\DataCopied\Research\tree\data\controlled-silva\sample.histo)",
@@ -462,9 +620,6 @@ shiny(
     geom_bar(data=staph,aes(scaledkmerCount,y=freq,fill="staph"),stat="identity",alpha=0.5)
 )
 ##########################################################
-
-
-
 sim<-formatSim(r"(C:\DataCopied\Research\tree\data\toy\toy_needle.csv)",
                r"(C:\DataCopied\Research\tree\data\toy\toy-k9-w100-s5_sim.txt)")
 
@@ -677,3 +832,18 @@ ggplot(sig)+
 
 ggplot(sig)+
   geom_histogram(aes(x=similarity))+facet_wrap(~floor(i/26))
+
+
+
+################################################
+
+
+
+
+
+
+
+
+
+
+

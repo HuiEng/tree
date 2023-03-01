@@ -1,6 +1,9 @@
 based on seq_min, going to build my tree
 first read fasta and convert to sigs by using pbuild
 
+tree build -f "{folder}/*.fna"
+rmb ""! 
+
 
 current algorithm:
 force split root change centroids method

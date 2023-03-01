@@ -95,7 +95,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     {
         for (size_t i = 1; i < cap; i++)
         {
-            fprintf(stderr, "inserting %zu\n", foo[i]);
+            printMsg("inserting %zu\n", foo[i]);
             size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]);
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
@@ -105,13 +105,20 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     {
         for (size_t i = 1; i < cap; i++)
         {
-            fprintf(stderr, "inserting %zu\n", foo[i]);
+            printMsg("inserting %zu\n", foo[i]);
             size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
         }
     }
-    fprintf(stderr, "\n\n\n\n");
+    printMsg("\n\n\n\n");
+
+    size_t lastindex = insertionList[insertionList.size() - 1] - 1;
+
+    
+    singleton = 1;
+    tree.trim(lastindex);
+    singleton = 2;
 
     for (size_t run = 0; run < iteration; run++)
     {
@@ -122,11 +129,11 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         {
             size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
 
-            fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+            printMsg("\n found %zu at %zu\n", foo[i], clus);
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
         }
-        tree.trim(insertionList[insertionList.size() - 1] - 1);
+        tree.trim(lastindex);
 
         if (debug_)
         {
@@ -154,7 +161,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     //         size_t clus = tree.search(seqs[foo[i]], foo[i]);
     //         tree.seqIDs[clus].push_back(foo[i]);
 
-    //         fprintf(stderr, "\n found %zu at %zu\n", foo[i], clus);
+    //         printMsg("\n found %zu at %zu\n", foo[i], clus);
     //         // clusters[foo[i]] = tree.findAncestor(clus);
     //         clusters[foo[i]] = clus;
     //     }
@@ -164,7 +171,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     // {
     //     size_t clus = tree.first_insert(seqs[foo[i]], insertionList, foo[i]);
     //     clusters[foo[i]] = clus;
-    //     // fprintf(stderr, ">>%zu\n", foo[i]);
+    //     // printMsg(">>%zu\n", foo[i]);
     //     // dbgPrintSignatureIdx(stderr, seqs[foo[i]]);
     // }
 
@@ -174,7 +181,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     //     size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
     //     // clusters[foo[i]] = tree.findAncestor(clus);
     //     clusters[foo[i]] = clus;
-    //     fprintf(stderr, ">>%zu\n", foo[i]);
+    //     printMsg(">>%zu\n", foo[i]);
     //     // dbgPrintSignatureIdx(stderr, seqs[foo[i]]);
     // }
 
@@ -254,6 +261,7 @@ int tree_main(int argc, char *argv[])
     iteration = args.iteration_arg;
 
     debug_ = args.debug_arg;
+    print_ = args.print_arg;
     force_split_ = args.force_split_arg;
 
     string inputFile = args.input_arg;
