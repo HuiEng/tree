@@ -98,6 +98,16 @@ list_install_components:
 list_install_components/fast: list_install_components
 .PHONY : list_install_components/fast
 
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+.PHONY : rebuild_cache/fast
+
 # Special rule for the target install/strip
 install/strip: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
@@ -119,16 +129,6 @@ edit_cache:
 # Special rule for the target edit_cache
 edit_cache/fast: edit_cache
 .PHONY : edit_cache/fast
-
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/local/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-.PHONY : rebuild_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -277,6 +277,19 @@ partree_main: cmake_check_build_system
 partree_main/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/partree_main.dir/build.make CMakeFiles/partree_main.dir/build
 .PHONY : partree_main/fast
+
+#=============================================================================
+# Target rules for targets named stats_main
+
+# Build rule for target.
+stats_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 stats_main
+.PHONY : stats_main
+
+# fast build rule for target.
+stats_main/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stats_main.dir/build.make CMakeFiles/stats_main.dir/build
+.PHONY : stats_main/fast
 
 #=============================================================================
 # Target rules for targets named partree_multi_main
@@ -557,6 +570,30 @@ similarity_main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/similarity_main.cpp.s
 .PHONY : similarity_main.cpp.s
 
+stats_main.o: stats_main.cpp.o
+.PHONY : stats_main.o
+
+# target to build an object file
+stats_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stats_main.dir/build.make CMakeFiles/stats_main.dir/stats_main.cpp.o
+.PHONY : stats_main.cpp.o
+
+stats_main.i: stats_main.cpp.i
+.PHONY : stats_main.i
+
+# target to preprocess a source file
+stats_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stats_main.dir/build.make CMakeFiles/stats_main.dir/stats_main.cpp.i
+.PHONY : stats_main.cpp.i
+
+stats_main.s: stats_main.cpp.s
+.PHONY : stats_main.s
+
+# target to generate assembly for a file
+stats_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stats_main.dir/build.make CMakeFiles/stats_main.dir/stats_main.cpp.s
+.PHONY : stats_main.cpp.s
+
 test_main.o: test_main.cpp.o
 .PHONY : test_main.o
 
@@ -626,6 +663,7 @@ help:
 	@echo "... partree_main"
 	@echo "... partree_multi_main"
 	@echo "... similarity_main"
+	@echo "... stats_main"
 	@echo "... test_main"
 	@echo "... tree"
 	@echo "... tree_main"
@@ -659,6 +697,9 @@ help:
 	@echo "... similarity_main.o"
 	@echo "... similarity_main.i"
 	@echo "... similarity_main.s"
+	@echo "... stats_main.o"
+	@echo "... stats_main.i"
+	@echo "... stats_main.s"
 	@echo "... test_main.o"
 	@echo "... test_main.i"
 	@echo "... test_main.s"

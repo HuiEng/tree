@@ -125,7 +125,8 @@ size_t calcHDWrap(seq_type shorter, seq_type longer)
     return c;
 }
 
-size_t calcHD(seq_type a, seq_type b){
+size_t calcHD(seq_type a, seq_type b)
+{
     if (a.size() < b.size())
     {
         return calcHDWrap(a, b);
@@ -198,9 +199,12 @@ size_t calcUnion(seq_type a, seq_type b)
     return c;
 }
 
-size_t calcMatchingWindows(seq_type a, seq_type b)
+
+// matching window pair must have at least t minimisers in common
+// return frequency of matching window
+double calcMatchingWindows(seq_type a, seq_type b)
 {
-    size_t match = 0;
+    double match = 0;
     // treat tail subseq as mismatch
     for (int w = 0; w < min(a.size(), b.size()); w++)
     {
@@ -209,10 +213,18 @@ size_t calcMatchingWindows(seq_type a, seq_type b)
         {
             match++;
         }
+        else if (c > 0)
+        {
+            if (c == calcSingleUnion(a[w], b[w]))
+            {
+                match++;
+            }
+        }
     }
-    return match;
+    return match / max(a.size(), b.size());
 }
 
+//?
 double calcMatchingMinimisers(seq_type a, seq_type b)
 {
     double size = min(countSetBits(a), countSetBits(b));
@@ -334,7 +346,7 @@ double calcOverlap(seq_type query, seq_type refer)
 {
     seq_type x = getMinimiseSet(query);
     seq_type y = getMinimiseSet(refer);
-    return calcInter(x, y) * 1.0 /countSetBits(x);
+    return calcInter(x, y) * 1.0 / countSetBits(x);
 }
 
 vector<cell_type> doSingleUnion(vector<cell_type> a, vector<cell_type> b)

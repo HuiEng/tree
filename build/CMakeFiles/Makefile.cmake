@@ -62,6 +62,7 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/minimiser_main.dir/DependInfo.cmake"
   "CMakeFiles/test_main.dir/DependInfo.cmake"
   "CMakeFiles/partree_main.dir/DependInfo.cmake"
+  "CMakeFiles/stats_main.dir/DependInfo.cmake"
   "CMakeFiles/partree_multi_main.dir/DependInfo.cmake"
   "CMakeFiles/build_main.dir/DependInfo.cmake"
   "CMakeFiles/tree_main.dir/DependInfo.cmake"

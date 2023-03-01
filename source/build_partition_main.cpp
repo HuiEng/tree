@@ -191,16 +191,32 @@ int build_partition_main(int argc, char *argv[])
     size_t lastindex = inputFile.find_last_of(".");
     string rawname = inputFile.substr(firstindex, lastindex - firstindex);
     char buffer[50];
-
-    if (args.step_given)
+    if (args.element_given)
     {
-        step_size = args.step_arg;
-        sprintf(buffer, "-k%zu-w%zu-s%zu--step%zu.bin", kmerLength, windowLength, minimiser_size, step_size);
+        bf_element_cnt = args.element_arg;
+        if (args.step_given)
+        {
+            step_size = args.step_arg;
+            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu--step%zu.bin", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
+        }
+        else
+        {
+            step_size = windowLength;
+            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu.bin", kmerLength, windowLength, minimiser_size, bf_element_cnt);
+        }
     }
     else
     {
-        step_size = windowLength;
-        sprintf(buffer, "-k%zu-w%zu-s%zu.bin", kmerLength, windowLength, minimiser_size);
+        if (args.step_given)
+        {
+            step_size = args.step_arg;
+            sprintf(buffer, "-k%zu-w%zu-s%zu--step%zu.bin", kmerLength, windowLength, minimiser_size, step_size);
+        }
+        else
+        {
+            step_size = windowLength;
+            sprintf(buffer, "-k%zu-w%zu-s%zu.bin", kmerLength, windowLength, minimiser_size);
+        }
     }
 
     string outfile = rawname + buffer;
@@ -215,7 +231,7 @@ int build_partition_main(int argc, char *argv[])
         string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
         fprintf(stderr, "Reading folder %s\n", folder.c_str());
 
-        outfile = folder + "/input" + buffer;
+        outfile = folder + buffer;
 
         ofstream wf(outfile, ios::out | ios::binary);
 

@@ -259,16 +259,10 @@ int build_main(int argc, char *argv[])
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
 
-    string bfOut = "out.bin";
-
-    if (args.bf_output_given)
-        bfOut = args.bf_output_arg;
     if (args.kmer_given)
         kmerLength = args.kmer_arg;
     if (args.window_given)
         windowLength = args.window_arg;
-    if (args.element_given)
-        bf_element_cnt = args.element_arg;
     if (args.seed_given)
         seed = args.seed_arg;
 
@@ -278,6 +272,39 @@ int build_main(int argc, char *argv[])
         return 1;
     }
     debug = args.debug;
+
+    string inputFile = args.input_arg;
+    size_t firstindex = inputFile.find_last_of("/") + 1;
+    size_t lastindex = inputFile.find_last_of(".");
+    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
+    char buffer[50];
+    if (args.element_given)
+    {
+        bf_element_cnt = args.element_arg;
+        if (kmerLength == windowLength)
+        {
+            sprintf(buffer, "-k%zu-b%zu.bin", kmerLength, bf_element_cnt);
+        }
+        else
+        {
+            sprintf(buffer, "-k%zu-w%zu-b%zu.bin", kmerLength, windowLength, bf_element_cnt);
+        }
+    }
+    else
+    {
+        if (kmerLength == windowLength)
+        {
+            sprintf(buffer, "-k%zu.bin", kmerLength);
+        }
+        else
+        {
+            sprintf(buffer, "-k%zu-w%zu.bin", kmerLength, windowLength);
+        }
+    }
+    string bfOut = rawname + buffer;
+
+    if (args.bf_output_given)
+        bfOut = args.bf_output_arg;
 
     bloom_parameters parameters;
     // How many elements roughly do we expect to insert?
@@ -307,9 +334,6 @@ int build_main(int argc, char *argv[])
         string folder = inputFile.substr(0, inputFile.find(delimiter));
         string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
         fprintf(stderr, "Reading folder %s\n", folder.c_str());
-
-        char buffer[50];
-        sprintf(buffer, "/input-k%zu-w%zu.bin", kmerLength, windowLength);
 
         string outfile = folder + buffer;
 
@@ -393,12 +417,12 @@ int build_main(int argc, char *argv[])
             auto minimiser_view = seqan3::views::minimiser_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
                                                                 seqan3::window_size{windowLength},
                                                                 seqan3::seed{0});
-            generateSig(minimiser_view, parameters, args.input_arg, bfOut, args.multiple_arg);
+            generateSig(minimiser_view, parameters, inputFile, bfOut, args.multiple_arg);
         }
         else
         {
             auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}});
-            generateSig(minimiser_view, parameters, args.input_arg, bfOut, args.multiple_arg);
+            generateSig(minimiser_view, parameters, inputFile, bfOut, args.multiple_arg);
         }
     }
     else
@@ -410,12 +434,12 @@ int build_main(int argc, char *argv[])
             auto minimiser_view = seqan3::views::minimiser_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
                                                                 seqan3::window_size{windowLength},
                                                                 seqan3::seed{0});
-            generateSig(minimiser_view, parameters, args.input_arg, bfOut, args.multiple_arg);
+            generateSig(minimiser_view, parameters, inputFile, bfOut, args.multiple_arg);
         }
         else
         {
 
-            generateSig(parameters, args.input_arg, bfOut, args.multiple_arg);
+            generateSig(parameters, inputFile, bfOut, args.multiple_arg);
         }
     }
 

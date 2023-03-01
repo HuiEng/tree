@@ -16,6 +16,7 @@ typedef int(main_func_t)(int argc, char *argv[]);
 main_func_t build_main;
 main_func_t build_partition_main;
 main_func_t similarity_main;
+main_func_t stats_main;
 main_func_t count_main;
 main_func_t merge_main;
 main_func_t ktree_main;
@@ -35,6 +36,7 @@ struct cmd_func
 cmd_func cmd_list[] = {
     {"build", &build_main},
     {"sim", &similarity_main},
+    {"stats", &stats_main},
     {"count", &count_main},
     {"merge", &merge_main},
     {"ktree", &ktree_main},

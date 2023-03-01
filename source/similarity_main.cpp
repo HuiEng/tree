@@ -31,7 +31,7 @@ bool skip = false;
 //     fprintf(stdout, "\n");
 // }
 
-void calcAllSimilarity(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
+void calcAllSimilarity(FILE *pFile, vector<seq_type> seqs)
 {
     size_t seqCount = seqs.size();
     fprintf(pFile, "i,j,similarity\n");
@@ -74,7 +74,7 @@ void calcAllSimilarity(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
     }
 }
 
-void calcAllSimilarityLocal(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
+void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs)
 {
     size_t seqCount = seqs.size();
     fprintf(pFile, "i,j,similarity\n");
@@ -85,7 +85,7 @@ void calcAllSimilarityLocal(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
         {
             for (size_t j = i; j < seqCount; j++)
             {
-                double dist = calcMatchingMinimisers(seqs[i], seqs[j]) * 100.0;
+                double dist = calcMatchingWindows(seqs[i], seqs[j]) * 100.0;
                 fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
             }
         }
@@ -96,14 +96,14 @@ void calcAllSimilarityLocal(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
         {
             for (size_t j = 0; j < seqCount; j++)
             {
-                double dist = calcMatchingMinimisers(seqs[i], seqs[j]) * 100.0;
+                double dist = calcMatchingWindows(seqs[i], seqs[j]) * 100.0;
                 fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
             }
         }
     }
 }
 
-void calcAllSimilarityGlobal(FILE *pFile, vector<vector<vector<cell_type>>> seqs)
+void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs)
 {
     size_t seqCount = seqs.size();
     fprintf(pFile, "i,j,similarity\n");
@@ -215,7 +215,7 @@ int similarity_main(int argc, char *argv[])
     }
     else
     {
-        vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn);
+        vector<seq_type> seqs = readPartitionBF(bfIn);
         // dummy code, assume there is at least 10 input seqs
         for (int i = 0; i < 10; i++)
         {
@@ -237,7 +237,9 @@ int similarity_main(int argc, char *argv[])
         // calcAllSetBits(sigs);
         if (args.local_arg)
         {
-            FILE *pFile = fopen((rawname + "-local_sim.txt").c_str(), "w");
+            char buffer[50];
+            sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
+            FILE *pFile = fopen((rawname + buffer).c_str(), "w");
             calcAllSimilarityLocal(pFile, seqs);
         }
         else if (args.global_arg)
