@@ -60,7 +60,7 @@ void calcAllStatsLocal(vector<seq_type> seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
     vector<size_t> indices = getIndices(seqCount);
-    size_t sample_size = seqs.size();
+    size_t sample_size = indices.size();
     vector<double> data;
 
     for (size_t i = 0; i < sample_size; i++)
@@ -77,7 +77,7 @@ void calcAllStatsLocal(vector<seq_type> seqs)
 void calcAllStatsGlobal(vector<seq_type> seqs)
 {
     vector<size_t> indices = getIndices(seqs.size());
-    size_t sample_size = seqs.size();
+    size_t sample_size = indices.size();
     vector<double> data;
 
     for (size_t i = 0; i < sample_size; i++)
@@ -95,7 +95,7 @@ void calcAllStatsGlobal(vector<seq_type> seqs)
 void calcAllStats(vector<seq_type> seqs)
 {
     vector<size_t> indices = getIndices(seqs.size());
-    size_t sample_size = seqs.size();
+    size_t sample_size = indices.size();
     vector<double> data;
 
     for (size_t i = 0; i < sample_size; i++)
@@ -112,8 +112,8 @@ void calcAllStats(vector<seq_type> seqs)
 // Jaccard stats
 void calcAllStatsKmers(vector<cell_type> seqs)
 {
-    vector<size_t> indices = getIndices(seqs.size());
-    size_t sample_size = seqs.size();
+    vector<size_t> indices = getIndices(seqs.size() / signatureSize);
+    size_t sample_size = indices.size();
     vector<double> data;
 
     for (size_t i = 0; i < sample_size; i++)
