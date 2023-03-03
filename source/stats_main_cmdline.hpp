@@ -359,19 +359,14 @@ public:
   const char *bf_input_arg;
   const char *output_arg;
   size_t threshold_arg;
-  size_t window_arg;
-  size_t element_arg;
+  size_t max_arg;
 
-  bool bf_input_given;
   bool output_given;
   bool threshold_given;
-  bool window_given;
-  bool element_given;
-  bool multiple_arg;
+  bool max_given;
   bool all_kmer_arg;
   bool global_arg;
   bool local_arg;
-  bool skip_arg;
 
   enum
   {
@@ -380,24 +375,18 @@ public:
   };
 
   stats_main_cmdline() : bf_input_arg(""), output_arg(""),
-                              threshold_arg(0), window_arg(0),
-                              element_arg(0),
-                              bf_input_given(false), output_given(false),
-                              threshold_given(false), window_given(false),
-                              element_given(false), multiple_arg(false),
-                              all_kmer_arg(false), global_arg(false),
-                              skip_arg(false), local_arg(false)
+                         threshold_arg(0), max_arg(0),
+                         output_given(false), threshold_given(false),
+                         max_given(false),all_kmer_arg(false),
+                         global_arg(false), local_arg(false)
   {
   }
 
   stats_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""),
-                                                    threshold_arg(0), window_arg(0),
-                                                    element_arg(0),
-                                                    bf_input_given(false), output_given(false),
-                                                    threshold_given(false), window_given(false),
-                                                    element_given(false), multiple_arg(false),
-                                                    all_kmer_arg(false), global_arg(false),
-                                                    skip_arg(false), local_arg(false)
+                                               threshold_arg(0), max_arg(0),
+                                               output_given(false), threshold_given(false),
+                                               max_given(false), all_kmer_arg(false),
+                                               global_arg(false), local_arg(false)
   {
     parse(argc, argv);
   }
@@ -407,19 +396,16 @@ public:
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
         {"output", 1, 0, 'o'},
-        {"capacity", 1, 0, 'c'},
+        {"maxCount", 1, 0, 'm'},
         {"threshold", 1, 0, 't'},
-        {"element", 1, 0, 's'},
-        {"multiple", 0, 0, 'm'},
         {"all", 0, 0, 'A'},
-        {"skip", 0, 0, 'S'},
         {"global", 0, 0, 'G'},
         {"local", 0, 0, 'L'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:t:w:s:mAGLS";
+    static const char *short_options = "hVi:o:t:m:AGLS";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -455,7 +441,6 @@ public:
         ::std::cerr << "Use --usage or --help for some help\n";
         exit(1);
       case 'i':
-        bf_input_given = true;
         bf_input_arg = optarg;
         break;
       case 'o':
@@ -467,24 +452,13 @@ public:
         threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-t, --threshold=size_t")
         break;
-      case 'w':
-        window_given = true;
-        window_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-w, --windowLength=size_t")
-        break;
-      case 's':
-        element_given = true;
-        element_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-s, --BF-elementCount=size_t")
-        break;
       case 'm':
-        multiple_arg = true;
+        max_given = true;
+        max_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-w, --maxCount=size_t")
         break;
       case 'A':
         all_kmer_arg = true;
-        break;
-      case 'S':
-        skip_arg = true;
         break;
       case 'G':
         global_arg = true;
@@ -561,6 +535,7 @@ public:
     return "Read input bin and compute distance statistics\n\n"
            "Options (default value in (), *required):\n"
            " -i, --input                              BF input path\n"
+           " -m, --maxCount                           sampling size [default=100]\n"
            " -A, --all                                input is all kmers [default=false]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
@@ -576,17 +551,13 @@ public:
   }
   void stats(::std::ostream &os = std::cout)
   {
-    os << " bf_input_given:" << bf_input_given << "\t"
-       << " bf_input_arg:" << bf_input_arg << "\n";
+    os << " bf_input_arg:" << bf_input_arg << "\n";
     os << " output_given:" << output_given << "\t"
        << " output_arg:" << output_arg << "\n";
     os << " threshold_given:" << threshold_given << "\t"
        << " threshold_arg:" << threshold_arg << "\n";
-    os << " window_given:" << window_given << "\t"
-       << " window_arg:" << window_arg << "\n";
-    os << " element_given:" << element_given << "\t"
-       << " element_arg:" << element_arg << "\n";
-    os << " multiple_arg:" << multiple_arg << "\n";
+    os << " max_given:" << max_given << "\t"
+       << " max_arg:" << max_arg << "\n";
   }
 };
 #endif // __STATS_MAIN_CMDLINE_HPP__"

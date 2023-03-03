@@ -7,6 +7,9 @@
 #include "self_tree.hpp"
 
 #include <regex>
+#include <vector>
+#include <numeric>
+#include <iostream>
 
 using namespace std;
 
@@ -14,35 +17,112 @@ static stats_main_cmdline args; // Command line switches and arguments
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 size_t max_seqCount = 100;
 
-void calcAllstatsGlobal(vector<vector<vector<cell_type>>> seqs)
+vector<size_t> getIndices(size_t seqCount)
 {
-    size_t seqCount = seqs.size();
-    for (size_t i = 0; i < seqCount; i++)
+    vector<size_t> indices(seqCount);
+    iota(indices.begin(), indices.end(), 0);
+    if (seqCount > max_seqCount)
     {
-        for (size_t j = 0; j < seqCount; j++)
+        unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        shuffle(indices.begin(), indices.end(), default_random_engine(seed));
+        indices.resize(max_seqCount);
+    }
+
+    return indices;
+}
+
+stats summarise(vector<double> const &v)
+{
+    stats st;
+    if (v.empty())
+    {
+        return st;
+    }
+
+    auto const count = static_cast<double>(v.size());
+
+    double sum = accumulate(v.begin(), v.end(), 0.0);
+    double mean = sum / count;
+
+    vector<double> diff(count);
+    transform(v.begin(), v.end(), diff.begin(),
+              bind2nd(minus<double>(), mean));
+    double sq_sum = inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    double stdev = sqrt(sq_sum / count);
+    st.update(mean, stdev);
+
+    st.printStats();
+    return st;
+}
+
+void calcAllStatsLocal(vector<seq_type> seqs)
+{
+    size_t seqCount = seqs.size() / signatureSize;
+    vector<size_t> indices = getIndices(seqCount);
+    vector<double> data;
+
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        for (size_t j = i + 1; j < indices.size(); j++)
         {
-            double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
-            fprintf(stderr, "%zu,%zu,%.2f\n", i, j, dist);
+            double sim = calcMatchingWindows(seqs[indices[i]], seqs[indices[j]]) * 100.0;
+            data.push_back(sim);
         }
     }
+    summarise(data);
+}
+
+void calcAllStatsGlobal(vector<seq_type> seqs)
+{
+    size_t seqCount = seqs.size() / signatureSize;
+    vector<size_t> indices = getIndices(seqCount);
+    vector<double> data;
+
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        for (size_t j = i + 1; j < indices.size(); j++)
+        {
+            double sim = calcJaccardGlobal(seqs[indices[i]], seqs[indices[j]]) * 100;
+            data.push_back(sim);
+        }
+    }
+    summarise(data);
+}
+
+void calcAllStats(vector<seq_type> seqs)
+{
+    size_t seqCount = seqs.size() / signatureSize;
+    vector<size_t> indices = getIndices(seqCount);
+    vector<double> data;
+
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        for (size_t j = i + 1; j < indices.size(); j++)
+        {
+            double sim = calcJaccardLocal(seqs[indices[i]], seqs[indices[j]]) * 100.0;
+            data.push_back(sim);
+        }
+    }
+    summarise(data);
 }
 
 // Jaccard stats
-void calcAllstatsKmers(vector<cell_type> seqs)
+void calcAllStatsKmers(vector<cell_type> seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
-    vector<size_t> indices(min(seqCount, max_seqCount));
-    iota(indices.begin(), indices.end(), 0);
+    vector<size_t> indices = getIndices(seqCount);
+    vector<double> data;
 
-    for (size_t i : indices)
+    for (size_t i = 0; i < indices.size(); i++)
     {
-        size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
-        for (size_t j : indices)
+        size_t temp = countSetBits(&seqs[indices[i] * signatureSize], signatureSize);
+        for (size_t j = i + 1; j < indices.size(); j++)
         {
-            double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
-            fprintf(stderr, "%zu,%zu,%.2f\n", i, j, sim * 100);
+            double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
+            data.push_back(sim);
         }
     }
+    summarise(data);
 }
 
 void calcAllSetBits(const vector<cell_type> &sigs)
@@ -59,10 +139,10 @@ void calcAllSetBits(const vector<cell_type> &sigs)
 int stats_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
-    std::ios::sync_with_stdio(false); // No sync with stdio -> faster
+    ios::sync_with_stdio(false); // No sync with stdio -> faster
 
     string bfIn = args.bf_input_arg;
-    // size_t bf_element_cnt = 1000;
+    size_t bf_element_cnt = 1000;
 
     size_t firstindex = bfIn.find_last_of("/") + 1;
     size_t lastindex = bfIn.find_last_of(".");
@@ -73,13 +153,17 @@ int stats_main(int argc, char *argv[])
         rawname = rawname + "-" + args.output_arg;
     }
 
-    char str[] = "The woman you were looking for!";
+    if (args.max_given)
+    {
+        max_seqCount = args.max_arg;
+    }
 
-cmatch m;
-
-if (regex_search(str, m, regex("w.m.n")))
-
-  cout << m[0] << endl;
+    cmatch matches;
+    if (regex_search(args.bf_input_arg, matches, regex("-b([0-9]+)")))
+    {
+        stringstream sstream(matches[1]);
+        sstream >> bf_element_cnt;
+    }
 
     if (args.all_kmer_arg)
     {
@@ -87,11 +171,11 @@ if (regex_search(str, m, regex("w.m.n")))
         signatureSize = readSignatures(bfIn, seqs);
 
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
-        calcAllstatsKmers(seqs);
+        calcAllStatsKmers(seqs);
     }
     else
     {
-        vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn);
+        vector<seq_type> seqs = readPartitionBF(bfIn);
         // dummy code, assume there is at least 10 input seqs
         for (int i = 0; i < 10; i++)
         {
@@ -109,6 +193,25 @@ if (regex_search(str, m, regex("w.m.n")))
 
         // fprintf(stderr,"done\n" );
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+
+        if (args.local_arg)
+        {
+            if (args.threshold_given)
+            {
+
+                minimiser_match_threshold = args.threshold_arg;
+            }
+            fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+            calcAllStatsLocal(seqs);
+        }
+        else if (args.global_arg)
+        {
+            calcAllStatsGlobal(seqs);
+        }
+        else
+        {
+            calcAllStats(seqs);
+        }
     }
 
     return 0;

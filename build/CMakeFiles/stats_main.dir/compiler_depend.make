@@ -293,8 +293,48 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
   /usr/include/c++/7/bits/stl_set.h \
   /usr/include/c++/7/bits/stl_multiset.h \
   /mnt/c/DataCopied/Research/tree/include/read.hpp \
-  /mnt/c/DataCopied/Research/tree/include/distance.hpp
+  /mnt/c/DataCopied/Research/tree/include/distance.hpp \
+  /usr/include/c++/7/regex \
+  /usr/include/c++/7/bitset \
+  /usr/include/c++/7/stack \
+  /usr/include/c++/7/deque \
+  /usr/include/c++/7/bits/stl_deque.h \
+  /usr/include/c++/7/bits/deque.tcc \
+  /usr/include/c++/7/bits/stl_stack.h \
+  /usr/include/c++/7/map \
+  /usr/include/c++/7/bits/stl_map.h \
+  /usr/include/c++/7/bits/stl_multimap.h \
+  /usr/include/c++/7/cstring \
+  /usr/include/c++/7/bits/std_function.h \
+  /usr/include/c++/7/bits/regex_constants.h \
+  /usr/include/c++/7/bits/regex_error.h \
+  /usr/include/c++/7/bits/regex_automaton.h \
+  /usr/include/c++/7/bits/regex_automaton.tcc \
+  /usr/include/c++/7/bits/regex_scanner.h \
+  /usr/include/c++/7/bits/regex_scanner.tcc \
+  /usr/include/c++/7/bits/regex_compiler.h \
+  /usr/include/c++/7/bits/regex_compiler.tcc \
+  /usr/include/c++/7/bits/regex.h \
+  /usr/include/c++/7/bits/regex.tcc \
+  /usr/include/c++/7/bits/regex_executor.h \
+  /usr/include/c++/7/bits/regex_executor.tcc
 
+
+/usr/include/c++/7/bits/regex.tcc:
+
+/usr/include/c++/7/bits/regex.h:
+
+/usr/include/c++/7/bits/regex_compiler.tcc:
+
+/usr/include/c++/7/cstring:
+
+/usr/include/c++/7/bits/stl_stack.h:
+
+/usr/include/c++/7/bits/deque.tcc:
+
+/usr/include/c++/7/deque:
+
+/usr/include/c++/7/regex:
 
 /mnt/c/DataCopied/Research/tree/include/distance.hpp:
 
@@ -354,6 +394,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/c++/7/stdlib.h:
 
+/usr/include/c++/7/bits/stl_multimap.h:
+
 /usr/include/x86_64-linux-gnu/bits/getopt_core.h:
 
 /usr/include/x86_64-linux-gnu/bits/getopt_posix.h:
@@ -406,6 +448,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/c++/7/tr1/bessel_function.tcc:
 
+/usr/include/c++/7/bits/regex_scanner.h:
+
 /usr/include/c++/7/tr1/gamma.tcc:
 
 /usr/include/c++/7/bits/atomic_base.h:
@@ -429,6 +473,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 /usr/include/c++/7/set:
 
 /usr/include/c++/7/bits/codecvt.h:
+
+/usr/include/c++/7/bits/regex_automaton.h:
 
 /usr/include/c++/7/tr1/ell_integral.tcc:
 
@@ -478,6 +524,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/c++/7/bits/functexcept.h:
 
+/usr/include/c++/7/bits/regex_automaton.tcc:
+
 /usr/include/c++/7/bits/stl_algobase.h:
 
 /usr/include/c++/7/experimental/filesystem:
@@ -504,13 +552,19 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/c++/7/bits/hash_bytes.h:
 
+/usr/include/c++/7/bits/regex_executor.tcc:
+
 /usr/include/c++/7/bits/cxxabi_init_exception.h:
+
+/usr/include/c++/7/bits/regex_error.h:
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
 
 /usr/include/c++/7/bits/stl_heap.h:
 
 /usr/include/ctype.h:
+
+/usr/include/c++/7/bits/regex_compiler.h:
 
 /usr/include/c++/7/bits/exception_defines.h:
 
@@ -592,6 +646,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/x86_64-linux-gnu/c++/7/bits/error_constants.h:
 
+/usr/include/c++/7/bits/std_function.h:
+
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
 /usr/include/c++/7/bits/stl_iterator_base_funcs.h:
@@ -603,6 +659,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 /usr/include/x86_64-linux-gnu/bits/floatn-common.h:
 
 /usr/include/x86_64-linux-gnu/bits/locale.h:
+
+/usr/include/c++/7/bitset:
 
 /usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
 
@@ -724,6 +782,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/x86_64-linux-gnu/bits/select.h:
 
+/usr/include/c++/7/bits/regex_constants.h:
+
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
 
 /usr/include/c++/7/bits/stream_iterator.h:
@@ -758,9 +818,13 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/c++/7/bits/functional_hash.h:
 
+/usr/include/c++/7/bits/stl_deque.h:
+
 /usr/include/c++/7/cstddef:
 
 /usr/include/c++/7/bits/string_view.tcc:
+
+/usr/include/c++/7/stack:
 
 /usr/include/c++/7/istream:
 
@@ -773,6 +837,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 /usr/include/c++/7/bits/streambuf_iterator.h:
 
 /usr/include/c++/7/cstdlib:
+
+/usr/include/c++/7/bits/stl_map.h:
 
 /usr/include/asm-generic/errno.h:
 
@@ -800,9 +866,13 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 
 /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h:
 
+/usr/include/c++/7/bits/regex_scanner.tcc:
+
 /usr/include/x86_64-linux-gnu/c++/7/bits/time_members.h:
 
 /usr/include/c++/7/bits/std_abs.h:
+
+/usr/include/c++/7/map:
 
 /usr/include/c++/7/cstdio:
 
@@ -819,6 +889,8 @@ CMakeFiles/stats_main.dir/stats_main.cpp.o: /mnt/c/DataCopied/Research/tree/sour
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
 
 /usr/include/x86_64-linux-gnu/bits/sys_errlist.h:
+
+/usr/include/c++/7/bits/regex_executor.h:
 
 /usr/include/c++/7/bits/random.tcc:
 

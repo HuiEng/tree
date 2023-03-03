@@ -24,6 +24,38 @@ enum
     NN_F = 4
 };
 
+class stats
+{
+public:
+    double mean, stdev, q1, q3;
+    bool isEmpty = true;
+
+    stats() {}
+
+    void update(double m, double s)
+    {
+        mean = m;
+        stdev = s;
+        q1 = mean - 0.675 * stdev;
+        q3 = mean + 0.675 * stdev;
+        isEmpty = false;
+    }
+
+    stats(double mean, double stdev)
+    {
+        update(mean, stdev);
+    }
+
+    void printStats()
+    {
+        size_t col = 4;
+        string s(1 + 11 * col, '-');
+        fprintf(stderr, "|%-10s|%-10s|%-10s|%-10s|\n", "mean", "stdev", "q1", "q3");
+        fprintf(stderr, "%s\n", s.c_str());
+        fprintf(stderr, "|%-10.2f|%-10.2f|%-10.2f|%-10.2f|\n", mean, stdev, q1, q3);
+    }
+};
+
 size_t signatureSize = 0; // Signature size (depends on element in BF, obtained while read binary)
 
 void toBinaryIdx(FILE *stream, vector<cell_type> sig)
@@ -198,7 +230,6 @@ size_t calcUnion(seq_type a, seq_type b)
     }
     return c;
 }
-
 
 // matching window pair must have at least t minimisers in common
 // return frequency of matching window

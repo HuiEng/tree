@@ -460,7 +460,7 @@ public:
         size_t entry = node;
 
         // number of matching windows, bigger better
-        size_t a = calcSimilarity(matrices[ancestor][0], signature);
+        double a = calcSimilarity(matrices[ancestor][0], signature);
 
         // while (node != root && isUnipath(node))
         while (node != root)
