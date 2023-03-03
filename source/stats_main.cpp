@@ -26,6 +26,7 @@ vector<size_t> getIndices(size_t seqCount)
         unsigned seed = chrono::system_clock::now().time_since_epoch().count();
         shuffle(indices.begin(), indices.end(), default_random_engine(seed));
         indices.resize(max_seqCount);
+        fprintf(stderr, "Random sampling %zu seqs...\n", max_seqCount);
     }
 
     return indices;
@@ -59,11 +60,12 @@ void calcAllStatsLocal(vector<seq_type> seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
     vector<size_t> indices = getIndices(seqCount);
+    size_t sample_size = seqs.size();
     vector<double> data;
 
-    for (size_t i = 0; i < indices.size(); i++)
+    for (size_t i = 0; i < sample_size; i++)
     {
-        for (size_t j = i + 1; j < indices.size(); j++)
+        for (size_t j = i + 1; j < sample_size; j++)
         {
             double sim = calcMatchingWindows(seqs[indices[i]], seqs[indices[j]]) * 100.0;
             data.push_back(sim);
@@ -74,15 +76,16 @@ void calcAllStatsLocal(vector<seq_type> seqs)
 
 void calcAllStatsGlobal(vector<seq_type> seqs)
 {
-    size_t seqCount = seqs.size() / signatureSize;
-    vector<size_t> indices = getIndices(seqCount);
+    vector<size_t> indices = getIndices(seqs.size());
+    size_t sample_size = seqs.size();
     vector<double> data;
 
-    for (size_t i = 0; i < indices.size(); i++)
+    for (size_t i = 0; i < sample_size; i++)
     {
-        for (size_t j = i + 1; j < indices.size(); j++)
+        for (size_t j = i + 1; j < sample_size; j++)
         {
             double sim = calcJaccardGlobal(seqs[indices[i]], seqs[indices[j]]) * 100;
+            // fprintf(stdout, "%zu,%zu,%.2f\n", i, j, sim);
             data.push_back(sim);
         }
     }
@@ -91,13 +94,13 @@ void calcAllStatsGlobal(vector<seq_type> seqs)
 
 void calcAllStats(vector<seq_type> seqs)
 {
-    size_t seqCount = seqs.size() / signatureSize;
-    vector<size_t> indices = getIndices(seqCount);
+    vector<size_t> indices = getIndices(seqs.size());
+    size_t sample_size = seqs.size();
     vector<double> data;
 
-    for (size_t i = 0; i < indices.size(); i++)
+    for (size_t i = 0; i < sample_size; i++)
     {
-        for (size_t j = i + 1; j < indices.size(); j++)
+        for (size_t j = i + 1; j < sample_size; j++)
         {
             double sim = calcJaccardLocal(seqs[indices[i]], seqs[indices[j]]) * 100.0;
             data.push_back(sim);
@@ -109,14 +112,14 @@ void calcAllStats(vector<seq_type> seqs)
 // Jaccard stats
 void calcAllStatsKmers(vector<cell_type> seqs)
 {
-    size_t seqCount = seqs.size() / signatureSize;
-    vector<size_t> indices = getIndices(seqCount);
+    vector<size_t> indices = getIndices(seqs.size());
+    size_t sample_size = seqs.size();
     vector<double> data;
 
-    for (size_t i = 0; i < indices.size(); i++)
+    for (size_t i = 0; i < sample_size; i++)
     {
         size_t temp = countSetBits(&seqs[indices[i] * signatureSize], signatureSize);
-        for (size_t j = i + 1; j < indices.size(); j++)
+        for (size_t j = i + 1; j < sample_size; j++)
         {
             double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
             data.push_back(sim);
