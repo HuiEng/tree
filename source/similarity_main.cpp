@@ -11,6 +11,7 @@ using namespace std;
 static similarity_main_cmdline args; // Command line switches and arguments
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 bool skip = false;
+size_t batch = 10;
 
 // void toBinary(cell_type letter)
 // {
@@ -176,6 +177,90 @@ void calcAllSetBits(const vector<cell_type> &sigs)
     }
 }
 
+vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t size)
+{
+    ifstream rf(file_path, ios::out | ios::binary);
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    //? 1 window
+    // cout << "length: " << length << "\n";
+    vector<cell_type> bf(length);
+    cell_type temp = 0;
+    size_t i = 0;
+    size_t count = 0;
+
+    while (rf)
+    {
+        rf.read((char *)&bf[i], sizeof(cell_type));
+        i++;
+        if (i == length)
+        {
+            if (isEmpty(bf))
+            {
+                seqs.push_back(tseq);
+                tseq.clear();
+                count++;
+                if (count == size)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                tseq.push_back(bf);
+            }
+            fill(bf.begin(), bf.end(), 0);
+            i = 0;
+        }
+    }
+    rf.close();
+
+    return seqs;
+}
+
+unsigned long long int readSignatures(const string file, vector<cell_type> &sigs, size_t size)
+{
+    ifstream rf(file, ios::out | ios::binary);
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+    size_t i = 0;
+    size = size * length;
+    sigs.resize(size);
+
+    while (rf)
+    {
+        rf.read((char *)&sigs[i], sizeof(cell_type));
+        i++;
+        if (i == size)
+        {
+            break;
+        }
+    }
+    sigs.resize(i);
+    rf.close();
+
+    return length;
+}
+
 int similarity_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -208,6 +293,7 @@ int similarity_main(int argc, char *argv[])
     {
         FILE *pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
         vector<cell_type> seqs;
+        // signatureSize = readSignatures(bfIn, seqs, batch);
         signatureSize = readSignatures(bfIn, seqs);
 
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
@@ -215,7 +301,8 @@ int similarity_main(int argc, char *argv[])
     }
     else
     {
-        vector<seq_type> seqs = readPartitionBF(bfIn);
+        vector<seq_type> seqs = readPartitionBF(bfIn, batch);
+        // vector<seq_type> seqs = readPartitionBF(bfIn);
         // dummy code, assume there is at least 10 input seqs
         for (int i = 0; i < 10; i++)
         {

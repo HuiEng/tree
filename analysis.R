@@ -223,12 +223,7 @@ cluQualityStaph<-function(dt,sim,ND=TRUE){
   clu
 }
 
-# cluQSim<-cluQualityStaph(dt,sim)
-plotStaph(cluQ)+ theme(legend.position="none")+
-  plotStaph(cluQsigClust)
-
-
-plotStaph<-function(cluQ){
+plotStaph<-function(cluQ,maxSize=70){
   labs<-colnames(cluQ)[2:3]
   m<-max(cluQ[labs[2]])
   coeff <- m/max(cluQ[labs[1]])
@@ -245,9 +240,32 @@ plotStaph<-function(cluQ){
       sec.axis = sec_axis(~m-(.)*coeff, name=labs[2])
     )+
     labs(color='data type') +
-    scale_x_discrete(limits=factor(cluQ$clu))
+    scale_x_discrete(limits=factor(cluQ$clu))+ 
+    scale_size(limits = c(1,maxSize))
   p
 }
+
+plotTwo<-function(a,b,range){
+  labs<-colnames(a)[range]
+  dataName<-deparse(substitute(a))
+  y<-deparse(substitute(b))
+  
+  do.call(patchwork::wrap_plots, lapply(labs, function(lab) {
+    ggplot()+
+      geom_point(data=a,aes(x=clu,y=.data[[lab]],size=size,color=dataName))+
+      geom_line(data=a,aes(x=clu,y=.data[[lab]],color=dataName))+
+      geom_point(data=b,aes(x=clu,y=.data[[lab]],size=size,color=y))+
+      geom_line(data=b,aes(x=clu,y=.data[[lab]],color=y))+
+      scale_x_discrete(limits=factor(a$clu))
+  }))
+}
+
+arrangeByEnt<-function(dt){
+  clu<-dt%>% arrange(ent,desc(size))
+  clu$clu<-seq.int(nrow(clu))-1
+  clu
+}
+
 
 path<-"C://DataCopied/Research/tree/data/staphopia-contigs"
 water<-waterStaph(paste(path,"/sample_needle.txt",sep=""),
@@ -276,33 +294,25 @@ avg<- cluQ %>% summarise(across(everything(), list(mean)))
 plotStaph(cluQ)
 
 
-sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
+sigClust<-read.csv(paste(path,"/sigclust9.txt",sep=""),header=FALSE)
+# sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
 colnames(sigClust)<-c("seqID","cluster")
 cluQsigClust<-cluQualityStaph(sigClust,water,FALSE)
 avgsigClust<- cluQsigClust %>% summarise(across(everything(), list(mean)))
+plotTwo(cluQ,cluQsigClust,3)
 
 plotStaph(cluQsigClust)
 
+plotStaph(cluQ)+ ggtitle("2W-MT")+
+  theme(legend.position="none")+
+  plotStaph(cluQsigClust)+ ggtitle("sigClust")
+
 # cluQSim<-cluQualityStaph(dt,sim)
-plotStaph(cluQ)+ theme(legend.position="none")+
-  plotStaph(cluQsigClust)
+# plotStaph(cluQ)+ theme(legend.position="none")+
+#   plotStaph(cluQsigClust)
 
-plotTwo<-function(a,b,range){
-  labs<-colnames(a)[range]
-  dataName<-deparse(substitute(a))
-  y<-deparse(substitute(b))
-  
-  do.call(patchwork::wrap_plots, lapply(labs, function(lab) {
-    ggplot()+
-      geom_point(data=a,aes(x=clu,y=.data[[lab]],size=size,color=dataName))+
-      geom_line(data=a,aes(x=clu,y=.data[[lab]],color=dataName))+
-      geom_point(data=b,aes(x=clu,y=.data[[lab]],size=size,color=y))+
-      geom_line(data=b,aes(x=clu,y=.data[[lab]],color=y))+
-      scale_x_discrete(limits=factor(a$clu))
-  }))
-}
-
-plotTwo(cluQ,cluQsigClust,3:2)
+t<-arrangeByEnt(cluQ)
+plotTwo(arrangeByEnt(cluQ),arrangeByEnt(cluQsigClust),2)
 
 ######################## ecoli ########################
 waterEcoli<-function(simFile,metaFile){
