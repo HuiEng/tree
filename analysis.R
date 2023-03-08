@@ -162,117 +162,14 @@ load("C:/DataCopied/Research/tree/data/toy/clusQ-1.RData")
 
 
 ######################## staph ################################
-mirror<-function(dt){
-  temp<-dt
-  n<-colnames(temp)[2:1]
-  colnames(temp)[1:2]<-n
-  dt<-rbind(dt,temp)
-  dt<-unique(dt)
-}
-
-waterStaph<-function(simFile,metaFile,skip=15){
-  water<-read.csv(simFile, skip = skip)
-  meta<-read.csv(metaFile)
-  
-  # mirrorring
-  water<-mirror(water)
-  # temp<-water
-  # colnames(temp)[1:2]<-c("bseq","aseq")
-  # water<-rbind(water,temp)
-  # water<-unique(water)
-  # 
-  water<-merge(water,meta,by.x="aseq",by.y="name")
-  merge(water,meta,by.x="bseq",by.y="name")
-}
-
-simStaph<-function(simFile,metaFile,skip=15){
-  sim<-read.csv(simFile, skip = skip)
-  meta<-read.csv(metaFile)
-  
-  # mirrorring
-  sim<-mirror(sim)
-  
-  colnames(sim)<-c("seqID.x","seqID.y","identity.")
-  sim<-merge(sim,meta,by.x="seqID.x",by.y="seqID")
-  merge(sim,meta,by.x="seqID.y",by.y="seqID")
-}
-
-cluQualityStaph<-function(dt,sim,ND=TRUE){
-  temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("seqID.y"))
-  names(temp)[names(temp) == 'cluster'] <- 'clusterB'
-  temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("seqID.x"))
-  names(temp)[names(temp) == 'cluster'] <- 'clusterA'
-  
-  temp<-temp%>%filter(clusterA==clusterB)
-  clu<-temp%>%group_by(clusterA)%>%
-    summarise(ent=Entropy(table(mlst.x),base=exp(1)),
-              avg_sim=mean(identity.),
-              size=length(unique(seqID.y)))
-  
-  names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
-  clu<-clu%>% arrange(desc(avg_sim),desc(size))
-  clu$clu<-seq.int(nrow(clu))-1
-  
-  if (ND){
-    nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
-    nodeDistance<-nodeDistance%>%group_by(clu)%>%
-      summarise(avg_nodeDistance=mean(HD))
-    clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
-    clu<-clu%>% arrange(clu)
-  }
-  clu
-}
-
-plotStaph<-function(cluQ,maxSize=70){
-  labs<-colnames(cluQ)[2:3]
-  m<-max(cluQ[labs[2]])
-  coeff <- m/max(cluQ[labs[1]])
-  p<-ggplot(cluQ, aes(x=clu)) +
-    geom_point( aes(y=.data[[labs[1]]],size=size,color=labs[1])) +
-    geom_point( aes(y=(m-.data[[labs[2]]]) / coeff,size=size,color=labs[2])) +
-    
-    geom_line( aes(y=.data[[labs[1]]],color=labs[1])) +
-    geom_line( aes(y=(m-.data[[labs[2]]]) / coeff,color=labs[2])) +
-    scale_y_reverse(
-      # Features of the first axis
-      name = labs[1],
-      # Add a second axis and specify its features
-      sec.axis = sec_axis(~m-(.)*coeff, name=labs[2])
-    )+
-    labs(color='data type') +
-    scale_x_discrete(limits=factor(cluQ$clu))+ 
-    scale_size(limits = c(1,maxSize))
-  p
-}
-
-plotTwo<-function(a,b,range){
-  labs<-colnames(a)[range]
-  dataName<-deparse(substitute(a))
-  y<-deparse(substitute(b))
-  
-  do.call(patchwork::wrap_plots, lapply(labs, function(lab) {
-    ggplot()+
-      geom_point(data=a,aes(x=clu,y=.data[[lab]],size=size,color=dataName))+
-      geom_line(data=a,aes(x=clu,y=.data[[lab]],color=dataName))+
-      geom_point(data=b,aes(x=clu,y=.data[[lab]],size=size,color=y))+
-      geom_line(data=b,aes(x=clu,y=.data[[lab]],color=y))+
-      scale_x_discrete(limits=factor(a$clu))
-  }))
-}
-
-arrangeByEnt<-function(dt){
-  clu<-dt%>% arrange(ent,desc(size))
-  clu$clu<-seq.int(nrow(clu))-1
-  clu
-}
-
+source("C://DataCopied/Research/R/staphFunctions.R")
 
 path<-"C://DataCopied/Research/tree/data/staphopia-contigs"
 water<-waterStaph(paste(path,"/sample_needle.txt",sep=""),
                   paste(path,"/sample_meta.csv",sep=""))
 
-sim<-simStaph(paste(path,"/sample-k9-w100-s5-global_sim.txt",sep=""),
-              paste(path,"/sample_meta.csv",sep=""),0)
+# sim<-simStaph(paste(path,"/sample-k9-w100-s5-global_sim.txt",sep=""),
+#               paste(path,"/sample_meta.csv",sep=""),0)
               
 # temp<-waterAll%>%
 #   # filter(mlst.x==mlst.y)%>%
@@ -284,35 +181,39 @@ sim<-simStaph(paste(path,"/sample-k9-w100-s5-global_sim.txt",sep=""),
 # 
 # ggplot(sim)+geom_tile(aes(x=aseq,y=bseq,fill=identity.))
 
+# meta<-read.csv(paste(path,"/sample_meta.csv",sep=""))
+# temp<-merge(dt,meta)
+# temp<-temp%>%group_by(cluster)%>%
+#   summarise(ent=Entropy(table(mlst),base=exp(1)))
 
 
 dt<-read.csv(paste(path,"/sample-k9-w100-s5-s80-l50.txt",sep=""),header=FALSE)
 colnames(dt)<-c("seqID","cluster")
-cluQ<-cluQualityStaph(dt,water)
-avg<- cluQ %>% summarise(across(everything(), list(mean)))
+cluQ_2WMT<-cluQualityStaph(dt,water)
+avg<- cluQ_2WMT %>% summarise(across(everything(), list(mean)))
 
-plotStaph(cluQ)
+# plotStaph(cluQ_2WMT)
 
 
 sigClust<-read.csv(paste(path,"/sigclust9.txt",sep=""),header=FALSE)
 # sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
 colnames(sigClust)<-c("seqID","cluster")
-cluQsigClust<-cluQualityStaph(sigClust,water,FALSE)
-avgsigClust<- cluQsigClust %>% summarise(across(everything(), list(mean)))
-plotTwo(cluQ,cluQsigClust,3)
+cluQ_sigClust<-cluQualityStaph(sigClust,water,FALSE)
+avgsigClust<- cluQ_sigClust %>% summarise(across(everything(), list(mean)))
+plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 
-plotStaph(cluQsigClust)
+plotStaph(cluQ_sigClust)
 
-plotStaph(cluQ)+ ggtitle("2W-MT")+
+plotStaph(cluQ_2WMT)+ ggtitle("2W-MT")+
   theme(legend.position="none")+
-  plotStaph(cluQsigClust)+ ggtitle("sigClust")
+  plotStaph(cluQ_sigClust)+ ggtitle("sigClust")
 
 # cluQSim<-cluQualityStaph(dt,sim)
-# plotStaph(cluQ)+ theme(legend.position="none")+
-#   plotStaph(cluQsigClust)
+# plotStaph(cluQ_2WMT)+ theme(legend.position="none")+
+#   plotStaph(cluQ_sigClust)
 
-t<-arrangeByEnt(cluQ)
-plotTwo(arrangeByEnt(cluQ),arrangeByEnt(cluQsigClust),2)
+t<-arrangeByEnt(cluQ_2WMT)
+plotTwo(arrangeByEnt(cluQ_2WMT),arrangeByEnt(cluQ_sigClust),2)
 
 ######################## ecoli ########################
 waterEcoli<-function(simFile,metaFile){

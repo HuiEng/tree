@@ -11,7 +11,7 @@ using namespace std;
 static similarity_main_cmdline args; // Command line switches and arguments
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 bool skip = false;
-size_t batch = 10;
+size_t batch = 300;
 
 // void toBinary(cell_type letter)
 // {
@@ -52,7 +52,7 @@ void calcAllSimilarity(FILE *pFile, vector<seq_type> seqs)
             //     fprintf(stdout, ",%zu", c);
             // }
 
-            for (size_t j = i; j < seqCount; j++)
+            for (size_t j = i + 1; j < seqCount; j++)
             {
                 // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
                 double dist = calcJaccardLocal(seqs[i], seqs[j]) * 100.0;
@@ -84,7 +84,7 @@ void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs)
 
         for (size_t i = 0; i < seqCount; i++)
         {
-            for (size_t j = i; j < seqCount; j++)
+            for (size_t j = i + 1; j < seqCount; j++)
             {
                 double dist = calcMatchingWindows(seqs[i], seqs[j]) * 100.0;
                 fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
@@ -104,19 +104,31 @@ void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs)
     }
 }
 
-void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs)
+void calcAllSimilarityGlobalBatch(FILE *pFile, vector<seq_type> seqsA, vector<seq_type> seqsB, size_t offsetA, size_t offsetB)
+{
+    for (size_t i = 0; i < seqsA.size(); i++)
+    {
+        for (size_t j = 0; j < seqsB.size(); j++)
+        {
+            double dist = calcJaccardGlobal(seqsA[i], seqsB[j]) * 100.0;
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offsetA, j + offsetB, dist);
+        }
+    }
+}
+
+void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
 {
     size_t seqCount = seqs.size();
-    fprintf(pFile, "i,j,similarity\n");
+    // fprintf(pFile, "i,j,similarity\n");
     if (skip)
     {
 
         for (size_t i = 0; i < seqCount; i++)
         {
-            for (size_t j = i; j < seqCount; j++)
+            for (size_t j = i + 1; j < seqCount; j++)
             {
                 double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
-                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, dist);
             }
         }
     }
@@ -127,7 +139,7 @@ void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs)
             for (size_t j = 0; j < seqCount; j++)
             {
                 double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
-                fprintf(pFile, "%zu,%zu,%.2f\n", i, j, dist);
+                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, dist);
             }
         }
     }
@@ -177,7 +189,63 @@ void calcAllSetBits(const vector<cell_type> &sigs)
     }
 }
 
-vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t size)
+// vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t size, size_t &idx)
+// {
+//     ifstream rf(file_path, ios::out | ios::binary);
+//     if (!rf.is_open())
+//     {
+//         fprintf(stderr, "Invalid File. Please try again\n");
+//         exit(0);
+//     }
+
+//     unsigned long long int length;
+//     if (rf)
+//         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+//     vector<vector<vector<cell_type>>> seqs;
+//     vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+//     //? 1 window
+//     // cout << "length: " << length << "\n";
+//     vector<cell_type> bf(length);
+//     cell_type temp = 0;
+//     size_t i = 0;
+//     size_t count = 0;
+//     size_t c = sizeof(unsigned long long int);
+
+//     while (rf)
+//     {
+//         rf.read((char *)&bf[i], sizeof(cell_type));
+//         i++;
+//         if (i == length)
+//         {
+//             if (isEmpty(bf))
+//             {
+//                 seqs.push_back(tseq);
+//                 tseq.clear();
+//                 count++;
+//                 if (count == size)
+//                 {
+//                     break;
+//                 }
+//             }
+//             else
+//             {
+//                 tseq.push_back(bf);
+//             }
+//             fill(bf.begin(), bf.end(), 0);
+//             c += i;
+//             i = 0;
+//         }
+//     }
+//     c += i;
+//     rf.close();
+//     idx = c;
+//     fprintf(stderr, "%zu,%zu\n", c, length);
+//     return seqs;
+// }
+
+vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t size, size_t &idx)
 {
     ifstream rf(file_path, ios::out | ios::binary);
     if (!rf.is_open())
@@ -199,11 +267,23 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t
     cell_type temp = 0;
     size_t i = 0;
     size_t count = 0;
+    size_t c = 0;
+    cell_type t;
+
+    while (rf && i < idx)
+    {
+        // fprintf(stderr, "%zu\n", i);
+        rf.read((char *)&t, sizeof(cell_type));
+        i++;
+    }
+
+    i = 0;
 
     while (rf)
     {
         rf.read((char *)&bf[i], sizeof(cell_type));
         i++;
+        c++;
         if (i == length)
         {
             if (isEmpty(bf))
@@ -225,7 +305,7 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t
         }
     }
     rf.close();
-
+    idx += c;
     return seqs;
 }
 
@@ -288,10 +368,11 @@ int similarity_main(int argc, char *argv[])
     {
         rawname = rawname + "-" + args.output_arg;
     }
+    FILE *pFile;
 
     if (args.all_kmer_arg)
     {
-        FILE *pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
+        pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
         vector<cell_type> seqs;
         // signatureSize = readSignatures(bfIn, seqs, batch);
         signatureSize = readSignatures(bfIn, seqs);
@@ -301,7 +382,9 @@ int similarity_main(int argc, char *argv[])
     }
     else
     {
-        vector<seq_type> seqs = readPartitionBF(bfIn, batch);
+
+        size_t idx = 0;
+        vector<seq_type> seqs = readPartitionBF(bfIn, batch, idx);
         // vector<seq_type> seqs = readPartitionBF(bfIn);
         // dummy code, assume there is at least 10 input seqs
         for (int i = 0; i < 10; i++)
@@ -326,17 +409,63 @@ int similarity_main(int argc, char *argv[])
         {
             char buffer[50];
             sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
-            FILE *pFile = fopen((rawname + buffer).c_str(), "w");
+            pFile = fopen((rawname + buffer).c_str(), "w");
             calcAllSimilarityLocal(pFile, seqs);
         }
         else if (args.global_arg)
         {
-            FILE *pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
+            pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
+            fprintf(pFile, "i,j,similarity\n");
             calcAllSimilarityGlobal(pFile, seqs);
+            size_t start = seqs.size();
+            vector<seq_type> temp;
+            vector<seq_type> seqsA;
+            size_t startA, idxA;
+            bool changed = false;
+
+            do
+            {
+                temp = readPartitionBF(bfIn, batch, idx);
+                calcAllSimilarityGlobal(pFile, temp, start);
+                calcAllSimilarityGlobalBatch(pFile, seqs, temp, start - seqs.size(), start);
+                start += temp.size();
+
+                if (!changed)
+                {
+                    seqsA = temp;
+                    startA = start;
+                    idxA = idx;
+                    changed = true;
+                }
+            } while (temp.size() > 0);
+
+            while (seqsA.size() > 0)
+            {
+                seqs = seqsA;
+                start = startA;
+                idx = idxA;
+
+                changed = false;
+                do
+                {
+                    temp = readPartitionBF(bfIn, batch, idx);
+                    calcAllSimilarityGlobalBatch(pFile, seqs, temp, start - seqs.size(), start);
+                    start += temp.size();
+
+                    if (!changed)
+                    {
+                        seqsA = temp;
+                        startA = start;
+                        idxA = idx;
+                        changed = true;
+                    }
+                } while (temp.size() > 0);
+            }
+            fprintf(stderr, "Loaded %zu seqs..\n", start);
         }
         else
         {
-            FILE *pFile = fopen((rawname + "_sim.txt").c_str(), "w");
+            pFile = fopen((rawname + "_sim.txt").c_str(), "w");
             calcAllSimilarity(pFile, seqs);
         }
     }
