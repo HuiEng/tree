@@ -361,6 +361,7 @@ public:
   size_t threshold_arg;
   size_t window_arg;
   size_t element_arg;
+  size_t batch_arg;
 
   bool bf_input_given;
   bool output_given;
@@ -372,6 +373,7 @@ public:
   bool global_arg;
   bool local_arg;
   bool skip_arg;
+  bool batch_given;
 
   enum
   {
@@ -381,23 +383,23 @@ public:
 
   similarity_main_cmdline() : bf_input_arg(""), output_arg(""),
                               threshold_arg(0), window_arg(0),
-                              element_arg(0),
+                              element_arg(0),batch_arg(0),
                               bf_input_given(false), output_given(false),
                               threshold_given(false), window_given(false),
                               element_given(false), multiple_arg(false),
                               all_kmer_arg(false), global_arg(false),
-                              skip_arg(false), local_arg(false)
+                              skip_arg(false), local_arg(false),batch_given(false)
   {
   }
 
   similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""),
                                                     threshold_arg(0), window_arg(0),
-                                                    element_arg(0),
+                                                    element_arg(0),batch_arg(0),
                                                     bf_input_given(false), output_given(false),
                                                     threshold_given(false), window_given(false),
                                                     element_given(false), multiple_arg(false),
                                                     all_kmer_arg(false), global_arg(false),
-                                                    skip_arg(false), local_arg(false)
+                                                    skip_arg(false), local_arg(false),batch_given(false)
   {
     parse(argc, argv);
   }
@@ -406,6 +408,7 @@ public:
   {
     static struct option long_options[] = {
         {"input", 1, 0, 'i'},
+        {"batch", 1, 0, 'b'},
         {"output", 1, 0, 'o'},
         {"capacity", 1, 0, 'c'},
         {"threshold", 1, 0, 't'},
@@ -419,7 +422,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:t:w:s:mAGLS";
+    static const char *short_options = "hVi:o:t:w:s:mAGLSb:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -461,6 +464,11 @@ public:
       case 'o':
         output_given = true;
         output_arg = optarg;
+        break;
+      case 'b':
+        batch_given = true;
+        batch_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-b, --batch=size_t")
         break;
       case 't':
         threshold_given = true;
@@ -561,6 +569,7 @@ public:
     return "Read minimisers BF and get all-against-all Jaccard similarity\n\n"
            "Options (default value in (), *required):\n"
            " -i, --input                              BF input path\n"
+           " -b, --batch                              recommended for processing large input, do in batch size [default=false]\n"
            " -o, --output                             output path is {input}{-output}_sim.txt\n"
            " -t, --threshold                          matching threshold per window  [default=4]\n"
            " -s, --element                            expected number of element in BF [default=1000]\n"
