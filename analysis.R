@@ -3,7 +3,7 @@ library(DescTools)
 library(patchwork) # To display 2 charts together
 source("C://DataCopied/Research/R/createShiny.R")
 
-cluQuality<-function(dt,sim){
+cluQuality<-function(dt,sim,ND=TRUE){
   temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
   names(temp)[names(temp) == 'cluster'] <- 'clusterB'
   temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
@@ -22,12 +22,15 @@ cluQuality<-function(dt,sim){
   names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
   clu$clu<-seq.int(nrow(clu))-1
   
-  nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
-  nodeDistance<-nodeDistance%>%group_by(clu)%>%
-    summarise(avg_nodeDistance=mean(HD))
-  clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
+  if (ND){
+    nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
+    nodeDistance<-nodeDistance%>%group_by(clu)%>%
+      summarise(avg_nodeDistance=mean(HD))
+    clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
+  }
   clu
 }
+
 
 
 ######################## iterations ##################################
@@ -190,16 +193,18 @@ water<-waterStaph(paste(path,"/sample_needle.txt",sep=""),
 dt<-read.csv(paste(path,"/sample-k9-w100-s5-s80-l50.txt",sep=""),header=FALSE)
 colnames(dt)<-c("seqID","cluster")
 cluQ_2WMT<-cluQualityStaph(dt,water)
-avg<- cluQ_2WMT %>% summarise(across(everything(), list(mean)))
+# avg<- cluQ_2WMT %>% summarise(across(everything(), list(mean)))
 
 # plotStaph(cluQ_2WMT)
 
 
-sigClust<-read.csv(paste(path,"/sigclust9.txt",sep=""),header=FALSE)
+sigClust<-read.csv(paste(path,"/sigClust-k9.txt",sep=""),header=FALSE)
 # sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
 colnames(sigClust)<-c("seqID","cluster")
 cluQ_sigClust<-cluQualityStaph(sigClust,water,FALSE)
-avgsigClust<- cluQ_sigClust %>% summarise(across(everything(), list(mean)))
+# avgsigClust<- cluQ_sigClust %>% summarise(across(everything(), list(mean)))
+
+avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
 plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 
 plotStaph(cluQ_sigClust)
@@ -208,6 +213,17 @@ plotStaph(cluQ_2WMT)+ ggtitle("2W-MT")+
   theme(legend.position="none")+
   plotStaph(cluQ_sigClust)+ ggtitle("sigClust")
 
+
+temp<-dt%>%group_by(cluster)%>%
+  summarise(size=length(unique(seqID)))
+sd(temp$size)
+
+temp<-sigClust%>%group_by(cluster)%>%
+  summarise(size=length(unique(seqID)))
+sd(temp$size)
+mean(cluQ_2WMT$size)
+mean(cluQ_sigClust$size)
+
 # cluQSim<-cluQualityStaph(dt,sim)
 # plotStaph(cluQ_2WMT)+ theme(legend.position="none")+
 #   plotStaph(cluQ_sigClust)
@@ -215,28 +231,80 @@ plotStaph(cluQ_2WMT)+ ggtitle("2W-MT")+
 t<-arrangeByEnt(cluQ_2WMT)
 plotTwo(arrangeByEnt(cluQ_2WMT),arrangeByEnt(cluQ_sigClust),2)
 
+temp<-water%>%group_by(seqID.x)%>%
+  summarise(size=length(unique(seqID.y)))%>%
+  filter(size!=length(dt[,1]))
+
 ######################## ecoli ########################
-waterEcoli<-function(simFile,metaFile){
-  water<-read.csv(simFile)
-  meta<-read.csv(metaFile,header=FALSE)
-  water<-water%>%mutate(aseq=meta[match(aseq,meta$V2),1],
-                        bseq=meta[match(bseq,meta$V2),1])
-  water
+waterEcoli<-function(simFile,skip=0){
+  water<-read.csv(simFile,skip = skip)
+  # water$clu<-seq.int(nrow(water))-1
+  len<-(sqrt(8*length(water[,1])+1)-1)/2
+  idx<-NULL
+  idy<-NULL
+  for (i in 0:(len-1)){
+    idx<-c(idx,c(i:(len-1)))
+    idy<-c(idy,rep(i,len-i))
+  }
+  water$aseq=idx
+  water$bseq=idy
+  # merge(water,meta,by.x="bseq",by.y="name")
+  # meta<-read.csv(metaFile,header=FALSE)
+  # water<-water%>%mutate(aseq=meta[match(aseq,meta$V2),1],
+  #                       bseq=meta[match(bseq,meta$V2),1])
+  # water<-mirror(water)
+  mirror(water)
 }
 
+cluQuality<-function(dt,sim,ND=TRUE){
+  temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
+  names(temp)[names(temp) == 'cluster'] <- 'clusterB'
+  temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
+  names(temp)[names(temp) == 'cluster'] <- 'clusterA'
+  
+  # temp<-temp%>%filter(clusterA==clusterB & aseq!=bseq)
+  # clu<-temp%>%group_by(clusterA)%>%
+  #   summarise(avg_sim=mean(identity.),
+  #             size=length(unique(bseq))+1)
+  
+  temp<-temp%>%filter(clusterA==clusterB)
+  clu<-temp%>%group_by(clusterA)%>%
+    summarise(avg_sim=mean(identity.),
+              size=length(unique(bseq)))
+  
+  names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
+  clu<-clu%>% arrange(desc(avg_sim),desc(size))
+  clu$clu<-seq.int(nrow(clu))-1
+  
+  if (ND){
+    nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
+    nodeDistance<-nodeDistance%>%group_by(clu)%>%
+      summarise(avg_nodeDistance=mean(HD))
+    clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
+    clu<-clu%>% arrange(clu)
+  }
+  clu
+}
+
+
 path<-"C://DataCopied/Research/tree/data/ecoli"
-water<-waterEcoli(paste(path,"/gene-2500-5000.waterall",sep=""),
-             paste(path,"/gene-2500-5000-meta.csv",sep=""))
-
-
+water<-waterEcoli(paste(path,"/gene-2500-5000.waterall",sep=""),17)
 dt<-read.csv(paste(path,"/gene-2500-5000-k9-w100-s5-s40-l5.txt",sep=""),header=FALSE)
 colnames(dt)<-c("seqID","cluster")
-cluQ<-cluQuality(dt,water)
-avg<- cluQ %>% summarise(across(everything(), list(mean)))
+
+cluQ_2WMT<-cluQuality(dt,water)
+# avg<- cluQ_2WMT %>% summarise(across(everything(), list(mean)))
+
+
+sigClust<-read.csv(paste(path,"/sigclust-k9.txt",sep=""),header=FALSE)
+colnames(sigClust)<-c("seqID","cluster")
+cluQ_sigClust<-cluQuality(sigClust,water,FALSE)
+avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
 
 
 (
-  ggplot(cluQ)+
+  ggplot(cluQ_sigClust)+
+  # ggplot(cluQ_2WMT)+
     geom_point(aes(x=clu,y=avg_sim,size=size))+
     # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
     ylim(50,100)

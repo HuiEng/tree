@@ -50,7 +50,7 @@ void calcAllSimilarity(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
             //     }
             //     fprintf(stdout, ",%zu", c);
             // }
-
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
@@ -82,6 +82,7 @@ void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs, size_t offset = 
 
         for (size_t i = 0; i < seqCount; i++)
         {
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 double dist = calcMatchingWindows(seqs[i], seqs[j]) * 100.0;
@@ -111,6 +112,7 @@ void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs, size_t offset =
 
         for (size_t i = 0; i < seqCount; i++)
         {
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
@@ -140,6 +142,8 @@ void calcAllSimilarityKmers(FILE *pFile, vector<cell_type> seqs, size_t offset =
         for (size_t i = 0; i < seqCount; i++)
         {
             size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
+
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
@@ -361,47 +365,44 @@ int batching(string bfIn, FILE *pFile,
     size_t start = seqs.size();
     vector<seq_type> temp;
     vector<seq_type> seqsA;
-    size_t startA = start;
+    size_t startA = 0;
     size_t idxA = 0;
     bool changed = false;
 
     do
     {
         temp = readPartitionBF(bfIn, batch, idx);
-        // size_t offset = (idx - temp.size());
         simFunc(pFile, temp, start);
-        simBatchFunc(pFile, seqs, temp, start - seqs.size(), start);
-        start += temp.size();
+        simBatchFunc(pFile, seqs, temp, startA, start);
 
         if (!changed)
         {
             seqsA = temp;
-            startA = start;
             idxA = idx;
             changed = true;
         }
+        start += temp.size();
     } while (temp.size() > 0);
 
-    while (seqsA.size() > 0)
+    while (seqsA.size() > 1)
     {
+        startA += seqs.size();
+        start = startA + seqsA.size();
         seqs = seqsA;
-        start = startA;
         idx = idxA;
 
         changed = false;
         do
         {
             temp = readPartitionBF(bfIn, batch, idx);
-            simBatchFunc(pFile, seqs, temp, start - seqs.size(), start);
-            start += temp.size();
-
+            simBatchFunc(pFile, seqs, temp, startA, start);
             if (!changed)
             {
                 seqsA = temp;
-                startA = start;
                 idxA = idx;
                 changed = true;
             }
+            start += temp.size();
         } while (temp.size() > 0);
     }
     fprintf(stderr, "Loaded %zu seqs..\n", start);
