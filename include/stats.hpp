@@ -152,15 +152,15 @@ void calcAllStatsKmers(vector<cell_type> seqs)
     summarise(data);
 }
 
-void calcAllSetBits(const vector<cell_type> &sigs)
-{
-    size_t seqCount = sigs.size() / signatureSize;
-    for (size_t i = 0; i < seqCount; i++)
-    {
-        // fprintf(stderr,"%zu,%zu,%zu\n",kmerLength,windowLength,countSetBits(&sigs[i*signatureSize]));
-        fprintf(stderr, "BF density for the first seq: %zu\n", countSetBits(&sigs[i * signatureSize], signatureSize));
-        break;
-    }
-}
+// void calcAllSetBits(const vector<cell_type> &sigs)
+// {
+//     size_t seqCount = sigs.size() / signatureSize;
+//     for (size_t i = 0; i < seqCount; i++)
+//     {
+//         // fprintf(stderr,"%zu,%zu,%zu\n",kmerLength,windowLength,countSetBits(&sigs[i*signatureSize]));
+//         fprintf(stderr, "BF density for the first seq: %zu\n", countSetBits(&sigs[i * signatureSize], signatureSize));
+//         break;
+//     }
+// }
 
 #endif

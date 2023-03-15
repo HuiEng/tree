@@ -3,8 +3,6 @@
 #include <random>
 #include "stats_main_cmdline.hpp"
 #include "stats.hpp"
-#include "similarity.hpp"
-
 
 #include <regex>
 #include <vector>
@@ -15,6 +13,38 @@ using namespace std;
 
 static stats_main_cmdline args; // Command line switches and arguments
 size_t batch_size = 5;
+// Jaccard similarity
+void calcAllSimilarityKmers2(FILE *pFile, vector<cell_type> seqs, size_t offset = 0)
+{
+    size_t seqCount = seqs.size() / signatureSize;
+
+    for (size_t i = 0; i < seqCount; i++)
+    {
+        // size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
+        fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
+
+        for (size_t j = i + 1; j < seqCount; j++)
+        {
+            // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
+            // fprintf(stdout, "%zu,%zu,%zu\n", i, j, bits);
+            double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, sim * 100);
+        }
+    }
+}
+void calcAllSimilarityKmersBatch(FILE *pFile, vector<cell_type> seqsA, vector<cell_type> seqsB, size_t offsetA, size_t offsetB)
+{
+    size_t seqCountA = seqsA.size() / signatureSize;
+    size_t seqCountB = seqsB.size() / signatureSize;
+    for (size_t i = 0; i < seqCountA; i++)
+    {
+        for (size_t j = 0; j < seqCountB; j++)
+        {
+            double dist = calcSimilarity(&seqsA[i * signatureSize], &seqsB[j * signatureSize], signatureSize) * 100.0;
+            fprintf(pFile, "%zu,%zu,%.2f\n", i + offsetA, j + offsetB, dist);
+        }
+    }
+}
 
 
 int stats_main(int argc, char *argv[])
@@ -62,7 +92,6 @@ int stats_main(int argc, char *argv[])
             size_t seqCount = temp * batch_size + seqs_batch[temp].size() / signatureSize;
             temp++;
             fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
-            skip = true;
 
             FILE *pFile = fopen("test-all_sim.txt", "w");
             fprintf(pFile, "i,j,similarity\n");
@@ -70,10 +99,11 @@ int stats_main(int argc, char *argv[])
             {
                 vector<cell_type> seqsA = seqs_batch[i];
                 size_t offset = i * batch_size;
-                calcAllSimilarityKmers(pFile, seqsA, offset);
+                calcAllSimilarityKmers2(pFile, seqsA, offset);
                 for (size_t j = i + 1; j < temp; j++)
                 {
                     vector<cell_type> seqsB = seqs_batch[j];
+                    fprintf(stderr, "%zu,%zu\n", offset, j * batch_size);
                     calcAllSimilarityKmersBatch(pFile, seqsA, seqsB, offset, j * batch_size);
                 }
             }
