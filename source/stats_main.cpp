@@ -5,7 +5,6 @@
 #include "stats.hpp"
 #include "similarity.hpp"
 
-
 #include <regex>
 #include <vector>
 #include <numeric>
@@ -16,6 +15,36 @@ using namespace std;
 static stats_main_cmdline args; // Command line switches and arguments
 size_t batch_size = 5;
 
+typedef void (*simtype1)(FILE *, vector<cell_type>, size_t);
+typedef void (*simtype2)(FILE *, vector<cell_type>, vector<cell_type>, size_t, size_t);
+// void test(FILE *pFile, vector<cell_type> seqs, size_t offset = 0) {}
+
+// functiontype2 func2 = &dosomethingwithchar;
+// int result = func2('a');
+
+template <typename seq_batch_type, typename t1, typename t2>
+void batchFunction(vector<seq_batch_type> seqs_batch, t1 simFunc, t2 simBatchFunc)
+{
+    size_t temp = seqs_batch.size() - 1;
+    size_t seqCount = temp * batch_size + seqs_batch[temp].size() / signatureSize;
+    temp++;
+    fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+    skip = true;
+
+    FILE *pFile = fopen("test-all_sim.txt", "w");
+    fprintf(pFile, "i,j,similarity\n");
+    for (size_t i = 0; i < temp; i++)
+    {
+        seq_batch_type seqsA = seqs_batch[i];
+        size_t offset = i * batch_size;
+        simFunc(pFile, seqsA, offset);
+        for (size_t j = i + 1; j < temp; j++)
+        {
+            seq_batch_type seqsB = seqs_batch[j];
+            simBatchFunc(pFile, seqsA, seqsB, offset, j * batch_size);
+        }
+    }
+}
 
 int stats_main(int argc, char *argv[])
 {
@@ -51,32 +80,13 @@ int stats_main(int argc, char *argv[])
         vector<cell_type> seqs;
         signatureSize = readSignatures(bfIn, seqs);
 
-
         seqs.clear();
 
         if (seqs.size() == 0)
         {
-            
-            vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
-            size_t temp = seqs_batch.size() - 1;
-            size_t seqCount = temp * batch_size + seqs_batch[temp].size() / signatureSize;
-            temp++;
-            fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
-            skip = true;
 
-            FILE *pFile = fopen("test-all_sim.txt", "w");
-            fprintf(pFile, "i,j,similarity\n");
-            for (size_t i = 0; i < temp; i++)
-            {
-                vector<cell_type> seqsA = seqs_batch[i];
-                size_t offset = i * batch_size;
-                calcAllSimilarityKmers(pFile, seqsA, offset);
-                for (size_t j = i + 1; j < temp; j++)
-                {
-                    vector<cell_type> seqsB = seqs_batch[j];
-                    calcAllSimilarityKmersBatch(pFile, seqsA, seqsB, offset, j * batch_size);
-                }
-            }
+            vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
+            batchFunction(seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
         }
         else
         {
@@ -105,6 +115,8 @@ int stats_main(int argc, char *argv[])
 
         // fprintf(stderr,"done\n" );
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+
+        return 0;
 
         if (args.local_arg)
         {

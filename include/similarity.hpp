@@ -407,6 +407,4 @@ int batching(string bfIn, FILE *pFile,
     return 1;
 }
 
-
-
 #endif
