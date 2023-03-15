@@ -42,44 +42,34 @@ int similarity_main(int argc, char *argv[])
         {
             pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
             vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch, signatureSize);
-
             size_t temp = seqs_batch.size() - 1;
             size_t seqCount = temp * batch + seqs_batch[temp].size() / signatureSize;
-            temp++;
             fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
-
-            fprintf(pFile, "i,j,similarity\n");
-            for (size_t i = 0; i < temp; i++)
-            {
-                vector<cell_type> seqsA = seqs_batch[i];
-                size_t offset = i * batch;
-                calcAllSimilarityKmers(pFile, seqsA, offset);
-                for (size_t j = i + 1; j < temp; j++)
-                {
-                    vector<cell_type> seqsB = seqs_batch[j];
-                    calcAllSimilarityKmersBatch(pFile, seqsA, seqsB, offset, j * batch);
-                }
-            }
+            batchSimFunction(pFile, seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
         }
         else
         {
-            // calcAllSetBits(sigs);
+            vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(bfIn, batch);
+            size_t temp = seqs_batch.size() - 1;
+            size_t seqCount = temp * batch + seqs_batch[temp].size();
+            fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+
             if (args.local_arg)
             {
                 char buffer[50];
                 sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
                 pFile = fopen((rawname + buffer).c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
+                batchSimFunction(pFile, seqs_batch, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
             }
             else if (args.global_arg)
             {
                 pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
+                batchSimFunction(pFile, seqs_batch, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
             }
             else
             {
                 pFile = fopen((rawname + "_sim.txt").c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarity, &calcAllSimilarityBatch);
+                batchSimFunction(pFile, seqs_batch, &calcAllSimilarity, &calcAllSimilarityBatch);
             }
         }
     }

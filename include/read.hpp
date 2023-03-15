@@ -270,4 +270,58 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path)
     return seqs;
 }
 
+vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file_path, size_t size)
+{
+    ifstream rf(file_path, ios::out | ios::binary);
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+    vector<vector<vector<vector<cell_type>>>> seqs_batch;
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    //? 1 window
+    // cout << "length: " << length << "\n";
+    vector<cell_type> bf(length);
+    size_t i = 0;
+    size_t count = 0;
+
+    while (rf)
+    {
+        rf.read((char *)&bf[i], sizeof(cell_type));
+        i++;
+        if (i == length)
+        {
+            if (isEmpty(bf))
+            {
+                seqs.push_back(tseq);
+                tseq.clear();
+                count++;
+                if (count == size)
+                {
+                    seqs_batch.push_back(seqs);
+                    seqs.clear();
+                    count = 0;
+                }
+            }
+            else
+            {
+                tseq.push_back(bf);
+            }
+            fill(bf.begin(), bf.end(), 0);
+            i = 0;
+        }
+    }
+    seqs_batch.push_back(seqs);
+    rf.close();
+    return seqs_batch;
+}
+
 #endif

@@ -334,6 +334,33 @@ void calcAllSimilarityKmersBatch(FILE *pFile, vector<cell_type> seqsA, vector<ce
     }
 }
 
+
+template <typename seq_batch_type, typename t1, typename t2>
+void batchSimFunction(FILE *pFile, vector<seq_batch_type> seqs_batch, t1 simFunc, t2 simBatchFunc)
+{
+    // size_t temp = seqs_batch.size() - 1;
+    // size_t seqCount = temp * batch + seqs_batch[temp].size() / signatureSize;
+    // temp++;
+    // fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+    skip = true;
+    size_t seqCount = seqs_batch.size();
+
+    // FILE *pFile = fopen("test-all_sim.txt", "w");
+    fprintf(pFile, "i,j,similarity\n");
+    for (size_t i = 0; i < seqCount; i++)
+    {
+        seq_batch_type seqsA = seqs_batch[i];
+        size_t offset = i * batch;
+        simFunc(pFile, seqsA, offset);
+        for (size_t j = i + 1; j < seqCount; j++)
+        {
+            seq_batch_type seqsB = seqs_batch[j];
+            simBatchFunc(pFile, seqsA, seqsB, offset, j * batch);
+        }
+    }
+}
+
+
 int batching(string bfIn, FILE *pFile,
              function<void(FILE *, vector<seq_type>, size_t)> simFunc,
              function<void(FILE *, vector<seq_type>, vector<seq_type>, size_t, size_t)> simBatchFunc)

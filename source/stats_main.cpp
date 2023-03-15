@@ -86,7 +86,7 @@ int stats_main(int argc, char *argv[])
         {
 
             vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
-            batchFunction(seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
+            // batchSimFunction(seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
         }
         else
         {
@@ -114,8 +114,15 @@ int stats_main(int argc, char *argv[])
         }
 
         // fprintf(stderr,"done\n" );
-        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+        // fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
 
+        vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(bfIn, batch_size);
+        size_t temp = seqs_batch.size() - 1;
+        size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+        fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+
+        FILE *pFile = fopen("test-all_sim.txt", "w");
+        batchSimFunction(pFile, seqs_batch, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
         return 0;
 
         if (args.local_arg)
