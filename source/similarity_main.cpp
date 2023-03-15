@@ -41,66 +41,25 @@ int similarity_main(int argc, char *argv[])
         if (args.all_kmer_arg)
         {
             pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
-            size_t idx = 0;
-            vector<cell_type> seqs;
-            signatureSize = readSignatures(bfIn, seqs, batch, idx);
+            vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch, signatureSize);
+
+            size_t temp = seqs_batch.size() - 1;
+            size_t seqCount = temp * batch + seqs_batch[temp].size() / signatureSize;
+            temp++;
+            fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
 
             fprintf(pFile, "i,j,similarity\n");
-            calcAllSimilarityKmers(pFile, seqs);
-
-            size_t start = idx;
-            vector<cell_type> temp;
-            vector<cell_type> seqsA;
-            size_t startA = start;
-            size_t idxA = 0;
-            bool changed = false;
-
-            do
+            for (size_t i = 0; i < temp; i++)
             {
-                readSignatures(bfIn, temp, batch, idx);
-                size_t offset = (idx - temp.size()) / signatureSize;
-                calcAllSimilarityKmers(pFile, temp, offset);
-                calcAllSimilarityKmersBatch(pFile, seqs, temp, idxA / signatureSize, offset);
-
-                if (!changed)
+                vector<cell_type> seqsA = seqs_batch[i];
+                size_t offset = i * batch;
+                calcAllSimilarityKmers(pFile, seqsA, offset);
+                for (size_t j = i + 1; j < temp; j++)
                 {
-                    seqsA = temp;
-                    startA = start;
-                    changed = true;
+                    vector<cell_type> seqsB = seqs_batch[j];
+                    calcAllSimilarityKmersBatch(pFile, seqsA, seqsB, offset, j * batch);
                 }
-                start = idx;
-
-            } while (temp.size() > 0);
-
-            size_t seqCount = idx;
-            while (seqsA.size() > 1)
-            {
-                seqs = seqsA;
-                idx = startA + seqsA.size();
-                start = idx;
-                idxA = startA;
-
-                changed = false;
-
-                do
-                {
-                    readSignatures(bfIn, temp, batch, idx);
-                    size_t offset = (idx - temp.size()) / signatureSize;
-                    calcAllSimilarityKmersBatch(pFile, seqs, temp, idxA / signatureSize, offset);
-
-                    if (!changed)
-                    {
-                        seqsA = temp;
-                        startA = start;
-                        // idxA = idx;
-                        changed = true;
-                    }
-                    start = idx;
-
-                } while (temp.size() > 0);
             }
-            seqCount = seqCount / signatureSize;
-            fprintf(stderr, "Loaded %zu seqs..\n", seqCount);
         }
         else
         {

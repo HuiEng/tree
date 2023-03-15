@@ -26,8 +26,9 @@ typedef size_t sig_type;
 unsigned long long int readSignatures(const string file, vector<cell_type> &sigs)
 {
     ifstream rf(file, ios::out | ios::binary);
-    if(!rf.is_open()){
-        fprintf(stderr,"Invalid File. Please try again\n");
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
         exit(0);
     }
 
@@ -41,7 +42,6 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
 
-    
     try
     {
         sigs.resize(len);
@@ -64,7 +64,7 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
 }
 
 // if too large to use readSignatures, use batch, signatureSize should be outputed from the prev function
-vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size)
+vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, size_t &signatureSize)
 {
     vector<vector<cell_type>> sigs;
     ifstream rf(file, ios::out | ios::binary);
@@ -77,7 +77,7 @@ vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size)
     unsigned long long int length;
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
-
+    signatureSize = length;
     size = size * length;
     vector<cell_type> temp(size);
     size_t i = 0;
@@ -101,7 +101,6 @@ vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size)
 
     return sigs;
 }
-
 
 // read all files in given folder
 unsigned long long int readSignaturesMultiple(const string folder, vector<cell_type> &sigs)
@@ -222,8 +221,9 @@ bool isEmpty(vector<cell_type> bf)
 vector<vector<vector<cell_type>>> readPartitionBF(const string file_path)
 {
     ifstream rf(file_path, ios::out | ios::binary);
-    if(!rf.is_open()){
-        fprintf(stderr,"Invalid File. Please try again\n");
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
         exit(0);
     }
 

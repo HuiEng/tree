@@ -51,13 +51,13 @@ int stats_main(int argc, char *argv[])
         vector<cell_type> seqs;
         signatureSize = readSignatures(bfIn, seqs);
 
+
         seqs.clear();
 
         if (seqs.size() == 0)
         {
-            fprintf(stderr, "here\n");
-            vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size);
-
+            
+            vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
             size_t temp = seqs_batch.size() - 1;
             size_t seqCount = temp * batch_size + seqs_batch[temp].size() / signatureSize;
             temp++;
