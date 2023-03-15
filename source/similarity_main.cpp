@@ -141,7 +141,7 @@ void calcAllSimilarityKmers(FILE *pFile, vector<cell_type> seqs, size_t offset =
     {
         for (size_t i = 0; i < seqCount; i++)
         {
-            size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
+            // size_t temp = countSetBits(&seqs[i * signatureSize], signatureSize);
             fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
 
             for (size_t j = i + 1; j < seqCount; j++)

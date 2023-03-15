@@ -22,7 +22,7 @@ using namespace std;
 namespace fs = std::experimental::filesystem;
 typedef size_t sig_type;
 
-
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
 unsigned long long int readSignatures(const string file, vector<cell_type> &sigs)
 {
     ifstream rf(file, ios::out | ios::binary);
@@ -41,7 +41,17 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
 
-    sigs.resize(len);
+    
+    try
+    {
+        sigs.resize(len);
+    }
+    catch (const std::exception &e) // caught by reference to base
+    {
+        // std::cout << " a standard exception was caught, with message '"
+        //           << e.what() << "'\n";
+        return length;
+    }
     size_t i = 0;
     while (rf)
     {
@@ -52,6 +62,46 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
 
     return length;
 }
+
+// if too large to use readSignatures, use batch, signatureSize should be outputed from the prev function
+vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size)
+{
+    vector<vector<cell_type>> sigs;
+    ifstream rf(file, ios::out | ios::binary);
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+    size = size * length;
+    vector<cell_type> temp(size);
+    size_t i = 0;
+
+    while (rf)
+    {
+        rf.read((char *)&temp[i], sizeof(cell_type));
+        i++;
+
+        if (i == size)
+        {
+            sigs.push_back(temp);
+            temp.clear();
+            temp.resize(size);
+            i = 0;
+        }
+    }
+    temp.resize(i);
+    sigs.push_back(temp);
+    rf.close();
+
+    return sigs;
+}
+
 
 // read all files in given folder
 unsigned long long int readSignaturesMultiple(const string folder, vector<cell_type> &sigs)
