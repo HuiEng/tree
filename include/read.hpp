@@ -41,8 +41,8 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
 
     // get length of file:
     rf.seekg(0, rf.end);
-    int len = rf.tellg();
-    len = len - (int)sizeof(unsigned long long int); // / sizeof(uint64_t);
+    unsigned long long int len = rf.tellg();
+    len = len - sizeof(unsigned long long int); // / sizeof(uint64_t);
     rf.seekg(0, rf.beg);
 
     unsigned long long int length;
@@ -107,6 +107,98 @@ vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, si
     rf.close();
 
     return sigs;
+}
+
+vector<size_t> getIndices(size_t seqCount, size_t sampleSize)
+{
+    vector<size_t> indices(seqCount);
+    iota(indices.begin(), indices.end(), 0);
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(indices.begin(), indices.end(), default_random_engine(seed));
+    indices.resize(sampleSize);
+    sort(indices.begin(), indices.end(), std::greater<>());
+    fprintf(stderr, "Random sampling %zu seqs...\n", sampleSize);
+
+    return indices;
+}
+
+unsigned long long int readSignaturesSample(const string file, vector<cell_type> &sigs, size_t sampleSize)
+{
+    ifstream rf(file, ios::out | ios::binary);
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+
+    // get length of file:
+    rf.seekg(0, rf.end);
+    unsigned long long int len = rf.tellg();
+    len = len - sizeof(unsigned long long int); // / sizeof(uint64_t);
+    rf.seekg(0, rf.beg);
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+    size_t seqCount = len / length;
+    fprintf(stderr, "File contains %zu seqs...\n", seqCount);
+
+    if (sampleSize > seqCount)
+    {
+        sigs.resize(len);
+        size_t i = 0;
+        while (rf)
+        {
+            rf.read((char *)&sigs[i], sizeof(cell_type));
+            i++;
+        }
+    }
+    else
+    {
+        vector<size_t> indices = getIndices(seqCount, sampleSize);
+        // for (size_t i : indices)
+        // {
+        //     fprintf(stderr, "%zu,", i);
+        // }
+        // fprintf(stderr, "\n");
+
+        size_t size = sampleSize * length;
+        sigs.resize(size);
+        size_t idx = indices.back() * length;
+        indices.pop_back();
+        size_t i = 0;
+        size_t c = 0;
+        cell_type t;
+        while (rf)
+        {
+            if (i == idx)
+            {
+                // fprintf(stderr, "%zu,", idx / length);
+                for (size_t n = 0; n < length; n++)
+                {
+                    rf.read((char *)&sigs[c], sizeof(cell_type));
+                    c++;
+                }
+                i += length;
+                idx = indices.back() * length;
+                indices.pop_back();
+                if (c == size)
+                {
+                    // fprintf(stderr, "done\n");
+                    break;
+                }
+            }
+            else
+            {
+                rf.read((char *)&t, sizeof(cell_type));
+                i++;
+            }
+        }
+    }
+
+    rf.close();
+
+    return length;
 }
 
 // read all files in given folder
@@ -243,17 +335,11 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t
     }
     ifstream rf(file_path, ios::out | ios::binary);
 
-    // get length of file:
-    rf.seekg(0, rf.end);
-    int len = rf.tellg();
-    len = len - (int)sizeof(unsigned long long int); // / sizeof(uint64_t);
-    rf.seekg(0, rf.beg);
-
     unsigned long long int length;
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
     signatureSize = length;
-    
+
     //? 1 window
     // cout << "length: " << length << "\n";
     vector<cell_type> bf(length);

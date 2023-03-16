@@ -201,14 +201,18 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t
     size_t c = 0;
     cell_type t;
 
-    while (rf && i < idx)
-    {
-        // fprintf(stderr, "%zu\n", i);
-        rf.read((char *)&t, sizeof(cell_type));
-        i++;
-    }
+    // while (rf && i < idx)
+    // {
+    //     // fprintf(stderr, "%zu\n", i);
+    //     rf.read((char *)&t, sizeof(cell_type));
+    //     i++;
+    // }
 
-    i = 0;
+    // i = 0;
+
+    rf.seekg(idx + sizeof(unsigned long long int), rf.beg);
+    rf.read((char *)&bf[i], sizeof(cell_type));
+    rf.seekg(idx + sizeof(unsigned long long int), rf.beg);
 
     while (rf)
     {
@@ -249,6 +253,12 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
         exit(0);
     }
 
+    // get length of file:
+    rf.seekg(0, rf.end);
+    unsigned long long int len = rf.tellg();
+    len = len - sizeof(unsigned long long int); // / sizeof(uint64_t);
+    rf.seekg(0, rf.beg);
+
     unsigned long long int length;
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
@@ -258,13 +268,23 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
     size_t i = 0;
     cell_type t;
 
-    while (rf && i < idx)
-    {
-        // fprintf(stderr, "%zu\n", i);
-        rf.read((char *)&t, sizeof(cell_type));
-        i++;
-    }
-    i = 0;
+    // while (rf && i < idx)
+    // {
+    //     // fprintf(stderr, "%zu\n", i);
+    //     rf.read((char *)&t, sizeof(cell_type));
+    //     i++;
+    // }
+    // i = 0;
+
+    rf.seekg(idx + sizeof(unsigned long long int), rf.beg);
+    rf.read((char *)&sigs[i], sizeof(cell_type));
+    // if (idx >= len)
+    // {
+    //     sigs.clear();
+    //     rf.close();
+    //     return length;
+    // }
+    rf.seekg(idx + sizeof(unsigned long long int), rf.beg);
 
     while (rf)
     {
@@ -279,6 +299,7 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
 
     sigs.resize(i);
     idx += i;
+
     rf.close();
 
     return length;
@@ -334,7 +355,6 @@ void calcAllSimilarityKmersBatch(FILE *pFile, vector<cell_type> seqsA, vector<ce
     }
 }
 
-
 template <typename seq_batch_type, typename t1, typename t2>
 void batchSimFunction(FILE *pFile, vector<seq_batch_type> seqs_batch, t1 simFunc, t2 simBatchFunc)
 {
@@ -359,7 +379,6 @@ void batchSimFunction(FILE *pFile, vector<seq_batch_type> seqs_batch, t1 simFunc
         }
     }
 }
-
 
 int batching(string bfIn, FILE *pFile,
              function<void(FILE *, vector<seq_type>, size_t)> simFunc,

@@ -81,7 +81,6 @@ stats summarise(vector<double> const &v)
     return st;
 }
 
-
 template <typename funcType>
 void calcAllStatsBatch(vector<vector<seq_type>> seqs, size_t seqCount, funcType simFunc)
 {
@@ -102,7 +101,6 @@ void calcAllStatsBatch(vector<vector<seq_type>> seqs, size_t seqCount, funcType 
     }
     summarise(data);
 }
-
 
 void calcAllStatsLocal(vector<seq_type> seqs)
 {
