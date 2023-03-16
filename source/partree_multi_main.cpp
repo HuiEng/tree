@@ -208,7 +208,12 @@ int partree_multi_main(int argc, char *argv[])
         partree_order = args.order_arg;
     }
 
-    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
+    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile, signatureSize);
+    if (signatureSize == 0)
+    {
+        fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+        return 0;
+    }
 
     fprintf(stderr, "Loaded signatures...\n");
 
@@ -245,16 +250,15 @@ int partree_multi_main(int argc, char *argv[])
     size_t seqCount = seqs.size();
     vector<size_t> clusters(seqCount);
 
-    for (size_t n = 0; n < seqCount; n+=26)
+    for (size_t n = 0; n < seqCount; n += 26)
     {
         // fprintf(stderr, "\ninsert %zu\n", n);
         tree.insert(seqs[n], n);
     }
 
-
     tree.printTreeJson();
 
-    for (size_t n = 1; n < seqCount; n+=26)
+    for (size_t n = 1; n < seqCount; n += 26)
     {
         // fprintf(stderr, "find %zu,", n);
         // size_t best = -1;

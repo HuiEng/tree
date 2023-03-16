@@ -21,16 +21,23 @@
 using namespace std;
 namespace fs = std::experimental::filesystem;
 typedef size_t sig_type;
+size_t max_fileSize = 1000000000;
 
 // output signature size, if file too big => return empty "sigs", use readSignaturesBatch
 unsigned long long int readSignatures(const string file, vector<cell_type> &sigs)
 {
-    ifstream rf(file, ios::out | ios::binary);
-    if (!rf.is_open())
+    ifstream rfSize(file, ios::binary | ios::ate);
+    if (!rfSize.is_open())
     {
         fprintf(stderr, "Invalid File. Please try again\n");
         exit(0);
     }
+    if (rfSize.tellg() > max_fileSize)
+    {
+        fprintf(stderr, "File too big, please read in batches\n");
+        return 0;
+    }
+    ifstream rf(file, ios::out | ios::binary);
 
     // get length of file:
     rf.seekg(0, rf.end);
@@ -218,14 +225,23 @@ bool isEmpty(vector<cell_type> bf)
     return true;
 }
 
-vector<vector<vector<cell_type>>> readPartitionBF(const string file_path)
+vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t &signatureSize)
 {
-    ifstream rf(file_path, ios::out | ios::binary);
-    if (!rf.is_open())
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    ifstream rfSize(file_path, ios::binary | ios::ate);
+    if (!rfSize.is_open())
     {
         fprintf(stderr, "Invalid File. Please try again\n");
         exit(0);
     }
+    if (rfSize.tellg() > max_fileSize)
+    {
+        fprintf(stderr, "File too big, please read in batches\n");
+        return seqs;
+    }
+    ifstream rf(file_path, ios::out | ios::binary);
 
     // get length of file:
     rf.seekg(0, rf.end);
@@ -236,41 +252,49 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path)
     unsigned long long int length;
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
-
-    vector<vector<vector<cell_type>>> seqs;
-    vector<vector<cell_type>> tseq; // list of BFs for a seq
-
+    signatureSize = length;
+    
     //? 1 window
     // cout << "length: " << length << "\n";
     vector<cell_type> bf(length);
     cell_type temp = 0;
     size_t i = 0;
 
-    while (rf)
+    try
     {
-        rf.read((char *)&bf[i], sizeof(cell_type));
-        i++;
-        if (i == length)
+
+        while (rf)
         {
-            if (isEmpty(bf))
+            rf.read((char *)&bf[i], sizeof(cell_type));
+            i++;
+            if (i == length)
             {
-                seqs.push_back(tseq);
-                tseq.clear();
+                if (isEmpty(bf))
+                {
+                    seqs.push_back(tseq);
+                    tseq.clear();
+                }
+                else
+                {
+                    tseq.push_back(bf);
+                }
+                fill(bf.begin(), bf.end(), 0);
+                i = 0;
             }
-            else
-            {
-                tseq.push_back(bf);
-            }
-            fill(bf.begin(), bf.end(), 0);
-            i = 0;
         }
+    }
+    catch (const std::exception &e) // caught by reference to base
+    {
+        std::cout << " a standard exception was caught, with message '"
+                  << e.what() << "'\n";
+        seqs.clear();
     }
     rf.close();
 
     return seqs;
 }
 
-vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file_path, size_t size)
+vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file_path, size_t size, size_t &signatureSize)
 {
     ifstream rf(file_path, ios::out | ios::binary);
     if (!rf.is_open())
@@ -282,6 +306,7 @@ vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file
     unsigned long long int length;
     if (rf)
         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+    signatureSize = length;
 
     vector<vector<vector<vector<cell_type>>>> seqs_batch;
     vector<vector<vector<cell_type>>> seqs;

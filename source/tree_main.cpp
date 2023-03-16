@@ -115,7 +115,6 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
     size_t lastindex = insertionList[insertionList.size() - 1] - 1;
 
-    
     singleton = 1;
     tree.trim(lastindex);
     singleton = 2;
@@ -266,7 +265,13 @@ int tree_main(int argc, char *argv[])
 
     string inputFile = args.input_arg;
 
-    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile);
+    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile, signatureSize);
+    if (signatureSize == 0)
+    {
+        fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+        return 0;
+    }
+
     fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
     if (cap == 0)
     {

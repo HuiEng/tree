@@ -471,7 +471,7 @@ public:
         for (seq_type signature : temp_matrix)
         {
             vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-            double distance = calcJaccardGlobal(meanSig, signatureData);
+            double distance = calcJaccardGlobal_cell(meanSig, signatureData);
             sumSquaredistance += distance * distance;
         }
 

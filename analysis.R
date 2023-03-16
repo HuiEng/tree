@@ -815,9 +815,16 @@ ggplot(sig)+
 
 
 ################################################
-
-
-
+file<-"toy_26-k9-all_sim"
+file<-"toy_26-k9-w50-s5_chunk-global_sim"
+path<-paste("C:\\DataCopied\\Research\\tree\\data\\toy\\",file,".txt",sep="")
+tall<-mirror(read.csv(path))
+# tall<-mirror(read.csv("D:\\phd\\tree\\data\\refseq\\toy_26-k9-all_sim.txt"))
+tbin<-mirror(read.csv("D:\\phd\\tree\\data\\refseq\\toy_26-k9-w50-s5_chunk-global_sim.txt"))
+# temp<-merge(tall,tbin,by=c("i","j"))%>%filter(similarity.x!=similarity.y)
+temp<-tbin%>%group_by(i)%>%summarise(size=length(j))%>%
+  filter(size!=length(i))
+sum(tall$similarity)==sum(tbin$similarity)
 
 
 

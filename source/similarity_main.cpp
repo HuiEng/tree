@@ -49,27 +49,30 @@ int similarity_main(int argc, char *argv[])
         }
         else
         {
-            vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(bfIn, batch);
-            size_t temp = seqs_batch.size() - 1;
-            size_t seqCount = temp * batch + seqs_batch[temp].size();
-            fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+            // vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(bfIn, batch, signatureSize);
+            // size_t temp = seqs_batch.size() - 1;
+            // size_t seqCount = temp * batch + seqs_batch[temp].size();
+            // fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
 
             if (args.local_arg)
             {
                 char buffer[50];
                 sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
                 pFile = fopen((rawname + buffer).c_str(), "w");
-                batchSimFunction(pFile, seqs_batch, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
+                batching(bfIn, pFile, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
+                // batchSimFunction(pFile, seqs_batch, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
             }
             else if (args.global_arg)
             {
                 pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
-                batchSimFunction(pFile, seqs_batch, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
+                batching(bfIn, pFile, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
+                // batchSimFunction(pFile, seqs_batch, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
             }
             else
             {
                 pFile = fopen((rawname + "_sim.txt").c_str(), "w");
-                batchSimFunction(pFile, seqs_batch, &calcAllSimilarity, &calcAllSimilarityBatch);
+                batching(bfIn, pFile, &calcAllSimilarity, &calcAllSimilarityBatch);
+                // batchSimFunction(pFile, seqs_batch, &calcAllSimilarity, &calcAllSimilarityBatch);
             }
         }
     }
@@ -89,16 +92,8 @@ int similarity_main(int argc, char *argv[])
         else
         {
             size_t idx = 0;
-            vector<seq_type> seqs = readPartitionBF(bfIn);
-            // dummy code, assume there is at least 10 input seqs
-            for (int i = 0; i < 10; i++)
-            {
-                if (seqs[i].size() > 0)
-                {
-                    signatureSize = seqs[i][0].size();
-                    break;
-                }
-            }
+            vector<seq_type> seqs = readPartitionBF(bfIn, signatureSize);
+            
             if (signatureSize == 0)
             {
                 fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");

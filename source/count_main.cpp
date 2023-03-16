@@ -66,16 +66,7 @@ int count_main(int argc, char *argv[])
     }
     else
     {
-        vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn);
-        // dummy code, assume there is at least 10 valid input seqs
-        for (int i = 0; i < 10; i++)
-        {
-            if (seqs[i].size() > 0)
-            {
-                signatureSize = seqs[i][0].size();
-                break;
-            }
-        }
+        vector<vector<vector<cell_type>>> seqs = readPartitionBF(bfIn,signatureSize);
         if (signatureSize == 0)
         {
             fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");

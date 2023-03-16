@@ -308,7 +308,7 @@ double calcJaccardGlobal(seq_type a, seq_type b)
     return calcInter(x, y) * 1.0 / calcUnion(x, y);
 }
 
-double calcJaccardGlobal(vector<cell_type> a, vector<cell_type> b)
+double calcJaccardGlobal_cell(vector<cell_type> a, vector<cell_type> b)
 {
     return calcSingleInter(a, b) * 1.0 / calcSingleUnion(a, b);
 }

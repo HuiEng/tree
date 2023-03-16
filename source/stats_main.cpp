@@ -3,7 +3,6 @@
 #include <random>
 #include "stats_main_cmdline.hpp"
 #include "stats.hpp"
-#include "similarity.hpp"
 
 #include <regex>
 #include <vector>
@@ -13,14 +12,6 @@
 using namespace std;
 
 static stats_main_cmdline args; // Command line switches and arguments
-size_t batch_size = 5;
-
-typedef void (*simtype1)(FILE *, vector<cell_type>, size_t);
-typedef void (*simtype2)(FILE *, vector<cell_type>, vector<cell_type>, size_t, size_t);
-// void test(FILE *pFile, vector<cell_type> seqs, size_t offset = 0) {}
-
-// functiontype2 func2 = &dosomethingwithchar;
-// int result = func2('a');
 
 template <typename seq_batch_type, typename t1, typename t2>
 void batchFunction(vector<seq_batch_type> seqs_batch, t1 simFunc, t2 simBatchFunc)
@@ -29,7 +20,6 @@ void batchFunction(vector<seq_batch_type> seqs_batch, t1 simFunc, t2 simBatchFun
     size_t seqCount = temp * batch_size + seqs_batch[temp].size() / signatureSize;
     temp++;
     fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
-    skip = true;
 
     FILE *pFile = fopen("test-all_sim.txt", "w");
     fprintf(pFile, "i,j,similarity\n");
@@ -84,64 +74,75 @@ int stats_main(int argc, char *argv[])
 
         if (seqs.size() == 0)
         {
-
             vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
             // batchSimFunction(seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
         }
         else
         {
             fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
-
             calcAllStatsKmers(seqs);
         }
     }
     else
     {
-        vector<seq_type> seqs = readPartitionBF(bfIn);
-        // dummy code, assume there is at least 10 input seqs
-        for (int i = 0; i < 10; i++)
-        {
-            if (seqs[i].size() > 0)
-            {
-                signatureSize = seqs[i][0].size();
-                break;
-            }
-        }
+        vector<seq_type> seqs = readPartitionBF(bfIn, signatureSize);
         if (signatureSize == 0)
         {
             fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
             return 0;
         }
 
-        // fprintf(stderr,"done\n" );
+        fprintf(stderr, "done\n");
         // fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
 
-        vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(bfIn, batch_size);
-        size_t temp = seqs_batch.size() - 1;
-        size_t seqCount = temp * batch_size + seqs_batch[temp].size();
-        fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
-
-        FILE *pFile = fopen("test-all_sim.txt", "w");
-        batchSimFunction(pFile, seqs_batch, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
-        return 0;
-
-        if (args.local_arg)
+        if (seqs.size() == 0)
         {
-            if (args.threshold_given)
+            fprintf(stderr, "here\n");
+            vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(bfIn, batch_size, signatureSize);
+            size_t temp = seqs_batch.size() - 1;
+            size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+            fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+
+            if (args.local_arg)
             {
+                if (args.threshold_given)
+                {
 
-                minimiser_match_threshold = args.threshold_arg;
+                    minimiser_match_threshold = args.threshold_arg;
+                }
+                fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+                calcAllStatsBatch(seqs_batch, seqCount, &calcMatchingWindows);
             }
-            fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
-            calcAllStatsLocal(seqs);
-        }
-        else if (args.global_arg)
-        {
-            calcAllStatsGlobal(seqs);
+            else if (args.global_arg)
+            {
+                calcAllStatsBatch(seqs_batch, seqCount, &calcJaccardGlobal);
+            }
+            else
+            {
+                calcAllStatsBatch(seqs_batch, seqCount, &calcJaccardLocal);
+            }
         }
         else
         {
-            calcAllStats(seqs);
+
+            if (args.local_arg)
+            {
+                if (args.threshold_given)
+                {
+
+                    minimiser_match_threshold = args.threshold_arg;
+                }
+                fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+                calcAllStatsLocal(seqs);
+            }
+            else if (args.global_arg)
+            {
+                calcAllStatsGlobal(seqs);
+            }
+            else
+            {
+                calcAllStats(seqs);
+            }
         }
     }
 

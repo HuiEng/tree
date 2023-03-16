@@ -8,6 +8,7 @@
 
 using namespace std;
 size_t max_seqCount = 100;
+size_t batch_size = 5;
 
 class stats
 {
@@ -40,7 +41,6 @@ public:
         fprintf(stderr, "|%-10.2f|%-10.2f|%-10.2f|%-10.2f|\n", mean, stdev, q1, q3);
     }
 };
-
 
 vector<size_t> getIndices(size_t seqCount)
 {
@@ -80,6 +80,29 @@ stats summarise(vector<double> const &v)
     st.printStats();
     return st;
 }
+
+
+template <typename funcType>
+void calcAllStatsBatch(vector<vector<seq_type>> seqs, size_t seqCount, funcType simFunc)
+{
+    vector<size_t> indices = getIndices(seqCount);
+    size_t sample_size = indices.size();
+    vector<double> data;
+
+    for (size_t i = 0; i < sample_size; i++)
+    {
+        size_t idx = indices[i];
+        seq_type seqA = seqs[floor(idx / batch_size)][idx % batch_size];
+        for (size_t j = i + 1; j < sample_size; j++)
+        {
+            idx = indices[j];
+            double sim = simFunc(seqA, seqs[floor(idx / batch_size)][idx % batch_size]) * 100.0;
+            data.push_back(sim);
+        }
+    }
+    summarise(data);
+}
+
 
 void calcAllStatsLocal(vector<seq_type> seqs)
 {
@@ -137,6 +160,25 @@ void calcAllStats(vector<seq_type> seqs)
 void calcAllStatsKmers(vector<cell_type> seqs)
 {
     vector<size_t> indices = getIndices(seqs.size() / signatureSize);
+    size_t sample_size = indices.size();
+    vector<double> data;
+
+    for (size_t i = 0; i < sample_size; i++)
+    {
+        size_t temp = countSetBits(&seqs[indices[i] * signatureSize], signatureSize);
+        for (size_t j = i + 1; j < sample_size; j++)
+        {
+            double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
+            data.push_back(sim);
+        }
+    }
+    summarise(data);
+}
+
+// Jaccard stats
+void calcAllStatsKmersBatch(vector<cell_type> seqs, size_t seqCount)
+{
+    vector<size_t> indices = getIndices(seqCount);
     size_t sample_size = indices.size();
     vector<double> data;
 
