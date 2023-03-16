@@ -9,6 +9,7 @@
 using namespace std;
 size_t max_seqCount = 100;
 size_t batch_size = 5;
+size_t runs = 0;
 
 class stats
 {
@@ -32,6 +33,14 @@ public:
         update(mean, stdev);
     }
 
+    stats(double mean_, double stdev_, double q1_, double q3_, size_t size = 1)
+    {
+        mean = mean_ / size;
+        stdev = stdev_ / size;
+        q1 = q1_ / size;
+        q3 = q3_ / size;
+    }
+
     void printStats()
     {
         size_t col = 4;
@@ -51,7 +60,7 @@ vector<size_t> getIndices(size_t seqCount)
         unsigned seed = chrono::system_clock::now().time_since_epoch().count();
         shuffle(indices.begin(), indices.end(), default_random_engine(seed));
         indices.resize(max_seqCount);
-        fprintf(stderr, "Random sampling %zu seqs...\n", max_seqCount);
+        // fprintf(stderr, "Random sampling %zu seqs...\n", max_seqCount);
     }
 
     return indices;
@@ -77,29 +86,67 @@ stats summarise(vector<double> const &v)
     double stdev = sqrt(sq_sum / count);
     st.update(mean, stdev);
 
-    st.printStats();
+    // st.printStats();
     return st;
 }
 
-template <typename funcType>
-void calcAllStatsBatch(vector<vector<seq_type>> seqs, size_t seqCount, funcType simFunc)
+stats findStatMeans(vector<stats> inputs)
 {
-    vector<size_t> indices = getIndices(seqCount);
-    size_t sample_size = indices.size();
-    vector<double> data;
+    double mean, stdev, q1, q3;
 
-    for (size_t i = 0; i < sample_size; i++)
+    for (stats input : inputs)
     {
-        size_t idx = indices[i];
-        seq_type seqA = seqs[floor(idx / batch_size)][idx % batch_size];
-        for (size_t j = i + 1; j < sample_size; j++)
-        {
-            idx = indices[j];
-            double sim = simFunc(seqA, seqs[floor(idx / batch_size)][idx % batch_size]) * 100.0;
-            data.push_back(sim);
-        }
+        mean += input.mean;
+        stdev += input.stdev;
+        q1 += input.q1;
+        q3 += input.q3;
     }
-    summarise(data);
+
+    return stats(mean, stdev, q1, q3, inputs.size());
+}
+
+// template <typename funcType>
+// void calcAllStatsBatch(vector<vector<seq_type>> seqs, size_t seqCount, funcType simFunc)
+// {
+//     vector<size_t> indices = getIndices(seqCount);
+//     size_t sample_size = indices.size();
+//     vector<double> data;
+
+//     for (size_t i = 0; i < sample_size; i++)
+//     {
+//         size_t idx = indices[i];
+//         seq_type seqA = seqs[floor(idx / batch_size)][idx % batch_size];
+//         for (size_t j = i + 1; j < sample_size; j++)
+//         {
+//             idx = indices[j];
+//             double sim = simFunc(seqA, seqs[floor(idx / batch_size)][idx % batch_size]) * 100.0;
+//             data.push_back(sim);
+//         }
+//     }
+//     summarise(data);
+// }
+
+template <typename funcType>
+void calcAllStatsBatch(vector<seq_type> seqs, funcType simFunc)
+{
+    size_t seqCount = seqs.size();
+    vector<stats> allStats;
+    for (size_t r = 0; r < runs; r++)
+    {
+        vector<size_t> indices = getIndices(seqCount);
+        vector<double> data;
+
+        for (size_t i = 0; i < max_seqCount; i++)
+        {
+            for (size_t j = i + 1; j < max_seqCount; j++)
+            {
+                double sim = simFunc(seqs[indices[i]], seqs[indices[j]]) * 100.0;
+                data.push_back(sim);
+            }
+        }
+        allStats.push_back(summarise(data));
+    }
+    findStatMeans(allStats).printStats();
 }
 
 void calcAllStatsLocal(vector<seq_type> seqs)
@@ -116,7 +163,7 @@ void calcAllStatsLocal(vector<seq_type> seqs)
             data.push_back(sim);
         }
     }
-    summarise(data);
+    summarise(data).printStats();
 }
 
 void calcAllStatsGlobal(vector<seq_type> seqs)
@@ -134,7 +181,7 @@ void calcAllStatsGlobal(vector<seq_type> seqs)
             data.push_back(sim);
         }
     }
-    summarise(data);
+    summarise(data).printStats();
 }
 
 void calcAllStats(vector<seq_type> seqs)
@@ -151,7 +198,7 @@ void calcAllStats(vector<seq_type> seqs)
             data.push_back(sim);
         }
     }
-    summarise(data);
+    summarise(data).printStats();
 }
 
 // Jaccard stats
@@ -163,34 +210,56 @@ void calcAllStatsKmers(vector<cell_type> seqs)
 
     for (size_t i = 0; i < sample_size; i++)
     {
-        size_t temp = countSetBits(&seqs[indices[i] * signatureSize], signatureSize);
         for (size_t j = i + 1; j < sample_size; j++)
         {
             double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
             data.push_back(sim);
         }
     }
-    summarise(data);
+    summarise(data).printStats();
 }
 
 // Jaccard stats
-void calcAllStatsKmersBatch(vector<cell_type> seqs, size_t seqCount)
+void calcAllStatsKmersBatch(vector<cell_type> seqs)
 {
-    vector<size_t> indices = getIndices(seqCount);
-    size_t sample_size = indices.size();
-    vector<double> data;
-
-    for (size_t i = 0; i < sample_size; i++)
+    size_t seqCount = seqs.size() / signatureSize;
+    vector<stats> allStats;
+    for (size_t r = 0; r < runs; r++)
     {
-        size_t temp = countSetBits(&seqs[indices[i] * signatureSize], signatureSize);
-        for (size_t j = i + 1; j < sample_size; j++)
+        vector<size_t> indices = getIndices(seqCount);
+        vector<double> data;
+
+        for (size_t i = 0; i < max_seqCount; i++)
         {
-            double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
-            data.push_back(sim);
+            for (size_t j = i + 1; j < max_seqCount; j++)
+            {
+                double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
+                data.push_back(sim);
+            }
         }
+        allStats.push_back(summarise(data));
     }
-    summarise(data);
+    findStatMeans(allStats).printStats();
 }
+
+// // Jaccard stats
+// void calcAllStatsKmersBatch(vector<cell_type> seqs, size_t seqCount)
+// {
+//     vector<size_t> indices = getIndices(seqCount);
+//     size_t sample_size = indices.size();
+//     vector<double> data;
+
+//     for (size_t i = 0; i < sample_size; i++)
+//     {
+//         size_t temp = countSetBits(&seqs[indices[i] * signatureSize], signatureSize);
+//         for (size_t j = i + 1; j < sample_size; j++)
+//         {
+//             double sim = calcSimilarity(&seqs[indices[i] * signatureSize], &seqs[indices[j] * signatureSize], signatureSize) * 100;
+//             data.push_back(sim);
+//         }
+//     }
+//     summarise(data);
+// }
 
 // void calcAllSetBits(const vector<cell_type> &sigs)
 // {

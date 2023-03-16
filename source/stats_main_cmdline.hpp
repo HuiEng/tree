@@ -360,10 +360,12 @@ public:
   const char *output_arg;
   size_t threshold_arg;
   size_t max_arg;
+  size_t runs_arg;
 
   bool output_given;
   bool threshold_given;
   bool max_given;
+  bool runs_given;
   bool all_kmer_arg;
   bool global_arg;
   bool local_arg;
@@ -375,17 +377,17 @@ public:
   };
 
   stats_main_cmdline() : bf_input_arg(""), output_arg(""),
-                         threshold_arg(0), max_arg(0),
+                         threshold_arg(0), max_arg(0), runs_arg(0),
                          output_given(false), threshold_given(false),
-                         max_given(false),all_kmer_arg(false),
+                         max_given(false), all_kmer_arg(false), runs_given(false),
                          global_arg(false), local_arg(false)
   {
   }
 
   stats_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""),
-                                               threshold_arg(0), max_arg(0),
+                                               threshold_arg(0), max_arg(0), runs_arg(0),
                                                output_given(false), threshold_given(false),
-                                               max_given(false), all_kmer_arg(false),
+                                               max_given(false), all_kmer_arg(false), runs_given(false),
                                                global_arg(false), local_arg(false)
   {
     parse(argc, argv);
@@ -397,6 +399,7 @@ public:
         {"input", 1, 0, 'i'},
         {"output", 1, 0, 'o'},
         {"maxCount", 1, 0, 'm'},
+        {"runs", 1, 0, 'r'},
         {"threshold", 1, 0, 't'},
         {"all", 0, 0, 'A'},
         {"global", 0, 0, 'G'},
@@ -405,7 +408,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:t:m:AGLS";
+    static const char *short_options = "hVi:o:t:m:r:AGLS";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -455,7 +458,12 @@ public:
       case 'm':
         max_given = true;
         max_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-w, --maxCount=size_t")
+        CHECK_ERR(size_t, optarg, "-m, --maxCount=size_t")
+        break;
+      case 'r':
+        runs_given = true;
+        runs_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-r, --runs=size_t")
         break;
       case 'A':
         all_kmer_arg = true;
@@ -536,6 +544,7 @@ public:
            "Options (default value in (), *required):\n"
            " -i, --input                              BF input path\n"
            " -m, --maxCount                           sampling size [default=100]\n"
+           " -r, --runs                               number of runs [default=0]\n"
            " -A, --all                                input is all kmers [default=false]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
@@ -558,6 +567,8 @@ public:
        << " threshold_arg:" << threshold_arg << "\n";
     os << " max_given:" << max_given << "\t"
        << " max_arg:" << max_arg << "\n";
+    os << " runs_given:" << runs_given << "\t"
+       << " runs_arg:" << runs_arg << "\n";
   }
 };
 #endif // __STATS_MAIN_CMDLINE_HPP__"

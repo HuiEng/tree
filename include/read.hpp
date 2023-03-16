@@ -435,4 +435,183 @@ vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file
     return seqs_batch;
 }
 
+size_t estimateSeqCount(ifstream &rf)
+{
+    // get length of file:
+    rf.seekg(0, rf.end);
+    unsigned long long int len = rf.tellg();
+    len = len - sizeof(unsigned long long int); // / sizeof(uint64_t);
+    rf.seekg(0, rf.beg);
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+    size_t winNum = 0;
+    vector<cell_type> bf(length);
+    size_t i = 0;
+    while (rf)
+    {
+        rf.read((char *)&bf[i], sizeof(cell_type));
+        i++;
+        if (i == length)
+        {
+            if (isEmpty(bf))
+            {
+                rf.seekg(0, rf.beg);
+                return (len * 1.0 / length) / winNum;
+            }
+            else
+            {
+                winNum++;
+            }
+            fill(bf.begin(), bf.end(), 0);
+            i = 0;
+        }
+    }
+}
+
+vector<vector<vector<cell_type>>> readPartitionBFSample(const string file_path, size_t &signatureSize, size_t sampleSize)
+{
+    ifstream rf(file_path, ios::out | ios::binary);
+    if (!rf.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+
+    size_t seqCount = estimateSeqCount(rf);
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+    fprintf(stderr, "File contains approximately %zu seqs...\n", seqCount);
+    signatureSize = length;
+
+    //? 1 window
+    // cout << "length: " << length << "\n";
+    vector<cell_type> bf(length);
+    cell_type temp = 0;
+    size_t i = 0;
+
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    if (sampleSize > seqCount)
+    {
+        while (rf)
+        {
+            rf.read((char *)&bf[i], sizeof(cell_type));
+            i++;
+            if (i == length)
+            {
+                if (isEmpty(bf))
+                {
+                    seqs.push_back(tseq);
+                    tseq.clear();
+                }
+                else
+                {
+                    tseq.push_back(bf);
+                }
+                fill(bf.begin(), bf.end(), 0);
+                i = 0;
+            }
+        }
+    }
+    else
+    {
+        // actual sample size might be smaller due to the estimated seqCount
+        // just ignore for now
+        vector<size_t> indices = getIndices(seqCount, sampleSize);
+        // for (size_t i : indices)
+        // {
+        //     fprintf(stderr, "%zu,", i);
+        // }
+        // fprintf(stderr, "\n");
+
+        size_t idx = indices.back();
+        indices.pop_back();
+        size_t c = 0;
+        size_t last_seen = 0;
+        size_t n = sizeof(unsigned long long int);
+
+        while (rf)
+        {
+            rf.read((char *)&bf[i], sizeof(cell_type));
+            i++;
+            n++;
+            if (i == length)
+            {
+                if (isEmpty(bf))
+                {
+                    if (c == idx)
+                    {
+                        // fprintf(stderr, "%zu,", idx);
+                        seqs.push_back(tseq);
+                        idx = indices.back();
+                        indices.pop_back();
+                        last_seen = n;
+
+                        if (seqs.size() == sampleSize)
+                        {
+                            break;
+                        }
+                    }
+                    c++;
+                    tseq.clear();
+                }
+                else
+                {
+                    tseq.push_back(bf);
+                }
+                fill(bf.begin(), bf.end(), 0);
+                i = 0;
+            }
+        }
+
+        if (seqs.size() < sampleSize)
+        {
+            fprintf(stderr, "Read all %zu seqs...\n", c);
+            fill(bf.begin(), bf.end(), 0);
+            tseq.clear();
+            i = 0;
+
+            rf.clear();
+            rf.seekg(last_seen, rf.beg);
+            while (rf)
+            {
+                rf.read((char *)&bf[i], sizeof(cell_type));
+                i++;
+                if (i == length)
+                {
+                    if (isEmpty(bf))
+                    {
+                        seqs.push_back(tseq);
+                        tseq.clear();
+
+                        if (seqs.size() == sampleSize)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        tseq.push_back(bf);
+                    }
+                    fill(bf.begin(), bf.end(), 0);
+                    i = 0;
+                }
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Read up to %zu seqs...\n", c);
+        }
+    }
+    rf.close();
+
+    return seqs;
+}
+
 #endif

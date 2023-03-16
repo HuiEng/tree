@@ -5,7 +5,9 @@ tree build -f "{folder}/*.fna"
 rmb ""! 
 
 
-current algorithm:
-force split root change centroids method
-find furthest child to centroid first, then find its furthest sibling
-need check, still can't split evenly but seems better than before
+stats runs:
+each runs with "max_seqCount" number of seqs.
+Start by randomly sampling  "max_seqCount*runs" number of seq (or until the end)
+Using this subset, random sampling again "max_seqCount" from it to run the experiments
+* avoid reading the input files multiple times and is faster with large input bin file
+* can always read all seqs
