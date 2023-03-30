@@ -457,6 +457,38 @@ public:
     }
 
     // RMSD
+    double test(size_t node)
+    {
+        vector<seq_type> temp_matrix = getNonAmbiMatrix(node);
+        if (temp_matrix.size() <= 1)
+        {
+            return 0;
+        }
+
+        double sumSquaredistance = 0;
+
+        seq_type meanSig = createMeanSig(temp_matrix);
+        dbgPrintSignatureIdx(stderr, meanSig);
+        auto children = childLinks[node];
+        size_t i = 0;
+
+        for (seq_type signature : temp_matrix)
+        {
+            double distance = calcSimilarity(meanSig, signature);
+            dbgPrintSignatureIdx(stderr, signature);
+            while (!isAmbiNode[children[i]])
+            {
+                i++;
+            }
+
+            printMsg(">>%zu,%.2f\n", children[i], distance);
+            sumSquaredistance += distance * distance;
+        }
+
+        return sqrt(sumSquaredistance / temp_matrix.size());
+    }
+
+    // RMSD
     double calcDistortion(size_t node)
     {
         vector<seq_type> temp_matrix = getNonAmbiMatrix(node);
@@ -466,12 +498,20 @@ public:
         }
 
         double sumSquaredistance = 0;
-        vector<cell_type> meanSig = getMinimiseSet(createMeanSig(temp_matrix))[0];
+        // vector<cell_type> meanSig = getMinimiseSet(createMeanSig(temp_matrix))[0];
+
+        // for (seq_type signature : temp_matrix)
+        // {
+        //     vector<cell_type> signatureData = getMinimiseSet(signature)[0];
+        //     double distance = calcJaccardGlobal_cell(meanSig, signatureData);
+        //     sumSquaredistance += distance * distance;
+        // }
+
+        seq_type meanSig = createMeanSig(temp_matrix);
 
         for (seq_type signature : temp_matrix)
         {
-            vector<cell_type> signatureData = getMinimiseSet(signature)[0];
-            double distance = calcJaccardGlobal_cell(meanSig, signatureData);
+            double distance = calcSimilarity(meanSig, signature);
             sumSquaredistance += distance * distance;
         }
 
@@ -1090,7 +1130,7 @@ public:
             for (size_t c : NN_branches)
             {
                 double similarity = calcSimilarity(means[c], signature);
-                if (c > max_sim)
+                if (similarity > max_sim)
                 {
                     max_sim = similarity;
                     dest = c;
@@ -1113,7 +1153,7 @@ public:
                 for (size_t c : NN_leaves)
                 {
                     double similarity = calcSimilarity(means[c], signature);
-                    if (c > max_sim)
+                    if (similarity > max_sim)
                     {
                         max_sim = similarity;
                         dest = c;
@@ -1226,7 +1266,7 @@ public:
 
     inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (node == root)
+        if (isRootNode[node])
         {
             return tt_root(signature, insertionList, idx);
         }
@@ -1259,12 +1299,12 @@ public:
         {
             forceSplitRoot(insertionList);
 
-            //?
-            vector<size_t> subtrees = childLinks[root];
-            for (size_t t_parent : subtrees)
-            {
-                forceSplitSubtree(insertionList, t_parent);
-            }
+            // //?
+            // vector<size_t> subtrees = childLinks[root];
+            // for (size_t t_parent : subtrees)
+            // {
+            //     forceSplitSubtree(insertionList, t_parent);
+            // }
         }
         return node;
     }
