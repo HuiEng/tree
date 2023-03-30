@@ -924,24 +924,24 @@ public:
         // }
         // // double NN_t = local_stay_t + stay_threshold * offset;
 
-        double local_split_t = split_threshold;
+        double local_split_t = split_threshold * 1.5;
         double similarity = calcSimilarity(sig1, sig2);
 
         printMsg("%.2f", similarity);
 
         if (similarity >= local_stay_t)
         {
-            printMsg(": STAY>\n");
+            printMsg(": STAY> b\n");
             return STAY_F;
         }
         else if (similarity <= local_split_t)
         {
-            printMsg(": SPLIT>\n");
+            printMsg(": SPLIT> b\n");
             return SPLIT_F;
         }
         else
         {
-            printMsg(": NN>\n");
+            printMsg(": NN> b\n");
             return NN_F;
         }
     }
