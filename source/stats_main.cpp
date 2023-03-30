@@ -107,110 +107,110 @@ int stats_main(int argc, char *argv[])
 
     return 0;
 
-    if (args.all_kmer_arg)
-    {
-        vector<cell_type> seqs;
-        signatureSize = readSignaturesSample(bfIn, seqs, max_seqCount);
-        calcAllStatsKmers(seqs);
+    // if (args.all_kmer_arg)
+    // {
+    //     vector<cell_type> seqs;
+    //     signatureSize = readSignaturesSample(bfIn, seqs, max_seqCount);
+    //     calcAllStatsKmers(seqs);
 
-        // signatureSize = readSignatures(bfIn, seqs);
+    //     // signatureSize = readSignatures(bfIn, seqs);
 
-        // seqs.clear();
+    //     // seqs.clear();
 
-        // if (seqs.size() == 0)
-        // {
-        //     vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
-        //     // batchSimFunction(seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
-        // }
-        // else
-        // {
-        //     fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
-        //     calcAllStatsKmers(seqs);
-        // }
-    }
-    else
-    {
+    //     // if (seqs.size() == 0)
+    //     // {
+    //     //     vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch_size, signatureSize);
+    //     //     // batchSimFunction(seqs_batch, &calcAllSimilarityKmers, &calcAllSimilarityKmersBatch);
+    //     // }
+    //     // else
+    //     // {
+    //     //     fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
+    //     //     calcAllStatsKmers(seqs);
+    //     // }
+    // }
+    // else
+    // {
 
-        vector<seq_type> seqs = readPartitionBFSample(bfIn, signatureSize, max_seqCount);
+    //     vector<seq_type> seqs = readPartitionBFSample(bfIn, signatureSize, max_seqCount);
 
-        if (args.local_arg)
-        {
-            if (args.threshold_given)
-            {
+    //     if (args.local_arg)
+    //     {
+    //         if (args.threshold_given)
+    //         {
 
-                minimiser_match_threshold = args.threshold_arg;
-            }
-            fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
-            calcAllStatsLocal(seqs);
-        }
-        else if (args.global_arg)
-        {
-            calcAllStatsGlobal(seqs);
-        }
-        else
-        {
-            calcAllStats(seqs);
-        }
+    //             minimiser_match_threshold = args.threshold_arg;
+    //         }
+    //         fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+    //         calcAllStatsLocal(seqs);
+    //     }
+    //     else if (args.global_arg)
+    //     {
+    //         calcAllStatsGlobal(seqs);
+    //     }
+    //     else
+    //     {
+    //         calcAllStats(seqs);
+    //     }
 
-        // vector<seq_type> seqs = readPartitionBF(bfIn, signatureSize);
-        // if (signatureSize == 0)
-        // {
-        //     fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
-        //     return 0;
-        // }
+    //     // vector<seq_type> seqs = readPartitionBF(bfIn, signatureSize);
+    //     // if (signatureSize == 0)
+    //     // {
+    //     //     fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+    //     //     return 0;
+    //     // }
 
-        // // fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+    //     // // fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
 
-        // if (seqs.size() == 0)
-        // {
-        //     fprintf(stderr, "here\n");
-        //     vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(bfIn, batch_size, signatureSize);
-        //     size_t temp = seqs_batch.size() - 1;
-        //     size_t seqCount = temp * batch_size + seqs_batch[temp].size();
-        //     fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+    //     // if (seqs.size() == 0)
+    //     // {
+    //     //     fprintf(stderr, "here\n");
+    //     //     vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(bfIn, batch_size, signatureSize);
+    //     //     size_t temp = seqs_batch.size() - 1;
+    //     //     size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+    //     //     fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
 
-        //     if (args.local_arg)
-        //     {
-        //         if (args.threshold_given)
-        //         {
+    //     //     if (args.local_arg)
+    //     //     {
+    //     //         if (args.threshold_given)
+    //     //         {
 
-        //             minimiser_match_threshold = args.threshold_arg;
-        //         }
-        //         fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
-        //         calcAllStatsBatch(seqs_batch, seqCount, &calcMatchingWindows);
-        //     }
-        //     else if (args.global_arg)
-        //     {
-        //         calcAllStatsBatch(seqs_batch, seqCount, &calcJaccardGlobal);
-        //     }
-        //     else
-        //     {
-        //         calcAllStatsBatch(seqs_batch, seqCount, &calcJaccardLocal);
-        //     }
-        // }
-        // else
-        // {
+    //     //             minimiser_match_threshold = args.threshold_arg;
+    //     //         }
+    //     //         fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+    //     //         calcAllStatsBatch(seqs_batch, seqCount, &calcMatchingWindows);
+    //     //     }
+    //     //     else if (args.global_arg)
+    //     //     {
+    //     //         calcAllStatsBatch(seqs_batch, seqCount, &calcJaccardGlobal);
+    //     //     }
+    //     //     else
+    //     //     {
+    //     //         calcAllStatsBatch(seqs_batch, seqCount, &calcJaccardLocal);
+    //     //     }
+    //     // }
+    //     // else
+    //     // {
 
-        //     if (args.local_arg)
-        //     {
-        //         if (args.threshold_given)
-        //         {
+    //     //     if (args.local_arg)
+    //     //     {
+    //     //         if (args.threshold_given)
+    //     //         {
 
-        //             minimiser_match_threshold = args.threshold_arg;
-        //         }
-        //         fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
-        //         calcAllStatsLocal(seqs);
-        //     }
-        //     else if (args.global_arg)
-        //     {
-        //         calcAllStatsGlobal(seqs);
-        //     }
-        //     else
-        //     {
-        //         calcAllStats(seqs);
-        //     }
-        // }
-    }
+    //     //             minimiser_match_threshold = args.threshold_arg;
+    //     //         }
+    //     //         fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+    //     //         calcAllStatsLocal(seqs);
+    //     //     }
+    //     //     else if (args.global_arg)
+    //     //     {
+    //     //         calcAllStatsGlobal(seqs);
+    //     //     }
+    //     //     else
+    //     //     {
+    //     //         calcAllStats(seqs);
+    //     //     }
+    //     // }
+    // }
 
     return 0;
 }

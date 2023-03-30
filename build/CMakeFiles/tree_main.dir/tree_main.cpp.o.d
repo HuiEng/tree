@@ -225,4 +225,5 @@ CMakeFiles/tree_main.dir/tree_main.cpp.o: \
  /usr/include/c++/7/bits/algorithmfwd.h \
  /usr/include/c++/7/bits/stl_heap.h /usr/include/c++/7/cstddef \
  /usr/include/c++/7/iterator /usr/include/c++/7/bits/stream_iterator.h \
- /mnt/c/DataCopied/Research/tree/source/../include/distance.hpp
+ /mnt/c/DataCopied/Research/tree/source/../include/distance.hpp \
+ /mnt/c/DataCopied/Research/tree/source/../include/stats.hpp

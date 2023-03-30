@@ -291,7 +291,8 @@ CMakeFiles/tree_main.dir/tree_main.cpp.o: /mnt/c/DataCopied/Research/tree/source
   /usr/include/c++/7/cstddef \
   /usr/include/c++/7/iterator \
   /usr/include/c++/7/bits/stream_iterator.h \
-  /mnt/c/DataCopied/Research/tree/include/distance.hpp
+  /mnt/c/DataCopied/Research/tree/include/distance.hpp \
+  /mnt/c/DataCopied/Research/tree/include/stats.hpp
 
 
 /mnt/c/DataCopied/Research/tree/include/distance.hpp:
@@ -411,6 +412,8 @@ CMakeFiles/tree_main.dir/tree_main.cpp.o: /mnt/c/DataCopied/Research/tree/source
 /usr/include/c++/7/bits/uniform_int_dist.h:
 
 /usr/include/c++/7/bits/vector.tcc:
+
+/mnt/c/DataCopied/Research/tree/include/stats.hpp:
 
 /usr/include/getopt.h:
 

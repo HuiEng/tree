@@ -92,6 +92,8 @@ stats summarise(vector<double> const &v)
 
 stats findStatMeans(vector<stats> inputs)
 {
+    // fprintf(stderr, "%zu runs...\n", inputs.size());
+
     double mean, stdev, q1, q3;
 
     for (stats input : inputs)
@@ -127,7 +129,7 @@ stats findStatMeans(vector<stats> inputs)
 // }
 
 template <typename funcType>
-void calcAllStatsBatch(vector<seq_type> seqs, funcType simFunc)
+stats calcAllStatsBatch(vector<seq_type> seqs, funcType simFunc)
 {
     size_t seqCount = seqs.size();
     vector<stats> allStats;
@@ -146,7 +148,9 @@ void calcAllStatsBatch(vector<seq_type> seqs, funcType simFunc)
         }
         allStats.push_back(summarise(data));
     }
-    findStatMeans(allStats).printStats();
+    stats ans = findStatMeans(allStats);
+    ans.printStats();
+    return ans;
 }
 
 void calcAllStatsLocal(vector<seq_type> seqs)
@@ -271,5 +275,16 @@ void calcAllStatsKmersBatch(vector<cell_type> seqs)
 //         break;
 //     }
 // }
+
+// stats return in percentage, coverts to decimal
+double getSplitThreshold(const string bfIn, size_t sample_size = 100, size_t runs_ = 10)
+{
+
+    vector<seq_type> seqs = readPartitionBFSample(bfIn, signatureSize, sample_size * runs_);
+    fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+    max_seqCount = sample_size;
+    runs = runs_;
+    return calcAllStatsBatch(seqs, &calcJaccardGlobal).q3 / 100;
+}
 
 #endif

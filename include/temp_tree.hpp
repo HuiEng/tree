@@ -710,6 +710,7 @@ public:
         size_t t_parent = getNewNodeIdx(insertionList);
         isBranchNode[t_parent] = 1;
         parentLinks[t_parent] = node;
+        isRootNode[t_parent] = 0;
 
         // update node
         childCounts[node]++;
@@ -726,6 +727,7 @@ public:
         addSigToMatrix(new_node, signature);
         seqIDs[new_node].push_back(idx);
         means[new_node] = signature;
+        isRootNode[new_node] = 0;
 
         // then add new node to t_parent
         childCounts[t_parent]++;

@@ -1,6 +1,8 @@
 #include <random>
 #include "tree_main_cmdline.hpp"
 #include "temp_tree.hpp"
+#include "stats.hpp"
+
 typedef temp_tree tree_type;
 typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 bool random_ = false;
@@ -111,13 +113,18 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
             clusters[foo[i]] = clus;
         }
     }
-    printMsg("\n\n\n\n");
 
-    size_t lastindex = insertionList[insertionList.size() - 1] - 1;
+    size_t lastindex;
 
-    singleton = 1;
-    tree.trim(lastindex);
-    singleton = 2;
+    if (iteration > 0)
+    {
+        printMsg("\n\n\nBefore\n");
+        tree.printTreeJson(stderr);
+        lastindex = insertionList[insertionList.size() - 1] - 1;
+        singleton = 1;
+        tree.trim(lastindex);
+        singleton = 2;
+    }
 
     for (size_t run = 0; run < iteration; run++)
     {
@@ -213,6 +220,195 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     return clusters;
 }
 
+vector<size_t> clusterSignaturesBatch(const vector<vector<seq_type>> &seqs)
+{
+    vector<size_t> clusters(cap); // cap is always seqCount here
+    tree_type tree(partree_capacity);
+
+    size_t firstNodes = 1;
+    // if (firstNodes > seqCount)
+    //     firstNodes = seqCount;
+
+    vector<size_t> insertionList; // potential nodes idx except root; root is always 0
+
+    // node 0 reserved for root, node 1 reserved for leaves idx
+    for (size_t i = firstNodes; i < partree_capacity; i++)
+    {
+        insertionList.push_back(partree_capacity - i);
+    }
+
+    size_t i = 1;
+    clusters[0] = tree.first_insert(seqs[0][0], insertionList, 0);
+    if (force_split_)
+    {
+        for (vector<seq_type> batch : seqs)
+        {
+            for (seq_type seq : batch)
+            {
+                printMsg("inserting %zu\n", i);
+                size_t clus = tree.insertSplitRoot(seq, insertionList, i);
+                clusters[i] = clus;
+                i++;
+            }
+        }
+        i = 0;
+    }
+    else
+    {
+        for (vector<seq_type> batch : seqs)
+        {
+            for (seq_type seq : batch)
+            {
+                printMsg("inserting %zu\n", i);
+                size_t clus = tree.insert(seq, insertionList, i);
+                clusters[i] = clus;
+                i++;
+            }
+        }
+        i = 0;
+    }
+
+    size_t lastindex;
+
+    if (iteration > 0)
+    {
+        printMsg("\n\n\nBefore\n");
+        tree.printTreeJson(stderr);
+        lastindex = insertionList[insertionList.size() - 1] - 1;
+        singleton = 1;
+        tree.trim(lastindex);
+        singleton = 2;
+    }
+
+    for (size_t run = 0; run < iteration; run++)
+    {
+        tree.printTreeJson(stderr);
+        fprintf(stderr, "Iteration %zu\n", run);
+        tree.prepReinsert();
+        for (vector<seq_type> batch : seqs)
+        {
+            for (seq_type seq : batch)
+            {
+                size_t clus = tree.reinsert(seq, i);
+
+                printMsg("\n found %zu at %zu\n", i, clus);
+                clusters[i] = clus;
+                i++;
+            }
+        }
+        i = 0;
+        tree.trim(lastindex);
+
+        if (debug_)
+        {
+            // auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
+            // FILE *nFile = fopen(fileName.c_str(), "w");
+            // tree.printNodeDistance(nFile, seqs, clusters);
+
+            auto fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+            FILE *cFile = fopen(fileName.c_str(), "w");
+            outputClusters(cFile, clusters);
+        }
+    }
+    tree.updateTree();
+
+    // FILE *pFile = fopen("nodeDistance.txt", "w");
+    // tree.printNodeDistance(pFile, seqs, clusters);
+
+    // Recursively destroy all locks
+    tree.destroyLocks();
+
+    tree.printTreeJson(stdout);
+
+    FILE *hFile = fopen("hierarchy.txt", "w");
+    fprintf(hFile, "parent,child,rank\n");
+    tree.outputHierarchy(hFile);
+
+    return clusters;
+}
+
+vector<size_t> readClusterBatch(const string file_path)
+{
+    vector<size_t> clusters;
+    size_t i = 0;
+    tree_type tree(partree_capacity);
+
+    size_t firstNodes = 1;
+    vector<size_t> insertionList; // potential nodes idx except root; root is always 0
+    // node 0 reserved for root, node 1 reserved for leaves idx
+    for (size_t n = firstNodes; n < partree_capacity; n++)
+    {
+        insertionList.push_back(partree_capacity - n);
+    }
+
+    ifstream rfSize(file_path, ios::binary | ios::ate);
+    if (!rfSize.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+    ifstream rf(file_path, ios::out | ios::binary);
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+    signatureSize = length;
+
+    vector<cell_type> bf(length);
+    cell_type temp = 0;
+    size_t s = 0;
+    seq_type tseq;
+
+    while (rf)
+    {
+        rf.read((char *)&bf[i], sizeof(cell_type));
+        s++;
+        if (s == length)
+        {
+            if (isEmpty(bf))
+            {
+                printMsg("inserting %zu\n", i);
+                clusters.push_back(tree.insert(tseq, insertionList, i));
+                i++;
+                tseq.clear();
+            }
+            else
+            {
+                tseq.push_back(bf);
+            }
+            fill(bf.begin(), bf.end(), 0);
+            s = 0;
+        }
+    }
+
+    rf.close();
+    i = 0;
+    
+
+    size_t lastindex;
+
+    if (iteration > 0)
+    {
+        printMsg("\n\n\nBefore\n");
+        tree.printTreeJson(stderr);
+        lastindex = insertionList[insertionList.size() - 1] - 1;
+        singleton = 1;
+        tree.trim(lastindex);
+        singleton = 2;
+    }
+    
+    // Recursively destroy all locks
+    tree.destroyLocks();
+
+    tree.printTreeJson(stdout);
+
+    FILE *hFile = fopen("hierarchy.txt", "w");
+    fprintf(hFile, "parent,child,rank\n");
+    tree.outputHierarchy(hFile);
+
+    return clusters;
+}
+
 int tree_main(int argc, char *argv[])
 {
     split_threshold = 0.5;
@@ -230,6 +426,7 @@ int tree_main(int argc, char *argv[])
         return 0;
     }
 
+    string inputFile = args.input_arg;
     if (args.random_arg)
     {
         random_ = true;
@@ -238,6 +435,10 @@ int tree_main(int argc, char *argv[])
     if (args.split_threshold_given)
     {
         split_threshold = args.split_threshold_arg;
+    }
+    else
+    {
+        split_threshold = getSplitThreshold(inputFile);
     }
 
     if (args.stay_threshold_given)
@@ -263,26 +464,33 @@ int tree_main(int argc, char *argv[])
     print_ = args.print_arg;
     force_split_ = args.force_split_arg;
 
-    string inputFile = args.input_arg;
-
-    vector<vector<vector<cell_type>>> seqs = readPartitionBF(inputFile, signatureSize);
+    // vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
+    size_t batch_size = 300;
+    vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
     if (signatureSize == 0)
     {
         fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
         return 0;
     }
 
-    fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
+    // fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
+
+    size_t temp = seqs_batch.size() - 1;
+    size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+    fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+
     if (cap == 0)
     {
-        cap = seqs.size();
+        // cap = seqs.size();
+        cap = seqCount;
     }
 
-    signatureSize = seqs[0][0].size();
+    // signatureSize = seqs[0][0].size();
     fprintf(stderr, "Building Signature...\n");
     default_random_engine rng;
     // output_type clusters = clusterSignatures(seqs);
-    vector<size_t> clusters = clusterSignatures(seqs);
+    // vector<size_t> clusters = clusterSignatures(seqs);
+    vector<size_t> clusters = clusterSignaturesBatch(seqs_batch);
 
     fprintf(stderr, "writing output...\n");
 

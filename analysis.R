@@ -82,28 +82,21 @@ ggplot()+
     sec.axis = sec_axis(~.+60, name="avg_sim")
   )
 ######################## toy ##################################
-plotEnt<-function(file){
-  dt<-read.csv(file,header=FALSE)
-  colnames(dt)<-c("seqID","cluster")
-  dt<-dt%>%mutate(species_id=ceiling((seqID+1)/26)-1)
-  # dt<-dt%>%group_by(cluster)%>%
-  #   summarise(clu_size=length(cluster),
-  #             entropy=Entropy(table(species_id),base=exp(1)))
-  # dt<-dt%>%mutate(clus_id=row_number())
-  dt
-}
+source("C://DataCopied/Research/R/toyFunctions.R")
+dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s80-l18.txt",sep=""))
+cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
+
+sigClust<-plotEnt(paste(path,"/sigClust-k9-c42.txt",sep=""))
+cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
 
 
-path<-"C://DataCopied/Research/tree/data/toy"
-water<-read.csv(paste(path,"/toy-waterall.csv",sep=""))
-# ggplot(water)+geom_tile(aes(x=aseq,y=bseq,fill=similarity.))
+# mean(cluQ$avg_sim)
+# avg<- cluQ %>% summarise(across(everything(), list(mean)))
+avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
+plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 
-dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
-cluQ<-cluQuality(dt,water)
-mean(cluQ$avg_sim)
-avg<- cluQ %>% summarise(across(everything(), list(mean)))
 (
-  ggplot(cluQ)+
+  ggplot(cluQ_2WMT)+
   geom_point(aes(x=clu,y=avg_sim,size=size))+
     # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
     ylim(50,100)
@@ -129,6 +122,7 @@ load("C:/DataCopied/Research/tree/data/toy/clusQ-1Ambi.RData")
 ######################## hierarchy ###############################
 hierarchy<-read.csv(paste(path,"/hierarchy.txt",sep=""))
 hierarchy<-hierarchy%>%mutate(parent=case_when((rank == 0 & parent == 0 & !child %in% parent) ~ child, TRUE ~ parent))
+t<-hierarchy%>%filter(!child %in% parent)
 
 dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s60-l20.txt",sep=""))
 dt<-merge(dt,hierarchy,by.x="cluster",by.y="child")
@@ -168,61 +162,91 @@ load("C:/DataCopied/Research/tree/data/toy/clusQ-1.RData")
 source("C://DataCopied/Research/R/staphFunctions.R")
 
 path<-"C://DataCopied/Research/tree/data/staphopia-contigs"
+w<-read.csv(paste(path,"/sample-k9-w100-s5-global_sim.txt",sep=""))
 water<-waterStaph(paste(path,"/sample_needle.txt",sep=""),
                   paste(path,"/sample_meta.csv",sep=""))
 
-# sim<-simStaph(paste(path,"/sample-k9-w100-s5-global_sim.txt",sep=""),
-#               paste(path,"/sample_meta.csv",sep=""),0)
-              
-# temp<-waterAll%>%
-#   # filter(mlst.x==mlst.y)%>%
-#   group_by(mlst.x,mlst.y)%>%summarise(mean=mean(similarity.))
 
-# ggplot()+
-#   geom_density(data=water,aes(x=similarity.))+
-#   geom_density(data=waterAll,aes(x=similarity.))
-# 
-# ggplot(sim)+geom_tile(aes(x=aseq,y=bseq,fill=identity.))
-
-# meta<-read.csv(paste(path,"/sample_meta.csv",sep=""))
-# temp<-merge(dt,meta)
-# temp<-temp%>%group_by(cluster)%>%
-#   summarise(ent=Entropy(table(mlst),base=exp(1)))
-
-
-dt<-read.csv(paste(path,"/sample-k9-w100-s5-s80-l50.txt",sep=""),header=FALSE)
+# dt<-read.csv(paste(path,"/sample-k9-w100-s5-s100-l59.txt",sep=""),header=FALSE)
+dt<-read.csv(paste(path,"/sample-k9-w100-s5-s90-l58.txt",sep=""),header=FALSE)
 colnames(dt)<-c("seqID","cluster")
-cluQ_2WMT<-cluQualityStaph(dt,water)
+# cluQ_2WMT<-cluQualityStaph(dt,water)
+# cluQ_2WMT<-cluQuality(dt,w,3,FALSE)
+cluQ_2WMT<-cluQuality(dt,water,2,FALSE,w,3)
+
 # avg<- cluQ_2WMT %>% summarise(across(everything(), list(mean)))
+
+sigClust<-read.csv(paste(path,"/sigClust-k9-c",nrow(cluQ_2WMT),".txt",sep=""),header=FALSE)
+# sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
+colnames(sigClust)<-c("seqID","cluster")
+# cluQ_sigClust<-cluQualityStaph(sigClust,water,FALSE)
+# cluQ_sigClust<-cluQuality(sigClust,w,3,FALSE)
+cluQ_sigClust<-cluQuality(sigClust,water,2,FALSE,w,3)
+
+plotTwo(cluQ_2WMT,cluQ_sigClust,3)
+plotTwo(normSize(cluQ_2WMT),normSize(cluQ_sigClust),ncol(cluQ_2WMT)+1)
+# plotTwo(normSize(cluQ_2WMT,'avg_sim_sig'),normSize(cluQ_sigClust,'avg_sim_sig'),ncol(cluQ_2WMT)+1)
 
 # plotStaph(cluQ_2WMT)
 
 
-sigClust<-read.csv(paste(path,"/sigClust-k9.txt",sep=""),header=FALSE)
-# sigClust<-read.csv(paste(path,"/sigClust.txt",sep=""),header=FALSE)
-colnames(sigClust)<-c("seqID","cluster")
-cluQ_sigClust<-cluQualityStaph(sigClust,water,FALSE)
-# avgsigClust<- cluQ_sigClust %>% summarise(across(everything(), list(mean)))
-
 avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
-plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 
-plotStaph(cluQ_sigClust)
+# find nearest neighbours of the outliers
+outliers_NN<-function(sim,var, col_i="i", col_j="j"){
+  getSubsetBySize<-function(dt,summ,size=-1){
+    if (size==-1){
+      (dt%>%filter(cluster==(summ%>%slice(which.max(size)))$cluster[1]))$seqID
+    }else{
+      (dt%>%filter(cluster==(summ%>%slice(which(.data$size == size)))$cluster[1]))$seqID
+      
+    }
+  }
+  t_s<-getSubsetBySize(sigClust,cluQ_sigClust)
+  t_w<-getSubsetBySize(dt,cluQ_2WMT)
+  outliers<-setdiff(t_w,t_s)
+  
+  t<-sim%>%filter(.data[[col_i]] %in% outliers)
+  outliers_best_inter<-t%>%filter(.data[[col_j]] %in% t_s)%>%
+    group_by(.data[[col_i]])%>%
+    slice(which(min(.data[[var]])<100))
+  if (nrow(outliers_best_inter)>0){
+    names(outliers_best_inter)[names(outliers_best_inter) == col_j] <- paste("best_inter_",col_j,sep="")
+    names(outliers_best_inter)[names(outliers_best_inter) == var] <- paste("best_inter_",var,sep="")
+    # colnames(outliers_best_inter)[2:3]<-c("inter_j",paste("best_inter_",var,sep=""))
+
+    true_outliers<-outliers_best_inter%>%pull(col_i)
+# 
+    NN<-t%>%filter(.data[[col_i]] %in% true_outliers & !.data[[col_j]] %in% t_w)%>%
+      group_by(.data[[col_i]])%>%
+      slice(which(max(.data[[var]])==.data[[var]]))
+    names(NN)[names(NN) == var] <- paste("best_intra_",var,sep="")
+    # colnames(NN)[which(colnames(NN)==var)]<-paste("best_intra_",var,sep="")
+    
+    NN<-merge(NN,dt,by.x=col_j,by.y="seqID")
+    NN<-merge(distinct(NN,.data[[col_i]],cluster,.keep_all = TRUE),outliers_best_inter,by=col_i)
+    NN<-merge(NN,cluQ_2WMT)
+    NN[!grepl('\\.[x|y]$', colnames(NN))]
+  }else{
+    print("no outliers based on 2WMT signature")
+    NULL
+  }
+}
+
+NN<-outliers_NN(w,"similarity")
+# N2<-outliers_NN(water,"identity.","seqID.x","seqID.y")
+N2<-outliers_NN(water,"identity.")
+
+
+plotStaph(cluQ_2WMT,TRUE,seq(3,2))
+plotStaph(cluQ_2WMT,FALSE,seq(3,4))
+
+plotStaph(cluQ_sigClust,FALSE)
 
 plotStaph(cluQ_2WMT)+ ggtitle("2W-MT")+
   theme(legend.position="none")+
   plotStaph(cluQ_sigClust)+ ggtitle("sigClust")
 
-
-temp<-dt%>%group_by(cluster)%>%
-  summarise(size=length(unique(seqID)))
-sd(temp$size)
-
-temp<-sigClust%>%group_by(cluster)%>%
-  summarise(size=length(unique(seqID)))
-sd(temp$size)
-mean(cluQ_2WMT$size)
-mean(cluQ_sigClust$size)
 
 # cluQSim<-cluQualityStaph(dt,sim)
 # plotStaph(cluQ_2WMT)+ theme(legend.position="none")+
@@ -826,6 +850,10 @@ tbin<-mirror(read.csv("D:\\phd\\tree\\data\\refseq\\toy-k9-w100-s5-global_sim.tx
 # temp<-merge(tall,tbin,by=c("i","j"))%>%filter(similarity.x!=similarity.y)
 temp<-tbin%>%group_by(i)%>%summarise(size=length(j))%>%
   filter(size!=length(i))
+
+temp<-check_sim(tall)
+
+
 sum(tall$similarity)==sum(tbin$similarity)
 
 idx<-c(152,397,652,870,911,1003,1020,1021,1022,1023)
