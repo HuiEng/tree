@@ -361,7 +361,7 @@ vector<size_t> readClusterBatch(const string file_path)
 
     while (rf)
     {
-        rf.read((char *)&bf[i], sizeof(cell_type));
+        rf.read((char *)&bf[s], sizeof(cell_type));
         s++;
         if (s == length)
         {
@@ -383,7 +383,6 @@ vector<size_t> readClusterBatch(const string file_path)
 
     rf.close();
     i = 0;
-    
 
     size_t lastindex;
 
@@ -396,7 +395,7 @@ vector<size_t> readClusterBatch(const string file_path)
         tree.trim(lastindex);
         singleton = 2;
     }
-    
+
     // Recursively destroy all locks
     tree.destroyLocks();
 
@@ -464,34 +463,35 @@ int tree_main(int argc, char *argv[])
     print_ = args.print_arg;
     force_split_ = args.force_split_arg;
 
-    // vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
-    size_t batch_size = 300;
-    vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
-    if (signatureSize == 0)
-    {
-        fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
-        return 0;
-    }
+    // // vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
+    // size_t batch_size = 300;
+    // vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
+    // if (signatureSize == 0)
+    // {
+    //     fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+    //     return 0;
+    // }
 
-    // fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
+    // // fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
 
-    size_t temp = seqs_batch.size() - 1;
-    size_t seqCount = temp * batch_size + seqs_batch[temp].size();
-    fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+    // size_t temp = seqs_batch.size() - 1;
+    // size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+    // fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
 
-    if (cap == 0)
-    {
-        // cap = seqs.size();
-        cap = seqCount;
-    }
+    // if (cap == 0)
+    // {
+    //     // cap = seqs.size();
+    //     cap = seqCount;
+    // }
 
-    // signatureSize = seqs[0][0].size();
-    fprintf(stderr, "Building Signature...\n");
-    default_random_engine rng;
-    // output_type clusters = clusterSignatures(seqs);
-    // vector<size_t> clusters = clusterSignatures(seqs);
-    vector<size_t> clusters = clusterSignaturesBatch(seqs_batch);
+    // // signatureSize = seqs[0][0].size();
+    // fprintf(stderr, "Building Signature...\n");
+    // default_random_engine rng;
+    // // output_type clusters = clusterSignatures(seqs);
+    // // vector<size_t> clusters = clusterSignatures(seqs);
+    // vector<size_t> clusters = clusterSignaturesBatch(seqs_batch);
 
+    vector<size_t> clusters = readClusterBatch(inputFile);
     fprintf(stderr, "writing output...\n");
 
     size_t firstindex = inputFile.find_last_of("/") + 1;
