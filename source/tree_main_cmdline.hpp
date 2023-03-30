@@ -364,6 +364,7 @@ public:
   double split_threshold_arg;
   double stay_threshold_arg;
   size_t iteration_arg;
+  size_t method_arg;
 
   bool input_given;
   bool tag_given;
@@ -385,7 +386,7 @@ public:
   };
 
   tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false),
-                        minimiser_match_arg(0), capacity_arg(0),
+                        minimiser_match_arg(0), capacity_arg(0), method_arg(0),
                         input_given(false),
                         minimiser_match_given(false), capacity_given(false),
                         random_arg(false), iteration_arg(0),
@@ -397,7 +398,7 @@ public:
   }
 
   tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false),
-                                              minimiser_match_arg(0), capacity_arg(0),
+                                              minimiser_match_arg(0), capacity_arg(0), method_arg(0),
                                               input_given(false),
                                               minimiser_match_given(false), capacity_given(false),
                                               random_arg(false), iteration_arg(0),
@@ -505,6 +506,10 @@ public:
         capacity_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-c, --treeCapacity=size_t")
         break;
+      case 'm':
+        method_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-m=size_t")
+        break;
       case 'R':
         random_arg = true;
         break;
@@ -582,6 +587,7 @@ public:
            "Options (default value in (), *required):\n"
            " -d, --debug                              print debug files\n"
            " -p, --print                              print debug msg to stderr [default = false]\n"
+           " -m,                                      read method, see code for details [default = 0]\n"
            " -f,                                      force split root [default=false]\n"
            " -i, --input                              input file or folder\n"
            " -T, --tag                                [optional] tag for output cluster file\n"

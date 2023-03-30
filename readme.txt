@@ -4,10 +4,7 @@ first read fasta and convert to sigs by using pbuild
 tree build -f "{folder}/*.fna"
 rmb ""! 
 
-
-stats runs:
-each runs with "max_seqCount" number of seqs.
-Start by randomly sampling  "max_seqCount*runs" number of seq (or until the end)
-Using this subset, random sampling again "max_seqCount" from it to run the experiments
-* avoid reading the input files multiple times and is faster with large input bin file
-* can always read all seqs
+tree tree 3 read seqs method, default=0
+0: the old ways, read all seqs, then cluster "cap" seqs, only method allow force split root with -f
+1: 2D seq vector, only read up to "cap" seq
+2: the other methods read seqs into vector first, this method does not store seqs, re-read the file whenever need the seqs again, very slow but doable with large collection

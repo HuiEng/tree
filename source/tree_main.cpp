@@ -222,12 +222,12 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
 vector<size_t> clusterSignaturesBatch(const vector<vector<seq_type>> &seqs)
 {
-    vector<size_t> clusters(cap); // cap is always seqCount here
+    vector<size_t> clusters(cap);
     tree_type tree(partree_capacity);
 
     size_t firstNodes = 1;
-    // if (firstNodes > seqCount)
-    //     firstNodes = seqCount;
+    if (firstNodes > cap)
+        firstNodes = cap;
 
     vector<size_t> insertionList; // potential nodes idx except root; root is always 0
 
@@ -327,14 +327,13 @@ vector<size_t> clusterSignaturesBatch(const vector<vector<seq_type>> &seqs)
     return clusters;
 }
 
-vector<size_t> readClusterBatch(const string file_path)
+tree_type readInsertCluster(const string file_path, vector<size_t> &clusters, vector<size_t> &insertionList)
 {
-    vector<size_t> clusters;
     size_t i = 0;
     tree_type tree(partree_capacity);
 
     size_t firstNodes = 1;
-    vector<size_t> insertionList; // potential nodes idx except root; root is always 0
+    // vector<size_t> insertionList; // potential nodes idx except root; root is always 0
     // node 0 reserved for root, node 1 reserved for leaves idx
     for (size_t n = firstNodes; n < partree_capacity; n++)
     {
@@ -355,7 +354,6 @@ vector<size_t> readClusterBatch(const string file_path)
     signatureSize = length;
 
     vector<cell_type> bf(length);
-    cell_type temp = 0;
     size_t s = 0;
     seq_type tseq;
 
@@ -382,9 +380,62 @@ vector<size_t> readClusterBatch(const string file_path)
     }
 
     rf.close();
-    i = 0;
 
+    return tree;
+}
+
+void readReinsertCluster(const string file_path, tree_type &tree, vector<size_t> &clusters)
+{
+    size_t i = 0;
+    ifstream rfSize(file_path, ios::binary | ios::ate);
+    if (!rfSize.is_open())
+    {
+        fprintf(stderr, "Invalid File. Please try again\n");
+        exit(0);
+    }
+    ifstream rf(file_path, ios::out | ios::binary);
+
+    unsigned long long int length;
+    if (rf)
+        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+    vector<cell_type> bf(length);
+    size_t s = 0;
+    seq_type tseq;
+
+    while (rf)
+    {
+        rf.read((char *)&bf[s], sizeof(cell_type));
+        s++;
+        if (s == length)
+        {
+            if (isEmpty(bf))
+            {
+                size_t clus = tree.reinsert(tseq, i);
+                printMsg("\n found %zu at %zu\n", i, clus);
+                clusters[i] = clus;
+                i++;
+                tseq.clear();
+            }
+            else
+            {
+                tseq.push_back(bf);
+            }
+            fill(bf.begin(), bf.end(), 0);
+            s = 0;
+        }
+    }
+
+    rf.close();
+}
+
+vector<size_t> readClusterBatch(const string file_path)
+{
+    vector<size_t> clusters;
+    vector<size_t> insertionList;
+    tree_type tree = readInsertCluster(file_path, clusters, insertionList);
     size_t lastindex;
+    fprintf(stderr, "Loaded %zu seqs...\n", clusters.size());
 
     if (iteration > 0)
     {
@@ -394,6 +445,22 @@ vector<size_t> readClusterBatch(const string file_path)
         singleton = 1;
         tree.trim(lastindex);
         singleton = 2;
+    }
+
+    for (size_t run = 0; run < iteration; run++)
+    {
+        tree.printTreeJson(stderr);
+        fprintf(stderr, "Iteration %zu\n", run);
+        tree.prepReinsert();
+        readReinsertCluster(file_path, tree, clusters);
+        tree.trim(lastindex);
+
+        if (debug_)
+        {
+            auto fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+            FILE *cFile = fopen(fileName.c_str(), "w");
+            outputClusters(cFile, clusters);
+        }
     }
 
     // Recursively destroy all locks
@@ -463,35 +530,60 @@ int tree_main(int argc, char *argv[])
     print_ = args.print_arg;
     force_split_ = args.force_split_arg;
 
-    // // vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
-    // size_t batch_size = 300;
-    // vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
-    // if (signatureSize == 0)
-    // {
-    //     fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
-    //     return 0;
-    // }
+    // signatureSize = seqs[0][0].size();
+    default_random_engine rng;
+    vector<size_t> clusters;
 
-    // // fprintf(stderr, "Loaded %zu signatures...\n", seqs.size());
+    size_t method = args.method_arg;
 
-    // size_t temp = seqs_batch.size() - 1;
-    // size_t seqCount = temp * batch_size + seqs_batch[temp].size();
-    // fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+    if (method == 1)
+    {
+        {
+            size_t batch_size = 300;
+            vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
 
-    // if (cap == 0)
-    // {
-    //     // cap = seqs.size();
-    //     cap = seqCount;
-    // }
+            if (cap == 0)
+            {
+                seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
+            }
+            else
+            {
+                seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize, cap);
+            }
+            if (signatureSize == 0)
+            {
+                fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+                return 0;
+            }
 
-    // // signatureSize = seqs[0][0].size();
-    // fprintf(stderr, "Building Signature...\n");
-    // default_random_engine rng;
-    // // output_type clusters = clusterSignatures(seqs);
-    // // vector<size_t> clusters = clusterSignatures(seqs);
-    // vector<size_t> clusters = clusterSignaturesBatch(seqs_batch);
+            size_t temp = seqs_batch.size() - 1;
+            size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+            fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+            cap = seqCount;
 
-    vector<size_t> clusters = readClusterBatch(inputFile);
+            clusters = clusterSignaturesBatch(seqs_batch);
+        }
+    }
+    else if (method == 2)
+    {
+        clusters = readClusterBatch(inputFile);
+    }
+    else
+    {
+        vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
+        if (signatureSize == 0)
+        {
+            fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+            return 0;
+        }
+        if (cap == 0)
+        {
+            cap = seqs.size();
+        }
+
+        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+        clusters = clusterSignatures(seqs);
+    }
     fprintf(stderr, "writing output...\n");
 
     size_t firstindex = inputFile.find_last_of("/") + 1;
