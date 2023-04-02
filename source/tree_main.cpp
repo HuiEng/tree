@@ -207,7 +207,10 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     //     // clusters[foo[i]] = tree.findAncestor(clus);
     //     clusters[foo[i]] = make_tuple(clus, tree.findAncestor(clus));
     // }
-    tree.test(19);
+
+
+    // tree.test(19);
+
     // Recursively destroy all locks
     tree.destroyLocks();
 

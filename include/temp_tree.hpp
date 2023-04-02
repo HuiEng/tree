@@ -327,6 +327,36 @@ public:
         return idx;
     }
 
+    seq_type createRandomSig(vector<size_t> children)
+    {
+        unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        default_random_engine rng(seed);
+        uniform_int_distribution<size_t> dist(0, children.size() - 1);
+
+        seq_type randomSig;// = means[children[dist(rng)]];
+        // find the smallest windows count
+        size_t winNum = means[children[0]].size();
+        for (size_t child : children)
+        {
+            seq_type matrix = means[child];
+            if (matrix.size() < winNum)
+            {
+                winNum = matrix.size();
+            }
+        }
+
+        randomSig.resize(winNum);
+
+        vector<vector<size_t>> counters;
+        for (size_t w = 0; w < winNum; w++)
+        {
+            size_t s = dist(rng);
+            randomSig[w] = means[children[s]][w];
+        }
+
+        return randomSig;
+    }
+
     // delete a child from its parent, need to format the child separately
     inline void deleteNode(size_t node)
     {
@@ -798,84 +828,205 @@ public:
         return dest;
     }
 
-    size_t findFurthest(size_t node, seq_type mean0)
+    // size_t findFurthest(size_t node, seq_type mean0)
+    // {
+    //     double min_similarity = 1;
+    //     size_t candidate = 0;
+    //     // seq_type mean0 = means[childLinks[node][0]];
+    //     for (size_t i = 0; i < childCounts[node]; i++)
+    //     {
+    //         size_t child = childLinks[node][i];
+    //         if (isAmbiNode[child])
+    //         {
+    //             continue;
+    //         }
+    //         double similarity = calcSimilarity(mean0, matrices[node][i]);
+    //         // double similarity = calcSimilarity(mean0, means[child]);
+
+    //         if (similarity < min_similarity)
+    //         {
+    //             min_similarity = similarity;
+    //             candidate = child;
+    //         }
+    //     }
+
+    //     if (candidate == 0)
+    //     {
+    //         printMsg("??cannot find candidate %zu, %f\n", node, priority[node]);
+    //     }
+    //     return candidate;
+    // }
+
+    // // this code is not working with unpacked
+    // size_t forceSplitRoot(vector<size_t> &insertionList, bool unpack = false, size_t node = 0)
+    // {
+    //     // printTreeJson(stderr);
+    //     // rootNodes.resize(1);
+    //     // size_t node = root;
+
+    //     // unpack previous subtree
+    //     unpack = false;
+    //     if (unpack)
+    //     {
+    //         printMsg(">> Unpacking...\n");
+    //         vector<size_t> tempChildLinks = childLinks[node];
+    //         for (size_t subtree : tempChildLinks)
+    //         {
+    //             if (isRootNode[subtree])
+    //             {
+    //                 for (size_t child : childLinks[subtree])
+    //                 {
+    //                     moveParent(child, node, false);
+    //                 }
+    //                 deleteNode(subtree);
+    //             }
+    //         }
+    //     }
+
+    //     //? assume the first child is never ambi
+    //     vector<size_t> temp_centroids;
+    //     vector<vector<size_t>> clusters;
+    //     //?
+    //     vector<size_t> temp;
+    //     clusters.push_back(temp);
+    //     vector<size_t> t;
+    //     clusters.push_back(t);
+
+    //     // size_t candidate = findFurthest(node, createMeanSig(getNonAmbiMatrix(node)));
+
+    //     size_t candidate = findFurthest(node, means[node]);
+    //     temp_centroids.push_back(candidate);
+    //     temp_centroids.push_back(findFurthest(node, means[candidate]));
+
+    //     // printMsg("??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
+
+    //     for (size_t n = 0; n < matrices[node].size(); n++)
+    //     {
+    //         size_t child = childLinks[node][n];
+    //         size_t dest = 0;
+    //         double max_similarity = 0;
+    //         for (size_t i = 0; i < temp_centroids.size(); i++)
+    //         {
+    //             // double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
+    //             double similarity = calcSimilarity(means[temp_centroids[i]], means[child]);
+
+    //             printMsg("%zu, %f\n", temp_centroids[i], similarity);
+    //             if (similarity > max_similarity)
+    //             {
+    //                 max_similarity = similarity;
+    //                 dest = i;
+    //             }
+    //         }
+    //         printMsg("--- %zu goes to %zu\n", child, dest);
+    //         clusters[dest].push_back(child);
+    //     }
+
+    //     if (clusters[0].size() <= 1 || clusters[1].size() <= 1)
+    //     {
+    //         printMsg("??something is wrong cannot split evenly\n");
+    //         return 0;
+    //     }
+
+    //     printMsg(">> Force split root %zu\n", node);
+
+    //     for (size_t i = 0; i < temp_centroids.size(); i++)
+    //     {
+    //         size_t t_parent = createParent(node, insertionList);
+    //         isRootNode[t_parent] = 1;
+    //         for (size_t n = 0; n < clusters[i].size(); n++)
+    //         {
+    //             moveParent(clusters[i][n], t_parent);
+    //             // printMsg("--- %zu,%zu\n", clusters[i][n], t_parent);
+    //         }
+    //         updateNodeMean(t_parent);
+    //         updatePriority(t_parent);
+    //         addSigToMatrix(node, means[t_parent]);
+    //     }
+    //     updateParentMean(node);
+    //     // printTreeJson(stderr);
+
+    //     return 1;
+    // }
+
+    vector<size_t> findFurthest(vector<size_t> children)
     {
         double min_similarity = 1;
-        size_t candidate = 0;
-        // seq_type mean0 = means[childLinks[node][0]];
-        for (size_t i = 0; i < childCounts[node]; i++)
+        size_t a, b;
+
+        for (size_t i = 0; i < children.size(); i++)
         {
-            size_t child = childLinks[node][i];
-            if (isAmbiNode[child])
+            for (size_t j = i + 1; j < children.size(); j++)
             {
-                continue;
-            }
-            double similarity = calcSimilarity(mean0, matrices[node][i]);
-            // printMsg("%zu, %f\n", child, similarity);
-            if (similarity < min_similarity)
-            {
-                min_similarity = similarity;
-                candidate = child;
+                double similarity = calcSimilarity(means[children[i]], means[children[j]]);
+                printMsg("## %zu, %zu, %f\n", children[i], children[j], similarity);
+
+                if (similarity < min_similarity)
+                {
+                    min_similarity = similarity;
+                    a = children[i];
+                    b = children[j];
+                }
             }
         }
 
-        if (candidate == 0)
-        {
-            printMsg("??cannot find candidate %zu, %f\n", node, priority[node]);
-        }
-        return candidate;
+        return {a, b};
     }
 
-    size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0, bool unpack = false)
+    size_t forceSplitRoot(vector<size_t> &insertionList, bool unpack = false, size_t node = 0)
     {
-        // printTreeJson(stderr);
-        printMsg(">> Force split root %zu\n", node);
-        // rootNodes.resize(1);
-        // size_t node = root;
-
+        size_t clusterCount = 2;
         // unpack previous subtree
+        vector<size_t> children;
+        // vector<size_t> grandchildren;
+        vector<size_t> to_remove_children;
+
         if (unpack)
         {
-            vector<size_t> tempChildLinks = childLinks[node];
-            for (size_t subtree : tempChildLinks)
+            printMsg(">> Unpacking...\n");
+            for (size_t subtree : childLinks[node])
             {
                 if (isRootNode[subtree])
                 {
                     for (size_t child : childLinks[subtree])
                     {
-                        moveParent(child, node, false);
+                        // moveParent(child, node, false);
+                        // grandchildren.push_back(child);
+                        children.push_back(child);
                     }
-                    deleteNode(subtree);
+                    // deleteNode(subtree);
+                    to_remove_children.push_back(subtree);
+                }
+                else if (!isAmbiNode[subtree])
+                {
+                    children.push_back(subtree);
                 }
             }
+            // children.insert(children.end(), grandchildren.begin(), grandchildren.end());
+        }
+        else
+        {
+            children = childLinks[node];
         }
 
-        //? assume the first child is never ambi
-        vector<size_t> temp_centroids;
-        vector<vector<size_t>> clusters;
-        //?
-        vector<size_t> temp;
-        clusters.push_back(temp);
-        vector<size_t> t;
-        clusters.push_back(t);
-
-        // size_t candidate = findFurthest(node, createMeanSig(getNonAmbiMatrix(node)));
-
-        size_t candidate = findFurthest(node, means[node]);
-        temp_centroids.push_back(candidate);
-        temp_centroids.push_back(findFurthest(node, means[candidate]));
-
-        // printMsg("??something is wrong %zu,%zu,%zu \n", matrices[node].size(), childLinks[node].size(), childCounts[node]);
-
-        for (size_t n = 0; n < matrices[node].size(); n++)
+        vector<size_t> clusters(children.size());
+        vector<seq_type> temp_centroids(clusterCount);
+        for (size_t i = 0; i < clusterCount; i++)
         {
-            size_t child = childLinks[node][n];
+            temp_centroids[i] = createRandomSig(children);
+        }
+
+        vector<size_t> clustersSize(clusterCount);
+
+        for (size_t n = 0; n < children.size(); n++)
+        {
+            size_t child = children[n];
             size_t dest = 0;
             double max_similarity = 0;
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
-                double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
-                printMsg("%zu, %f\n", temp_centroids[i], similarity);
+                // double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
+                double similarity = calcSimilarity(temp_centroids[i], means[child]);
+                printMsg("%zu, %f\n", i, similarity);
                 if (similarity > max_similarity)
                 {
                     max_similarity = similarity;
@@ -883,24 +1034,46 @@ public:
                 }
             }
             printMsg("--- %zu goes to %zu\n", child, dest);
-            clusters[dest].push_back(child);
+            clusters[n] = dest;
+            clustersSize[dest]++;
         }
 
-        if (clusters[0].size() <= 1 || clusters[1].size() <= 1)
+        for (size_t size : clustersSize)
         {
-            printMsg("??something is wrong cannot split evenly\n");
-            return 0;
+            if (size <= 1)
+            {
+                printMsg("??something is wrong cannot split evenly\n");
+                return 0;
+            }
         }
 
+        // for (size_t child : to_remove_children)
+        // {
+        //     printMsg(">> del %zu\n", child);
+        // }
+        printMsg(">> Force split root %zu\n", node);
+
+        // reuse clusterSize to store the new t_parents
         for (size_t i = 0; i < temp_centroids.size(); i++)
         {
             size_t t_parent = createParent(node, insertionList);
             isRootNode[t_parent] = 1;
-            for (size_t n = 0; n < clusters[i].size(); n++)
-            {
-                moveParent(clusters[i][n], t_parent);
-                // printMsg("--- %zu,%zu\n", clusters[i][n], t_parent);
-            }
+            clustersSize[i] = t_parent;
+        }
+
+        for (size_t n = 0; n < clusters.size(); n++)
+        {
+            moveParent(children[n], clustersSize[clusters[n]]);
+            // printMsg("--- %zu,%zu\n", clusters[i][n], t_parent);
+        }
+
+        for (size_t child : to_remove_children)
+        {
+            deleteNode(child);
+        }
+
+        for (size_t t_parent : clustersSize)
+        {
             updateNodeMean(t_parent);
             updatePriority(t_parent);
             addSigToMatrix(node, means[t_parent]);
@@ -1179,13 +1352,14 @@ public:
     inline size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
     {
         updatePriority(node);
-        if (childCounts[node] <= tree_order && priority[node] < 0.5)
+        return 0;
+        if (childCounts[node] <= tree_order && priority[node] > split_threshold)
         {
             return 0;
         }
 
         printMsg(">> Force split subtree %zu\n", node);
-        forceSplitRoot(insertionList, node, false);
+        forceSplitRoot(insertionList, false, node);
         size_t parent = parentLinks[node];
         for (size_t child : childLinks[node])
         {
@@ -1297,7 +1471,7 @@ public:
         size_t node = insert(signature, insertionList, idx);
         if (childCounts[root] > tree_order)
         {
-            forceSplitRoot(insertionList);
+            forceSplitRoot(insertionList, true);
 
             // //?
             // vector<size_t> subtrees = childLinks[root];
