@@ -1467,13 +1467,13 @@ public:
         }
 
         printMsg("#stay in subtree %zu (%.2f)\n", bestSubtree, maxOverlap);
-        size_t dest = stayNode(signature, insertionList, idx, bestSubtree);
         if (childCounts[bestSubtree] > 4 && priority[bestSubtree] < split_threshold)
         {
             addSubtree(insertionList, false, bestSubtree);
         }
 
-        return dest;
+        
+        return tt_rootSplit(signature, insertionList, idx, bestSubtree);
     }
 
     inline size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
