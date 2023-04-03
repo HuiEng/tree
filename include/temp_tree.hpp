@@ -333,7 +333,7 @@ public:
         default_random_engine rng(seed);
         uniform_int_distribution<size_t> dist(0, children.size() - 1);
 
-        seq_type randomSig;// = means[children[dist(rng)]];
+        seq_type randomSig; // = means[children[dist(rng)]];
         // find the smallest windows count
         size_t winNum = means[children[0]].size();
         for (size_t child : children)
@@ -1047,10 +1047,7 @@ public:
             }
         }
 
-        // for (size_t child : to_remove_children)
-        // {
-        //     printMsg(">> del %zu\n", child);
-        // }
+        printTreeJson(stderr);
         printMsg(">> Force split root %zu\n", node);
 
         // reuse clusterSize to store the new t_parents
@@ -1079,8 +1076,102 @@ public:
             addSigToMatrix(node, means[t_parent]);
         }
         updateParentMean(node);
-        // printTreeJson(stderr);
+        printTreeJson(stderr);
 
+        return 1;
+    }
+
+    size_t addSubtree(vector<size_t> &insertionList, bool unpack = false, size_t node = 0)
+    {
+        size_t clusterCount = 2;
+        // unpack previous subtree
+        vector<size_t> children;
+        vector<size_t> to_remove_children;
+
+        if (unpack)
+        {
+            printMsg(">> Unpacking...\n");
+            for (size_t subtree : childLinks[node])
+            {
+                if (isRootNode[subtree])
+                {
+                    for (size_t child : childLinks[subtree])
+                    {
+                        children.push_back(child);
+                    }
+                    to_remove_children.push_back(subtree);
+                }
+                else if (!isAmbiNode[subtree])
+                {
+                    children.push_back(subtree);
+                }
+            }
+        }
+        else
+        {
+            children = childLinks[node];
+        }
+        printTreeJson(stderr);
+
+        vector<vector<size_t>> clusters(clusterCount);
+        vector<seq_type> temp_centroids(clusterCount);
+        temp_centroids[0] = means[node];
+
+        // find another sibling centroid if any subtree has no child
+        while (true)
+        {
+            temp_centroids[1] = createRandomSig(children);
+            for (size_t child : children)
+            {
+                size_t dest = 0;
+                double max_similarity = 0;
+                for (size_t i = 0; i < temp_centroids.size(); i++)
+                {
+                    double similarity = calcSimilarity(temp_centroids[i], means[child]);
+                    printMsg("%zu, %f\n", i, similarity);
+                    if (similarity > max_similarity)
+                    {
+                        max_similarity = similarity;
+                        dest = i;
+                    }
+                }
+                printMsg("--- %zu goes to %zu\n", child, dest);
+                clusters[dest].push_back(child);
+            }
+            if (clusters[0].size() > 1 && clusters[1].size() > 1)
+            {
+                break;
+            }
+            clusters.clear();
+            clusters.resize(2);
+        }
+
+        printMsg(">> Add subtree %zu\n", node);
+
+        size_t grandparent = parentLinks[node];
+        size_t t_parent = createParent(grandparent, insertionList);
+        isRootNode[t_parent] = 1;
+
+        for (size_t child : clusters[1])
+        {
+            moveParent(child, t_parent);
+        }
+
+        // if unpacking
+        for (size_t child : to_remove_children)
+        {
+            deleteNode(child);
+        }
+
+        updateNodeMean(node);
+        updatePriority(node);
+
+        updateNodeMean(t_parent);
+        updatePriority(t_parent);
+        addSigToMatrix(grandparent, means[t_parent]);
+
+        updateParentMean(grandparent);
+        printTreeJson(stderr);
         return 1;
     }
 
@@ -1349,6 +1440,42 @@ public:
         return createNode(signature, insertionList, node, idx);
     }
 
+    // use this when children are all subtrees
+    // find the nearest subtree
+    // split subtree if distortion is too big
+    inline size_t tt_rootSplit(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    {
+        if (childCounts[node] > 0)
+        {
+            if (!isRootNode[childLinks[node][0]])
+            {
+                return tt_root(signature, insertionList, idx, node);
+            }
+        }
+
+        double maxOverlap = 0;
+        size_t bestSubtree = 0;
+
+        for (size_t subtree : childLinks[node])
+        {
+            double overlap = calcOverlap(signature, means[subtree]);
+            if (overlap > maxOverlap)
+            {
+                maxOverlap = overlap;
+                bestSubtree = subtree;
+            }
+        }
+
+        printMsg("#stay in subtree %zu (%.2f)\n", bestSubtree, maxOverlap);
+        size_t dest = stayNode(signature, insertionList, idx, bestSubtree);
+        if (childCounts[bestSubtree] > 4 && priority[bestSubtree] < split_threshold)
+        {
+            addSubtree(insertionList, false, bestSubtree);
+        }
+
+        return dest;
+    }
+
     inline size_t forceSplitSubtree(vector<size_t> &insertionList, size_t node)
     {
         updatePriority(node);
@@ -1466,12 +1593,19 @@ public:
         return node;
     }
 
+    inline size_t insertSplit(seq_type signature, vector<size_t> &insertionList, size_t idx)
+    {
+        size_t node = tt_rootSplit(signature, insertionList, idx);
+        printMsg("inserted %zu at %zu\n\n", idx, node);
+        return node;
+    }
+
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
-        size_t node = insert(signature, insertionList, idx);
+        size_t node = insertSplit(signature, insertionList, idx);
         if (childCounts[root] > tree_order)
         {
-            forceSplitRoot(insertionList, true);
+            forceSplitRoot(insertionList, false);
 
             // //?
             // vector<size_t> subtrees = childLinks[root];

@@ -94,7 +94,7 @@ cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
 # avg<- cluQ %>% summarise(across(everything(), list(mean)))
 avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
 plotTwo(cluQ_2WMT,cluQ_sigClust,3)
-
+plotTwo(normSize(cluQ_2WMT),normSize(cluQ_sigClust),ncol(cluQ_2WMT)+1)
 (
   ggplot(cluQ_2WMT)+
   geom_point(aes(x=clu,y=avg_sim,size=size))+
