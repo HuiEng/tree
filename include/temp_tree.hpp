@@ -238,6 +238,7 @@ public:
         fprintf(stream, "{\"node\":\"%zu\",", tnode);
         fprintf(stream, "\"branch\":\"%zu\",", isBranchNode[tnode]);
         fprintf(stream, "\"ambi\":\"%zu\",", isAmbiNode[tnode]);
+        fprintf(stream, "\"subtree\":\"%zu\",", isRootNode[tnode]);
         fprintf(stream, "\"priority\":\"%.2f\",", priority[tnode]);
         fprintf(stream, "\"childCount\":\"%zu\",\"content\":\"*", seqIDs[tnode].size());
         // fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], calcNodeMaxsimilarity(tnode), seqIDs[tnode].size());
@@ -1172,6 +1173,7 @@ public:
 
         updateParentMean(grandparent);
         printTreeJson(stderr);
+
         return 1;
     }
 
@@ -1440,11 +1442,69 @@ public:
         return createNode(signature, insertionList, node, idx);
     }
 
+    // promote subtree only if the subtree and its parent are not root(0)
+    // AND
+    // if distortion[node]<distortion[parent]
+    // OR
+    // if the similarity btw the subtree and its parent is smaller than the split threshold
+    inline size_t promoteSubtree(size_t node)
+    {
+        if (node == root)
+        {
+            return 0;
+        }
+        size_t parent = parentLinks[node];
+        if (parent == root)
+        {
+            return 0;
+        }
+
+        if (childCounts[parent] < tree_order)
+        {
+            return 0;
+        }
+
+        if (isRootNode[node])
+        {
+            if (priority[node] >= priority[parent])
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            double similarity = calcSimilarity(means[node], means[parent]);
+            if (similarity > split_threshold)
+            {
+                return 0;
+            }
+        }
+
+        size_t grandparent = parentLinks[parent];
+        printMsg("promoting %zu from %zu to %zu\n", node, parent, grandparent);
+        printTreeJson(stderr);
+        moveParent(node, grandparent);
+        updateNodeMean(parent);
+        updatePriority(parent);
+
+        updateNodeMean(grandparent);
+        updatePriority(grandparent);
+        printTreeJson(stderr);
+        return promoteSubtree(node);
+    }
     // use this when children are all subtrees
     // find the nearest subtree
     // split subtree if distortion is too big
     inline size_t tt_rootSplit(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
+        if (childCounts[node] > findLevel(node) * tree_order)
+        {
+            forceSplitRoot(insertionList, false, node);
+        }
+
+        // promote subtree if distance to parent greater than split threshold
+        promoteSubtree(node);
+
         if (childCounts[node] > 0)
         {
             if (!isRootNode[childLinks[node][0]])
@@ -1472,7 +1532,6 @@ public:
             addSubtree(insertionList, false, bestSubtree);
         }
 
-        
         return tt_rootSplit(signature, insertionList, idx, bestSubtree);
     }
 
