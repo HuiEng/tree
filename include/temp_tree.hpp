@@ -412,7 +412,7 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
-        if (isBranchNode[node])
+        if (isBranchNode[node] || isRootNode[node])
         {
             seq_type meanSig = means[childLinks[node][0]];
 
@@ -1497,13 +1497,16 @@ public:
     // split subtree if distortion is too big
     inline size_t tt_rootSplit(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (childCounts[node] > findLevel(node) * tree_order)
+        if (node != root && isRootNode[node])
         {
-            forceSplitRoot(insertionList, false, node);
-        }
+            if (childCounts[node] > findLevel(node) * tree_order)
+            {
+                forceSplitRoot(insertionList, false, node);
+            }
 
-        // promote subtree if distance to parent greater than split threshold
-        promoteSubtree(node);
+            // promote subtree if distance to parent greater than split threshold
+            promoteSubtree(node);
+        }
 
         if (childCounts[node] > 0)
         {
@@ -1516,14 +1519,62 @@ public:
         double maxOverlap = 0;
         size_t bestSubtree = 0;
 
+        double maxSimilarity = 0;
+        size_t best_branch = 0;
+        // size_t nonSubTreeCount = 0;
+        // vector<size_t> mismatch;
+        // vector<size_t> NN_leaves;
+        // vector<size_t> NN_branches;
+        // vector<size_t> stay;
+
         for (size_t subtree : childLinks[node])
         {
-            double overlap = calcOverlap(signature, means[subtree]);
-            if (overlap > maxOverlap)
+            if (isRootNode[subtree])
             {
-                maxOverlap = overlap;
-                bestSubtree = subtree;
+                double overlap = calcOverlap(signature, means[subtree]);
+                if (overlap > maxOverlap)
+                {
+                    maxOverlap = overlap;
+                    bestSubtree = subtree;
+                }
             }
+            else if (!isAmbiNode[subtree])
+            {
+                double similarity = calcSimilarity(signature, means[subtree]);
+                if (similarity > maxSimilarity)
+                {
+                    maxSimilarity = similarity;
+                    best_branch = subtree;
+                }
+                // nonSubTreeCount++;
+                // size_t rank = findLevel(subtree);
+                // size_t status = similarityStatus(subtree, rank, signature);
+                //
+                // switch (status)
+                // {
+                // case STAY_F:
+                //     stay.push_back(subtree);
+                //     break;
+
+                // case SPLIT_F:
+                //     mismatch.push_back(subtree);
+                //     break;
+                // case NN_LEAVE_F:
+                //     NN_leaves.push_back(subtree);
+                //     break;
+                // case NN_BRANCH_F:
+                //     NN_branches.push_back(subtree);
+                //     break;
+                // default:
+                //     break;
+                // }
+            }
+        }
+
+        if (maxOverlap < maxSimilarity || maxOverlap < 0.5)
+        {
+            printMsg("#Retry subtree %zu (%.2f,%.2f)\n", node, maxOverlap, maxSimilarity);
+            return tt_root(signature, insertionList, idx, node);
         }
 
         printMsg("#stay in subtree %zu (%.2f)\n", bestSubtree, maxOverlap);
@@ -1835,6 +1886,162 @@ public:
         }
     }
 
+    // find highest overlap among children
+    // break tie by checking similarity of the finals
+    inline size_t search2(seq_type signature, size_t idx = 0, size_t node = 0)
+    {
+        printMsg("\n");
+        double best_similarity = 0;
+        size_t best_branch = 0;
+
+        double best_overlap = 0;
+        size_t best_subtree = 0;
+        vector<size_t> overlapAll;
+
+        for (size_t i = 0; i < childCounts[node]; i++)
+        {
+            size_t child = childLinks[node][i];
+            if (isAmbiNode[child])
+            {
+                continue;
+            }
+            else if (isRootNode[child])
+            {
+                double overlap = calcOverlap(signature, means[child]);
+                printMsg(" <%zu,o-%.2f> ", child, overlap);
+                if (overlap == 1)
+                {
+                    overlapAll.push_back(child);
+                }
+                else if (overlap == best_overlap)
+                {
+                    double s1 = calcSimilarity(means[best_subtree], signature);
+                    double s2 = calcSimilarity(means[child], signature);
+                    if (s2 > s1)
+                    {
+                        printMsg(" <%zu,s2-%.2f,%.2f> ", child, s1, s2);
+                        best_subtree = child;
+                    }
+                }
+                else if (overlap > best_overlap)
+                {
+                    best_overlap = overlap;
+                    best_subtree = child;
+                }
+            }
+            else
+            {
+                double similarity = calcSimilarity(means[child], signature);
+                printMsg(" <%zu,s-%.2f> ", child, similarity);
+                if (similarity > best_similarity)
+                {
+                    best_similarity = similarity;
+                    best_branch = child;
+                }
+            }
+        }
+
+        if (overlapAll.size() > 0)
+        {
+            best_subtree = overlapAll[0];
+        }
+        printMsg("@@@ %zu, %zu", best_subtree, overlapAll.size());
+        // if node has no subtree
+        if (best_subtree == 0)
+        {
+            if (isBranchNode[best_branch])
+            {
+                return search2(signature, idx, best_branch);
+            }
+            else
+            {
+                return best_branch;
+            }
+        }
+        else if (overlapAll.size() <= 1)
+        {
+            return search2(signature, idx, best_subtree);
+        }
+        else
+        {
+            printMsg("\n---");
+            double best_subtree_similarity = 0;
+            for (size_t child : overlapAll)
+            {
+                double similarity = calcSimilarity(means[child], signature);
+                printMsg(" <%zu,s-%.2f> ", child, similarity);
+                if (similarity > best_subtree_similarity)
+                {
+                    best_subtree_similarity = similarity;
+                    best_subtree = child;
+                }
+            }
+
+            if (best_branch == 0)
+            {
+                return search2(signature, idx, best_subtree);
+            }
+            else
+            {
+                if (best_subtree_similarity > best_similarity)
+                {
+                    return search2(signature, idx, best_subtree);
+                }
+                if (isBranchNode[best_branch])
+                {
+                    return search2(signature, idx, best_branch);
+                }
+                else
+                {
+                    return best_branch;
+                }
+            }
+        }
+    }
+
+    // find highest overlap among children
+    // break tie by checking similarity of the finals
+    inline size_t search3(seq_type signature, size_t idx = 0, size_t node = 0, double best_score = 0, double dest = 0)
+    {
+        printMsg("\n");
+        size_t temp_dest = 0;
+        double temp_best_similarity = best_score;
+
+        for (size_t child : childLinks[node])
+        {
+            if (isAmbiNode[child])
+            {
+                continue;
+            }
+            else if (isRootNode[child] || isBranchNode[child])
+            {
+                size_t best_leaf = search3(signature, idx, child, temp_best_similarity);
+                if (best_leaf != 0)
+                {
+                    double similarity = calcSimilarity(means[best_leaf], signature);
+                    printMsg("<%zu,o-%.2f>\n", child, similarity);
+                    if (best_leaf != 0 && similarity > temp_best_similarity)
+                    {
+                        temp_best_similarity = similarity;
+                        temp_dest = child;
+                    }
+                }
+            }
+            else
+            {
+                double similarity = calcSimilarity(means[child], signature);
+                printMsg(" <%zu,s-%.2f> ", child, similarity);
+                if (similarity > temp_best_similarity)
+                {
+                    temp_best_similarity = similarity;
+                    temp_dest = child;
+                }
+            }
+        }
+
+        return temp_dest;
+    }
+
     // cluster means still remain
     void prepReinsert(size_t node = 0)
     {
@@ -1871,7 +2078,8 @@ public:
 
     size_t reinsert(seq_type signature, size_t idx)
     {
-        size_t node = search(signature);
+        // size_t node = search(signature);
+        size_t node = search2(signature);
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
         return node;
