@@ -12,6 +12,7 @@
 #define INCLUDE_temp_tree_HPP
 
 #include <omp.h>
+#include <bitset>
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
@@ -100,6 +101,7 @@ public:
     vector<size_t> childCounts;        // n entries, number of children
     vector<int> isBranchNode;          // n entries, is this a branch node
     vector<int> isRootNode;            // n entries, is this root of subtree
+    vector<int> isSuperNode;           // n entries, is this root of subtree
     vector<vector<size_t>> childLinks; // n * o entries, links to children
     vector<int> isAmbiNode;            // n entries, is this a branch node
     vector<vector<size_t>> ambiLinks;  // n * o entries, links to children
@@ -137,6 +139,7 @@ public:
                 isAmbiNode.resize(capacity);
                 ambiLinks.resize(capacity);
                 isRootNode.reserve(capacity);
+                isSuperNode.reserve(capacity);
             }
             //#pragma omp single
             {
@@ -176,6 +179,7 @@ public:
         childCounts[root] = 0;
         isBranchNode[root] = 0;
         isRootNode[root] = 1;
+        isSuperNode[root] = 0;
     }
 
     void printMatrix(FILE *stream, size_t node)
@@ -582,10 +586,32 @@ public:
         return sqrt(sumSquareHD / temp_matrix.size());
     }
 
+    inline double calcAvgSim(size_t node)
+    {
+        vector<seq_type> temp_matrix = getNonAmbiMatrix(node);
+        if (temp_matrix.size() <= 1)
+        {
+            return 0;
+        }
+
+        double sumDistance = 0;
+        seq_type meanSig = createMeanSig(temp_matrix);
+
+        for (seq_type signature : temp_matrix)
+        {
+            double distance = calcSimilarity(meanSig, signature);
+            sumDistance += distance;
+        }
+
+        return sumDistance / temp_matrix.size();
+    }
+
     // union mean of children
     inline void updatePriority(size_t node)
     {
-        priority[node] = calcDistortion(node);
+        // priority[node] = calcDistortion(node);
+        priority[node] = calcAvgSim(node);
+
         // priority[node] = calcDistortionHD(node);
         // priority[node] = calcNodeMaxsimilarity(node);
 
@@ -1188,20 +1214,9 @@ public:
         return 1;
     }
 
-    inline size_t similarityStatus(seq_type sig1, seq_type sig2, double offset = 0)
+    inline size_t similarityStatus(seq_type sig1, seq_type sig2, double local_stay_t, double offset = 0)
     {
-        // check the other children
-        double local_stay_t = stay_threshold - offset;
-
-        // double offset = 1.2;
-        // // size_t rank = findLevel(child);
-        // for (size_t t = 0; t < rank; t++)
-        // {
-        //     local_stay_t = local_stay_t + stay_threshold * offset;
-        // }
-        // // double NN_t = local_stay_t + stay_threshold * offset;
-
-        double local_split_t = split_threshold * 1.5;
+        double local_split_t = split_threshold * offset;
         double similarity = calcSimilarity(sig1, sig2);
 
         printMsg("%.2f", similarity);
@@ -1223,14 +1238,16 @@ public:
         }
     }
 
-    inline size_t similarityStatus(size_t child, size_t rank, seq_type signature)
+    inline size_t similarityStatus(size_t child, seq_type signature)
     {
         printMsg("<%zu, ", child);
         size_t status;
+        //?
+        double offset = 0;
 
         if (isRootNode[child])
         {
-            // root can be stay or split only
+            //? root can be stay or split only
             double similarity = calcOverlap(signature, means[child]);
             printMsg("%.2f> r\n ", similarity);
             if (similarity >= stay_threshold)
@@ -1242,15 +1259,14 @@ public:
                 return SPLIT_F;
             }
         }
-        else if (isBranchNode[child])
+        else if (isSuperNode[child])
         {
-            // double offset = 0.1 * rank;
-            double offset = 0;
-            status = similarityStatus(means[child], signature, offset);
+            // super can only be stay or split
+            status = similarityStatus(means[child], signature, priority[child], 100);
         }
         else
         {
-            status = similarityStatus(means[child], signature);
+            status = similarityStatus(means[child], signature, stay_threshold);
         }
 
         if (status == NN_F)
@@ -1267,11 +1283,90 @@ public:
         return status;
     }
 
-    inline size_t checkRoot(seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN_leaves, vector<size_t> &NN_branches, vector<size_t> &stay, size_t node = 0)
+    template <typename bset>
+    inline size_t getMethod(bset statuses, bool multiple = false)
     {
+        if (statuses.none())
+        {
+            return 0;
+        }
+
+        // bset temp(std::string("00100010"));
+
+        if ((statuses & bset("00001010")).any())
+        {
+            if (statuses.test(5))
+            {
+                return 2;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+        else if (statuses == bset().set(5))
+        {
+            if (multiple)
+            {
+                return 4;
+            }
+            else
+            {
+                return 3;
+            }
+        }
+        else if (statuses == bset().set(2))
+        {
+            if (multiple)
+            {
+                return 7;
+            }
+            else
+            {
+                return 5;
+            }
+        }
+        else if (statuses == bset().set(4))
+        {
+            if (multiple)
+            {
+                return 7;
+            }
+            else
+            {
+                return 6;
+            }
+        }
+        else if (statuses == bset("00010100"))
+        {
+            return 7;
+        }
+        else if (statuses == bset("00100100"))
+        {
+            return 8;
+        }
+        else if (statuses == bset("00110000"))
+        {
+            return 9;
+        }
+        else if (statuses == bset("00110100"))
+        {
+            return 10;
+        }
+        else
+        {
+            printMsg("ERROR - status\n");
+            return 11;
+        }
+        return 0;
+    }
+
+    inline pair<size_t, size_t> checkRootP(seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN_leaves, vector<size_t> &NN_branches, vector<size_t> &stay, size_t node = 0)
+    {
+        std::bitset<8> statuses;
         size_t dest = 0;
-        size_t best_rank = numeric_limits<size_t>::max();
-        double offset = 1.2;
+        double max_similarity = 0;
+
         // check the other children
         for (size_t child : childLinks[node])
         {
@@ -1281,32 +1376,123 @@ public:
                 printMsg("Ambi: %zu\n", child);
                 continue;
             }
-            size_t rank = findLevel(child);
-            size_t status = similarityStatus(child, rank, signature);
+            double similarity = 0;
+            size_t status = similarityStatus(child, signature);
             switch (status)
             {
             case STAY_F:
                 stay.push_back(child);
-                if (rank < best_rank)
-                {
-                    best_rank = rank;
-                    dest = child;
-                }
-                break;
 
+                if (isSuperNode[child] || isRootNode[child])
+                {
+                    statuses.set(5);
+                }
+                else
+                {
+                    similarity = calcSimilarity(means[child], signature);
+                    if (similarity > max_similarity)
+                    {
+                        max_similarity = similarity;
+                        dest = child;
+                    }
+
+                    if (isBranchNode[child])
+                    {
+                        statuses.set(3);
+                    }
+                    else
+                    {
+                        statuses.set(1);
+                    }
+                }
+
+                break;
             case SPLIT_F:
                 mismatch.push_back(child);
                 break;
             case NN_LEAVE_F:
                 NN_leaves.push_back(child);
+                statuses.set(2);
                 break;
             case NN_BRANCH_F:
                 NN_branches.push_back(child);
+                statuses.set(4);
                 break;
             default:
                 break;
             }
         }
+
+        // cerr << statuses << "\n";
+        // cerr << "Status: " << getMethod(statuses, (NN_branches.size() > 1 || NN_leaves.size() > 1)) << "\n";
+
+        size_t method = getMethod(statuses, (NN_branches.size() > 1 || NN_leaves.size() > 1));
+
+        return make_pair(method, dest);
+    }
+
+    inline size_t checkRoot(seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN_leaves, vector<size_t> &NN_branches, vector<size_t> &stay, size_t node = 0)
+    {
+        std::bitset<8> statuses;
+        size_t dest = 0;
+        double max_similarity = 0;
+
+        // check the other children
+        for (size_t child : childLinks[node])
+        {
+            // skip ambiNode
+            if (isAmbiNode[child])
+            {
+                printMsg("Ambi: %zu\n", child);
+                continue;
+            }
+            double similarity = 0;
+            size_t status = similarityStatus(child, signature);
+            switch (status)
+            {
+            case STAY_F:
+                stay.push_back(child);
+                similarity = calcSimilarity(means[child], signature);
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = child;
+                }
+
+                if (isSuperNode[child] || isRootNode[child])
+                {
+                    statuses.set(5);
+                }
+                else if (isBranchNode[child])
+                {
+                    statuses.set(3);
+                }
+                else
+                {
+                    statuses.set(1);
+                }
+                break;
+            case SPLIT_F:
+                mismatch.push_back(child);
+                break;
+            case NN_LEAVE_F:
+                NN_leaves.push_back(child);
+                statuses.set(2);
+                break;
+            case NN_BRANCH_F:
+                NN_branches.push_back(child);
+                statuses.set(4);
+                break;
+            default:
+                break;
+            }
+        }
+
+        // cerr << statuses << "\n";
+        // cerr << "Status: " << getMethod(statuses, (NN_branches.size() > 1 || NN_leaves.size() > 1)) << "\n";
+
+        size_t method = getMethod(statuses, (NN_branches.size() > 1 || NN_leaves.size() > 1));
+
         return dest;
     }
 
@@ -1348,7 +1534,51 @@ public:
         vector<size_t> NN_branches;
         vector<size_t> stay;
 
-        size_t dest = checkRoot(signature, insertionList, mismatch, NN_leaves, NN_branches, stay, node);
+        size_t method, dest;
+        std::tie(method, dest) = checkRootP(signature, insertionList, mismatch, NN_leaves, NN_branches, stay, node);
+
+        switch (method)
+        {
+        case 0:
+            printMsg("#mismatch\n");
+            return createNode(signature, insertionList, node, idx);
+            break;
+        case 1:
+            printMsg("#stay in %zu from %zu\n", dest, stay.size());
+            return stayNode(signature, insertionList, idx, dest);
+            break;
+        case 2:
+            printMsg("#ignore super, stay in %zu from %zu\n", dest, stay.size());
+            return stayNode(signature, insertionList, idx, dest);
+            break;
+        case 3:
+            printMsg("#stay in one super %zu from %zu\n", dest, stay.size());
+            return tt_root(signature, insertionList, idx, stay[0]);
+            break;
+        case 4:
+            printMsg("#stay multiple super %zu\n", stay.size());
+            break;
+        case:
+            printMsg("# %zu\n", );
+            break;
+        case:
+            printMsg("# %zu\n", );
+            break;
+        case:
+            printMsg("# %zu\n", );
+            break;
+        case:
+            printMsg("# %zu\n", );
+            break;
+        case:
+            printMsg("# %zu\n", );
+            break;
+        default:
+            printMsg("ERROR!!!\n");
+            break;
+        }
+
+        return 0;
 
         if (dest != 0)
         {
@@ -1366,16 +1596,9 @@ public:
 
         if (NN_branches.size() == 0)
         {
-            // if (NN_leaves.size() > 1)
             {
                 printMsg("NN leaves\n");
                 return superCluster(signature, insertionList, idx, node, NN_leaves, NN_branches);
-
-                // dbgPrintSignatureIdx(stderr, means[t_parent]);
-                // for (size_t c : childLinks[t_parent])
-                // {
-                //     dbgPrintSignatureIdx(stderr, means[c]);
-                // }
             }
         }
         else if (NN_branches.size() == 1)
@@ -1668,7 +1891,7 @@ public:
 
             for (size_t child : nonSubTree)
             {
-                size_t status = similarityStatus(child, 0, signature);
+                size_t status = similarityStatus(child, signature);
                 switch (status)
                 {
                 case STAY_F:
