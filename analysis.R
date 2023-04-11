@@ -83,12 +83,13 @@ ggplot()+
   )
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
-dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s80-l18.txt",sep=""))
-cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
-
 sigClust<-plotEnt(paste(path,"/sigClust-k9-c42.txt",sep=""))
 cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
 
+{
+dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s80-l18.txt",sep=""))
+cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
+}
 
 # mean(cluQ$avg_sim)
 # avg<- cluQ %>% summarise(across(everything(), list(mean)))
