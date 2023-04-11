@@ -505,26 +505,39 @@ public:
     // RMSD
     double test(size_t node = 0)
     {
+        // for (size_t i = 0; i < childCounts[node]; i++)
+        // {
+        //     for (size_t j = i + 1; j < childCounts[node]; j++)
+        //     {
+        //         double similarity = calcSimilarity(means[childLinks[node][i]], means[childLinks[node][j]]);
+        //         printMsg("%zu,%zu,%.2f\n", childLinks[node][i], childLinks[node][j], similarity);
+        //     }
+        // }
+
+        // printMsg(">>>\n");
+        // node = 10;
+
+        // size_t nodeb = 12;
+        // for (size_t j = 0; j < childCounts[node]; j++)
+        // {
+        //     double similarity = calcSimilarity(means[nodeb], means[childLinks[node][j]]);
+        //     printMsg("10,%zu,%.2f\n", childLinks[node][j], similarity);
+        // }
+
+        printMsg(">>>\n");
+        node = 73;
+        size_t nodeb = 61;
         for (size_t i = 0; i < childCounts[node]; i++)
         {
-            for (size_t j = i + 1; j < childCounts[node]; j++)
+            for (size_t j = 0; j < childCounts[nodeb]; j++)
             {
-                double similarity = calcSimilarity(means[childLinks[node][i]], means[childLinks[node][j]]);
-                printMsg("%zu,%zu,%.2f\n", childLinks[node][i], childLinks[node][j], similarity);
+                double similarity = calcSimilarity(means[childLinks[node][i]], means[childLinks[nodeb][j]]);
+                printMsg("%zu,%zu,%.2f\n", childLinks[node][i], childLinks[nodeb][j], similarity);
             }
         }
-
         printMsg(">>>\n");
-        node = 10;
 
-        size_t nodeb = 12;
-        for (size_t j = 0; j < childCounts[node]; j++)
-        {
-            double similarity = calcSimilarity(means[nodeb], means[childLinks[node][j]]);
-            printMsg("10,%zu,%.2f\n", childLinks[node][j], similarity);
-        }
-
-        printMsg(">>>\n");
+        nodeb = 67;
         for (size_t i = 0; i < childCounts[node]; i++)
         {
             for (size_t j = 0; j < childCounts[nodeb]; j++)
@@ -1629,6 +1642,10 @@ public:
             }
         }
 
+        printTreeJson(stderr);
+
+        printTreeJson(stderr);
+
         printMsg("Overlaps %zu\n", overlaps.size());
     }
 
@@ -1678,7 +1695,6 @@ public:
     {
         size_t t_parent = 0;
         size_t temp_dest = 0;
-        size_t ambi = 0;
         double max_similarity = 0;
 
         // size_t node = root;
@@ -1759,17 +1775,42 @@ public:
             }
             else
             {
-                ambi = ambiLinks[t_parent][0];
-                dest = stayNode(signature, insertionList, idx, ambi);
-                updatePriority(ambi);
-                if (priority[ambi] > stay_threshold)
+                dest = ambiLinks[t_parent][0];
+                printMsg("<<ambi %zu, %.2f\n", dest, priority[dest]);
+
+                // dest = stayNode(signature, insertionList, idx, dest);
+                // updatePriority(dest);
+
+                // preload sig into matrices to check for priority
+                addSigToMatrix(dest, signature);
+                updatePriority(dest);
+                // release preloaded matrix
+                matrices[dest].pop_back();
+
+                printMsg(">>ambi %zu, %.2f\n", dest, priority[dest]);
+
+                if (priority[dest] > stay_threshold)
                 {
-                    printMsg("@@ambi %zu, %.2f\n", ambi, priority[ambi]);
-                    isAmbiNode[ambi] = 0;
-                    updateParentMean(ambi);
+                    dest = stayNode(signature, insertionList, idx, dest);
+                    printMsg("@@ambi %zu, %.2f\n", dest, priority[dest]);
+                    isAmbiNode[dest] = 0;
+                    updateParentMean(dest);
                     //? also remove from ambi link;
                     ambiLinks[t_parent].clear();
                 }
+                else
+                {
+                    dest = stayNode(signature, insertionList, idx, dest);
+
+                    if (priority[dest] < split_threshold)
+                    {
+
+                        printMsg("??ambi split %zu, %.2f\n", dest, priority[dest]);
+                    }
+                }
+
+                // updatePriority(dest);
+                // updateParentMean(dest);
             }
             return dest;
             break;
