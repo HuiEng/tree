@@ -1695,6 +1695,7 @@ public:
     {
         size_t t_parent = 0;
         size_t temp_dest = 0;
+        size_t ambi_split = 0;
         double max_similarity = 0;
 
         // size_t node = root;
@@ -1762,7 +1763,7 @@ public:
             {
                 for (size_t child : childLinks[t_parent])
                 {
-                    if (calcSimilarity(means[child], signature) >= stay_threshold)
+                    if (!isAmbiNode[child] && calcSimilarity(means[child], signature) >= stay_threshold)
                     {
                         printMsg("stay branch %zu %.2f\n", child, calcSimilarity(means[child], signature));
                         return stayNode(signature, insertionList, idx, child);
@@ -1775,42 +1776,48 @@ public:
             }
             else
             {
-                dest = ambiLinks[t_parent][0];
-                printMsg("<<ambi %zu, %.2f\n", dest, priority[dest]);
-
-                // dest = stayNode(signature, insertionList, idx, dest);
-                // updatePriority(dest);
-
-                // preload sig into matrices to check for priority
-                addSigToMatrix(dest, signature);
-                updatePriority(dest);
-                // release preloaded matrix
-                matrices[dest].pop_back();
-
-                printMsg(">>ambi %zu, %.2f\n", dest, priority[dest]);
-
-                if (priority[dest] > stay_threshold)
+                for (size_t ambi : ambiLinks[t_parent])
                 {
-                    dest = stayNode(signature, insertionList, idx, dest);
-                    printMsg("@@ambi %zu, %.2f\n", dest, priority[dest]);
-                    isAmbiNode[dest] = 0;
-                    updateParentMean(dest);
-                    //? also remove from ambi link;
-                    ambiLinks[t_parent].clear();
-                }
-                else
-                {
-                    dest = stayNode(signature, insertionList, idx, dest);
+                    // dest = ambiLinks[t_parent][0];
+                    dest = ambi;
 
-                    if (priority[dest] < split_threshold)
+                    // dest = stayNode(signature, insertionList, idx, dest);
+                    // updatePriority(dest);
+
+                    // preload sig into matrices to check for priority
+                    addSigToMatrix(dest, signature);
+                    updatePriority(dest);
+                    // release preloaded matrix
+                    matrices[dest].pop_back();
+
+                    printMsg(">>ambi %zu, %.2f\n", dest, priority[dest]);
+
+                    if (priority[dest] > stay_threshold)
+                    {
+                        dest = stayNode(signature, insertionList, idx, dest);
+                        printMsg("@@ambi %zu, %.2f\n", dest, priority[dest]);
+                        isAmbiNode[dest] = 0;
+                        updateParentMean(dest);
+                        //? also remove from ambi link;
+                        ambiLinks[t_parent].clear();
+                        break;
+                    }
+                    else if (priority[dest] < split_threshold)
                     {
 
                         printMsg("??ambi split %zu, %.2f\n", dest, priority[dest]);
+                        ambi_split++;
+                        // dest = createAmbiNode(signature, insertionList, t_parent, idx);
+                    }
+                    else
+                    {
+                        dest = stayNode(signature, insertionList, idx, dest);
                     }
                 }
-
-                // updatePriority(dest);
-                // updateParentMean(dest);
+                if (ambi_split == ambiLinks[t_parent].size())
+                {
+                    dest = createAmbiNode(signature, insertionList, t_parent, idx);
+                }
             }
             return dest;
             break;
