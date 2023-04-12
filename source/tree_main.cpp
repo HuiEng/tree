@@ -122,9 +122,9 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         printMsg("\n\n\nBefore\n");
         tree.printTreeJson(stderr);
         lastindex = insertionList[insertionList.size() - 1] - 1;
-        singleton = 1;
+        singleton = 0;
         tree.trim(lastindex);
-        singleton = 2;
+        singleton = 1;
     }
 
     for (size_t run = 0; run < iteration; run++)

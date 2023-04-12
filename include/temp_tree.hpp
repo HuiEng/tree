@@ -26,7 +26,8 @@ using namespace std;
 // typedef unsigned char cell_type;
 bloom_parameters parameters;
 size_t partree_capacity = 100;
-size_t singleton = 2;
+size_t singleton = 1;
+size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
 bool print_ = false;
 
@@ -3094,6 +3095,7 @@ public:
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
         return node;
+        // return parentLinks[node];
     }
 
     void getEmptyLeaves(vector<size_t> &leaves, size_t node = 0)
@@ -3104,7 +3106,7 @@ public:
             {
                 getEmptyLeaves(leaves, child);
             }
-            else if (isAmbiNode[child] | seqIDs[child].size() < singleton) // remove singleton
+            else if (isAmbiNode[child] | seqIDs[child].size() <= singleton) // remove singleton
             {
                 leaves.push_back(child);
             }
@@ -3112,6 +3114,11 @@ public:
             {
                 updatePriority(child);
                 updateParentMean(node);
+                size_t size = seqIDs[child].size();
+                if (size <= minClusSize)
+                {
+                    minClusSize = size;
+                }
             }
         }
     }
@@ -3164,11 +3171,11 @@ public:
     void trim(size_t last_idx)
     {
         std::set<size_t> branches;
-        printMsg("\nTrimming\n");
 
         vector<size_t> leaves;
         getEmptyLeaves(leaves);
-
+        singleton = minClusSize + 1;
+        printMsg("\nTrimming, singleton size = %zu\n", singleton);
         // do leaves
         for (size_t i : leaves)
         {
