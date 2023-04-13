@@ -244,6 +244,7 @@ public:
         fprintf(stream, "\"branch\":\"%zu\",", isBranchNode[tnode]);
         fprintf(stream, "\"ambi\":\"%zu\",", isAmbiNode[tnode]);
         fprintf(stream, "\"subtree\":\"%zu\",", isRootNode[tnode]);
+        fprintf(stream, "\"super\":\"%zu\",", isSuperNode[tnode]);
         fprintf(stream, "\"priority\":\"%.2f\",", priority[tnode]);
         fprintf(stream, "\"childCount\":\"%zu\",\"content\":\"*", seqIDs[tnode].size());
         // fprintf(stream, "{\"node\":\"%zu\",\"branch\":\"%zu\",\"priority\":\"%.2f\",\"childCount\":\"%zu\",\"content\":\"*", tnode, isBranchNode[tnode], calcNodeMaxsimilarity(tnode), seqIDs[tnode].size());
@@ -526,6 +527,17 @@ public:
         // }
 
         printMsg(">>>\n");
+        vector<size_t> t{11, 8, 4, 5, 7, 38};
+        for (size_t i = 0; i < t.size(); i++)
+        {
+            for (size_t j = i + 1; j < t.size(); j++)
+            {
+                double similarity = calcSimilarity(means[t[i]], means[t[j]]);
+                printMsg("%zu,%zu,%.2f\n", t[i], t[j], similarity);
+            }
+        }
+        return 0;
+
         node = 73;
         size_t nodeb = 61;
         for (size_t i = 0; i < childCounts[node]; i++)
@@ -1272,17 +1284,17 @@ public:
 
         if (similarity >= local_stay_t)
         {
-            printMsg(": STAY> b\n");
+            printMsg(": STAY>\n");
             return STAY_F;
         }
         else if (similarity <= local_split_t)
         {
-            printMsg(": SPLIT> b\n");
+            printMsg(": SPLIT>\n");
             return SPLIT_F;
         }
         else
         {
-            printMsg(": NN> b\n");
+            printMsg(": NN>\n");
             return NN_F;
         }
     }
@@ -1298,7 +1310,7 @@ public:
         {
             //? root can be stay or split only
             double similarity = calcOverlap(signature, means[child]);
-            printMsg("%.2f> r\n ", similarity);
+            printMsg("%.2f> root\n ", similarity);
             if (similarity >= stay_threshold)
             {
                 return STAY_F;
@@ -1311,7 +1323,7 @@ public:
         else if (isSuperNode[child])
         {
             // super can only be stay or split
-            printMsg("(priority %.2f)", priority[child]);
+            printMsg("(super %.2f)", priority[child]);
             status = similarityStatus(means[child], signature, priority[child], 100);
         }
         else
@@ -1367,6 +1379,7 @@ public:
         }
         else if (statuses == bset().set(2))
         {
+            // return 5;
             if (multiple)
             {
                 return 7;
@@ -1571,7 +1584,7 @@ public:
 
                 if (sim2 > sim1)
                 {
-                    printMsg("Moving %zy from %zu to %zu, %.2f, %.2f\n", child, super, t_parent, sim1, sim2);
+                    printMsg("Moving %zu from %zu to %zu, %.2f, %.2f\n", child, super, t_parent, sim1, sim2);
                     moveParent(child, t_parent);
                     isSuperNode[t_parent] = 1;
                 }
@@ -1620,34 +1633,114 @@ public:
         return dest;
     }
 
-    inline size_t checkSuper(size_t super)
+    // check overlap
+    // may do something
+    inline size_t checkOverlap(size_t super)
     {
-        printMsg("Checking Super %zu, %.2f\n", super, priority[super]);
+        printMsg("Checking Overlap %zu, %.2f\n", super, priority[super]);
         size_t parent = parentLinks[super];
         vector<size_t> overlaps;
+        size_t overlapsMaxCount = 0;
         for (size_t child : childLinks[parent])
         {
             if (child == super)
             {
                 continue;
             }
-            else
+            else if (isSuperNode[child] || isRootNode[child])
             {
+                overlapsMaxCount++;
                 double similarity = calcSimilarity(means[super], means[child]);
-                printMsg("%zu,%.2f\n", child, similarity);
+                printMsg("%zu,%.2f,%.2f", child, priority[super], similarity);
                 //? may want to deal with root differently
                 if (similarity > priority[super])
                 {
                     overlaps.push_back(child);
+                    printMsg("*");
                 }
+                printMsg("\n");
             }
         }
 
-        printTreeJson(stderr);
+        // dissolve super
+        if (overlaps.size() > overlapsMaxCount / 2)
+        {
+            printMsg("Overlaps %zu\n", overlaps.size());
+            vector<size_t> candidates = childLinks[super];
 
-        printTreeJson(stderr);
+            deleteNode(super);
+            for (size_t child : candidates)
+            {
+                size_t dest = 0;
+                double max_similarity = 0;
 
-        printMsg("Overlaps %zu\n", overlaps.size());
+                for (size_t t_parent : overlaps)
+                {
+                    double similarity = calcSimilarity(means[child], means[t_parent]);
+                    if (similarity > max_similarity)
+                    {
+                        max_similarity = similarity;
+                        dest = t_parent;
+                    }
+                }
+                moveParent(child, dest);
+                updateParentMean(child);
+                printMsg("Relocating %zu to %zu\n", child, parentLinks[child]);
+            }
+
+            updateParentMean(parent);
+        }
+    }
+
+    // break the super if the distortion is too big
+    // find the nearest sibling with similarity greater than split threshold
+    // or else stay as child of grandparent(root?)
+    inline size_t checkSuper(size_t super)
+    {
+        if (priority[super] > split_threshold)
+        {
+            return checkOverlap(super);
+        }
+        printMsg("Checking Super %zu, %.2f\n", super, priority[super]);
+
+        size_t grandparent = parentLinks[super];
+        vector<size_t> candidates = childLinks[super];
+
+        deleteNode(super);
+        for (size_t child : candidates)
+        {
+            size_t dest = grandparent;
+            double max_similarity = split_threshold;
+
+            for (size_t t_parent : childLinks[grandparent])
+            {
+                double similarity = calcSimilarity(means[child], means[t_parent]);
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = t_parent;
+                }
+            }
+            moveParent(child, dest);
+
+            // size_t dest = parentLinks[searchBest(means[child])];
+            // double similarity = calcSimilarity(means[child], means[dest]);
+            // if (similarity <= split_threshold)
+            // {
+            //     //?
+            //     moveParent(child, grandparent);
+            // }
+            // else
+            // {
+            //     moveParent(child, dest);
+            // }
+            
+            updateParentMean(child);
+            printMsg("Relocating %zu to %zu\n", child, parentLinks[child]);
+        }
+
+        updateParentMean(grandparent);
+        return 1;
     }
 
     // put NN leaves and branches under the same supercluster
@@ -3033,7 +3126,7 @@ public:
     // cluster means still remain
     void prepReinsert(size_t node = 0)
     {
-        if (!isAmbiNode[node])
+        // if (!isAmbiNode[node])
         {
             updatePriority(node);
             if (!isBranchNode[node])
@@ -3064,6 +3157,7 @@ public:
         }
     }
 
+    // update priority of ambi nodes, for debugging only
     void prepareAmbi(size_t node = 0)
     {
         for (size_t child : childLinks[node])
@@ -3104,7 +3198,24 @@ public:
         {
             if (isBranchNode[child])
             {
-                getEmptyLeaves(leaves, child);
+                // getEmptyLeaves(leaves, child);
+
+                // unify tight branch
+                if (isRootNode[child] || isSuperNode[child])
+                {
+                    getEmptyLeaves(leaves, child);
+                }
+                else if (priority[child] > stay_threshold)
+                {
+                    for (size_t i = 1; i < childCounts[child]; i++)
+                    {
+                        leaves.push_back(childLinks[child][i]);
+                    }
+                }
+                else
+                {
+                    getEmptyLeaves(leaves, child);
+                }
             }
             else if (isAmbiNode[child] | seqIDs[child].size() <= singleton) // remove singleton
             {
@@ -3114,11 +3225,11 @@ public:
             {
                 updatePriority(child);
                 updateParentMean(node);
-                size_t size = seqIDs[child].size();
-                if (size <= minClusSize)
-                {
-                    minClusSize = size;
-                }
+                // size_t size = seqIDs[child].size();
+                // if (size <= minClusSize)
+                // {
+                //     minClusSize = size;
+                // }
             }
         }
     }
@@ -3168,13 +3279,13 @@ public:
         }
     }
 
-    void trim(size_t last_idx)
+    void trim()
     {
         std::set<size_t> branches;
 
         vector<size_t> leaves;
         getEmptyLeaves(leaves);
-        singleton = minClusSize + 1;
+        // singleton = minClusSize + 1;
         printMsg("\nTrimming, singleton size = %zu\n", singleton);
         // do leaves
         for (size_t i : leaves)

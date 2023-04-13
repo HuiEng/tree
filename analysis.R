@@ -83,7 +83,7 @@ ggplot()+
   )
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
-sigClust<-plotEnt(paste(path,"/sigClust-k9-c42.txt",sep=""))
+sigClust<-plotEnt(paste(path,"/sigClust-k9-c48.txt",sep=""))
 cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
 
 {
@@ -96,6 +96,8 @@ cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
 avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
 plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 plotTwo(normSize(cluQ_2WMT),normSize(cluQ_sigClust),ncol(cluQ_2WMT)+1)
+plotTwo(normSize(cluQ_2WMT, 'sd_sim'),normSize(cluQ_sigClust, 'sd_sim'),ncol(cluQ_2WMT)+1)
+test<-normSize(cluQ_2WMT, 'sd_sim')
 (
   ggplot(cluQ_2WMT)+
   geom_point(aes(x=clu,y=avg_sim,size=size))+
