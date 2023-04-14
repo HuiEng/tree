@@ -377,6 +377,7 @@ public:
   bool debug_arg;
   bool print_arg;
   bool force_split_arg;
+  bool iteration_given;
 
   enum
   {
@@ -393,7 +394,7 @@ public:
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
                         stay_threshold_given(false), stay_threshold_arg(0),
-                        debug_arg(false), print_arg(false), force_split_arg(false)
+                        debug_arg(false), print_arg(false), force_split_arg(false), iteration_given(false)
   {
   }
 
@@ -405,7 +406,7 @@ public:
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
                                               stay_threshold_given(false), stay_threshold_arg(0),
-                                              debug_arg(false), print_arg(false), force_split_arg(false)
+                                              debug_arg(false), print_arg(false), force_split_arg(false), iteration_given(false)
   {
     parse(argc, argv);
   }
@@ -514,6 +515,7 @@ public:
         random_arg = true;
         break;
       case 'I':
+        iteration_given = true;
         iteration_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-I, --iteration=size_t")
         break;

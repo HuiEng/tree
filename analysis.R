@@ -96,7 +96,9 @@ cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
 avg<-sumAll(cluQ_2WMT,cluQ_sigClust)
 plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 plotTwo(normSize(cluQ_2WMT),normSize(cluQ_sigClust),ncol(cluQ_2WMT)+1)
-plotTwo(normSize(cluQ_2WMT, 'sd_sim'),normSize(cluQ_sigClust, 'sd_sim'),ncol(cluQ_2WMT)+1)
+plotTwo(normSize(cluQ_2WMT, 'sd_sim', TRUE),
+        normSize(cluQ_sigClust, 'sd_sim', TRUE),
+        ncol(cluQ_2WMT)+1)
 test<-normSize(cluQ_2WMT, 'sd_sim')
 (
   ggplot(cluQ_2WMT)+
@@ -171,7 +173,7 @@ water<-waterStaph(paste(path,"/sample_needle.txt",sep=""),
 
 
 # dt<-read.csv(paste(path,"/sample-k9-w100-s5-s100-l59.txt",sep=""),header=FALSE)
-dt<-read.csv(paste(path,"/sample-k9-w100-s5-s90-l58.txt",sep=""),header=FALSE)
+dt<-read.csv(paste(path,"/sample-k9-w100-s5-s90-l60.txt",sep=""),header=FALSE)
 colnames(dt)<-c("seqID","cluster")
 # cluQ_2WMT<-cluQualityStaph(dt,water)
 # cluQ_2WMT<-cluQuality(dt,w,3,FALSE)
@@ -188,6 +190,11 @@ cluQ_sigClust<-cluQuality(sigClust,water,2,FALSE,w,3)
 
 plotTwo(cluQ_2WMT,cluQ_sigClust,3)
 plotTwo(normSize(cluQ_2WMT),normSize(cluQ_sigClust),ncol(cluQ_2WMT)+1)
+plotTwo(normSize(cluQ_2WMT, 'sd_sim', TRUE),
+        normSize(cluQ_sigClust, 'sd_sim', TRUE),
+        ncol(cluQ_2WMT)+1)
+test<-normSize(cluQ_sigClust, 'sd_sim')
+
 # plotTwo(normSize(cluQ_2WMT,'avg_sim_sig'),normSize(cluQ_sigClust,'avg_sim_sig'),ncol(cluQ_2WMT)+1)
 
 # plotStaph(cluQ_2WMT)

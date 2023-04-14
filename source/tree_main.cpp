@@ -8,6 +8,7 @@ typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 bool random_ = false;
 size_t cap = 0;
 size_t iteration = 0;
+bool iteration_given = false;
 using namespace std;
 bool debug_ = false;
 bool force_split_ = false;
@@ -111,48 +112,36 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     {
         for (size_t i = 1; i < cap; i++)
         {
-            if (foo[i] == 67)
-            {
-                tree.printTreeJson(stderr);
-                printMsg("inserting %zu\n", foo[i]);
-                size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
-                // clusters[foo[i]] = tree.findAncestor(clus);
-                clusters[foo[i]] = clus;
-                tree.printTreeJson(stderr);
-                tree.test();
-            }
-            else
-            {
-                printMsg("inserting %zu\n", foo[i]);
-                size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
-                // clusters[foo[i]] = tree.findAncestor(clus);
-                clusters[foo[i]] = clus;
-            }
-            // printMsg("inserting %zu\n", foo[i]);
-            // size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
-            // // clusters[foo[i]] = tree.findAncestor(clus);
-            // clusters[foo[i]] = clus;
+            printMsg("inserting %zu\n", foo[i]);
+            size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
+            // clusters[foo[i]] = tree.findAncestor(clus);
+            clusters[foo[i]] = clus;
         }
     }
 
-    // prep to remove and reinsert ambi
     tree.prepareAmbi();
-    printMsg("\n\n\nBefore\n");
-    tree.printTreeJson(stderr);
-    singleton = 0;
-    tree.trim();
-    printMsg("\n\nReinserting ambi (all)\n");
-    tree.prepReinsert();
-    for (size_t i = 0; i < cap; i++)
-    {
-        size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
-        printMsg("\n Reinsert %zu at %zu\n", foo[i], clus);
-        // clusters[foo[i]] = tree.findAncestor(clus);
-        clusters[foo[i]] = clus;
-    }
 
-    tree.printTreeJson(stderr);
-    singleton = 1;
+    // for debugging
+    if (iteration_given)
+    {
+        // prep to remove and reinsert ambi
+        printMsg("\n\n\nBefore\n");
+        tree.printTreeJson(stderr);
+        singleton = 0;
+        tree.trim();
+        printMsg("\n\nReinserting ambi (all)\n");
+        tree.prepReinsert();
+        for (size_t i = 0; i < cap; i++)
+        {
+            size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);
+            printMsg("\n Reinsert %zu at %zu\n", foo[i], clus);
+            // clusters[foo[i]] = tree.findAncestor(clus);
+            clusters[foo[i]] = clus;
+        }
+
+        tree.printTreeJson(stderr);
+        singleton = 1;
+    }
 
     for (size_t run = 0; run < iteration; run++)
     {
@@ -183,7 +172,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         }
     }
     tree.updateTree();
-    // tree.test();
+    tree.test();
 
     FILE *pFile = fopen("nodeDistance.txt", "w");
     tree.printNodeDistance(pFile, seqs, clusters);
@@ -555,7 +544,11 @@ int tree_main(int argc, char *argv[])
     }
 
     cap = args.capacity_arg;
-    iteration = args.iteration_arg;
+    if (args.iteration_given)
+    {
+        iteration_given = true;
+        iteration = args.iteration_arg;
+    }
 
     debug_ = args.debug_arg;
     print_ = args.print_arg;

@@ -334,9 +334,14 @@ public:
         return idx;
     }
 
-    seq_type createRandomSig(vector<size_t> children)
+    seq_type createRandomSig(vector<size_t> children, size_t s = 0)
     {
-        unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        unsigned seed = s;
+        if (seed == 0)
+        {
+            seed = chrono::system_clock::now().time_since_epoch().count();
+        }
         default_random_engine rng(seed);
         uniform_int_distribution<size_t> dist(0, children.size() - 1);
 
@@ -527,6 +532,11 @@ public:
         // }
 
         printMsg(">>>\n");
+        double similarity = calcSimilarity(means[31], means[32]);
+        printMsg("%zu,%zu,%.2f\n", 31, 32, similarity);
+
+        return 0;
+
         vector<size_t> t{11, 8, 4, 5, 7, 38};
         for (size_t i = 0; i < t.size(); i++)
         {
@@ -663,6 +673,21 @@ public:
         }
 
         return sumDistance / temp_matrix.size();
+        ;
+        // double avg_sim = sumDistance / temp_matrix.size();
+        // if (isRootNode[node])
+        // {
+        //     double max_width = 0;
+        //     for (size_t child : childLinks[node])
+        //     {
+        //         if (priority[child] > max_width)
+        //         {
+        //             max_width = priority[child];
+        //         }
+        //     }
+        //     avg_sim += max_width / 2;
+        // }
+        // return avg_sim;
     }
 
     // union mean of children
@@ -1071,6 +1096,67 @@ public:
         return {a, b};
     }
 
+    // rotate subtree if it has at least 1 subtree child with priority lower than it
+    // rotate with the lowest priority
+    size_t rotate(size_t t_parent)
+    {
+        bool need_rotate = false;
+        double min_priority = 1;
+        size_t candidate = 0;
+        size_t candidate_idx = 0;
+        for (size_t i = 0; i < childCounts[t_parent]; i++)
+        {
+            size_t child = childLinks[t_parent][i];
+            if (isRootNode[child])
+            {
+                if (priority[child] < priority[t_parent])
+                {
+                    need_rotate = true;
+                    printMsg("---%zu, %.2f\n", child, priority[child]);
+                    if (priority[child] < min_priority)
+                    {
+                        min_priority = priority[child];
+                        candidate = child;
+                        candidate_idx = i;
+                    }
+                }
+            }
+        }
+
+        if (!need_rotate)
+        {
+            return 0;
+        }
+
+        printMsg("Rotating %zu with %zu\n", t_parent, candidate);
+        printTreeJson(stderr);
+
+        size_t grandparent = parentLinks[t_parent];
+        size_t t_parent_idx = getNodeIdx(t_parent);
+
+        // remove candidate from t_parent then make candidate the parent of t_parent
+        matrices[t_parent].erase(matrices[t_parent].begin() + candidate_idx);
+        childLinks[t_parent].erase(childLinks[t_parent].begin() + candidate_idx);
+        childCounts[t_parent]--;
+        updateNodeMean(t_parent);
+        updatePriority(t_parent);
+
+        // add t_parent to candidate, make grandparent the parent of candidate then update grandparent
+        moveParent(t_parent, candidate, false);
+        matrices[grandparent].erase(matrices[grandparent].begin() + t_parent_idx);
+        childLinks[grandparent].erase(childLinks[grandparent].begin() + t_parent_idx);
+        moveParent(candidate, grandparent, false);
+
+        if (childCounts[t_parent] <= 1)
+        {
+            dropBranch(t_parent);
+            printMsg("Dropping unitig %zu \n", t_parent);
+        }
+
+        updateParentMean(candidate);
+        return 1;
+    }
+
     size_t forceSplitRoot(vector<size_t> &insertionList, bool unpack = false, size_t node = 0)
     {
         size_t clusterCount = 2;
@@ -1111,7 +1197,7 @@ public:
         vector<seq_type> temp_centroids(clusterCount);
         for (size_t i = 0; i < clusterCount; i++)
         {
-            temp_centroids[i] = createRandomSig(children);
+            temp_centroids[i] = createRandomSig(children, (i + 1) * 100);
         }
 
         vector<size_t> clustersSize(clusterCount);
@@ -1173,6 +1259,8 @@ public:
             updateNodeMean(t_parent);
             updatePriority(t_parent);
             addSigToMatrix(node, means[t_parent]);
+
+            rotate(t_parent);
         }
         updateParentMean(node);
         printTreeJson(stderr);
@@ -1215,11 +1303,21 @@ public:
         vector<vector<size_t>> clusters(clusterCount);
         vector<seq_type> temp_centroids(clusterCount);
         temp_centroids[0] = means[node];
+        size_t seed = 100;
 
         // find another sibling centroid if any subtree has no child
+        //? infinte loop issue
         while (true)
         {
-            temp_centroids[1] = createRandomSig(children);
+            printMsg(">> clustering\n");
+            temp_centroids[1] = createRandomSig(children, seed);
+            seed += 100;
+
+            if (seed > 1000)
+            {
+                printMsg("?? cannot cluster\n");
+                return 0;
+            }
             for (size_t child : children)
             {
                 size_t dest = 0;
@@ -1299,6 +1397,23 @@ public:
         }
     }
 
+    //? what happen if child is subtree too?
+    // priority of a root node is not a good measure, check the children instead
+    // return stay if there is any child return stay status, else split
+    // find the best child later in another function
+    inline size_t stayInSubtree(seq_type signature, size_t subtree)
+    {
+        for (size_t child : childLinks[subtree])
+        {
+            size_t status = similarityStatus(child, signature);
+            if (status == STAY_F)
+            {
+                return STAY_F;
+            }
+        }
+        return SPLIT_F;
+    }
+
     inline size_t similarityStatus(size_t child, seq_type signature)
     {
         printMsg("<%zu, ", child);
@@ -1308,17 +1423,39 @@ public:
 
         if (isRootNode[child])
         {
-            //? root can be stay or split only
-            double similarity = calcOverlap(signature, means[child]);
-            printMsg("%.2f> root\n ", similarity);
-            if (similarity >= stay_threshold)
+            // //? root can be stay or split only
+            // double similarity = calcOverlap(signature, means[child]);
+            // printMsg("%.2f> root\n ", similarity);
+            // if (similarity >= stay_threshold)
+            // {
+            //     return STAY_F;
+            // }
+            // else
+            // {
+            //     return SPLIT_F;
+            // }
+
+            // stayInSubtree(signature, child);
+
+            //? find the furthest distance to the root centroid
+            double min_priority = 1;
+            for (size_t grandchild : childLinks[child])
             {
-                return STAY_F;
+                double similarity = calcSimilarity(means[child], means[grandchild]);
+                if (similarity < min_priority)
+                {
+                    min_priority = similarity;
+                }
             }
-            else
+
+            //? allow room for some distortion
+            if (min_priority > split_threshold)
             {
-                return SPLIT_F;
+                min_priority -= split_threshold / 2;
             }
+
+            printMsg("(root %.2f)", min_priority);
+            status = similarityStatus(means[child], signature, min_priority, 100);
         }
         else if (isSuperNode[child])
         {
@@ -1424,6 +1561,9 @@ public:
         return 0;
     }
 
+    // dest cannot be super or root
+    // in the case of stay size = 1
+    // dest = stay[0]
     inline pair<size_t, size_t> checkRootP(seq_type signature, vector<size_t> &insertionList, vector<size_t> &mismatch, vector<size_t> &NN_leaves, vector<size_t> &NN_branches, vector<size_t> &stay, size_t node = 0)
     {
         std::bitset<8> statuses;
@@ -1439,6 +1579,7 @@ public:
                 printMsg("Ambi: %zu\n", child);
                 continue;
             }
+
             double similarity = 0;
             size_t status = similarityStatus(child, signature);
             switch (status)
@@ -1734,7 +1875,7 @@ public:
             // {
             //     moveParent(child, dest);
             // }
-            
+
             updateParentMean(child);
             printMsg("Relocating %zu to %zu\n", child, parentLinks[child]);
         }
@@ -1816,8 +1957,24 @@ public:
             return stayNode(signature, insertionList, idx, dest);
             break;
         case 3:
-            printMsg("#stay in one super %zu from %zu\n", dest, stay.size());
-            return tt_root(signature, insertionList, idx, stay[0]);
+            temp_dest = stay[0];
+            dest = tt_root(signature, insertionList, idx, temp_dest);
+
+            if (isRootNode[temp_dest])
+            {
+                printMsg("#stay in one root %zu from %zu\n", temp_dest, stay.size()); // stay here should always be size 1
+                if (priority[temp_dest] < split_threshold)
+                {
+                    printMsg(">>> adding subtree beside %zu\n", temp_dest);
+                    addSubtree(insertionList, false, temp_dest);
+                }
+            }
+            else
+            {
+                printMsg("#stay in one super %zu from %zu\n", temp_dest, stay.size()); // stay here should always be size 1
+            }
+
+            return dest;
             break;
         case 4:
             printMsg("#stay multiple super %zu\n", stay.size());
@@ -1859,6 +2016,12 @@ public:
                 {
                     if (!isAmbiNode[child] && calcSimilarity(means[child], signature) >= stay_threshold)
                     {
+                        if (priority[t_parent] < stay_threshold)
+                        {
+                            printMsg("turning branch %zu to super\n", t_parent);
+
+                            isSuperNode[t_parent] = 1;
+                        }
                         printMsg("stay branch %zu %.2f\n", child, calcSimilarity(means[child], signature));
                         return stayNode(signature, insertionList, idx, child);
                     }
@@ -2765,7 +2928,8 @@ public:
 
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
-        size_t node = insertSplit(signature, insertionList, idx);
+        // size_t node = insertSplit(signature, insertionList, idx);
+        size_t node = insert(signature, insertionList, idx);
         if (childCounts[root] > tree_order)
         {
             forceSplitRoot(insertionList, false);
