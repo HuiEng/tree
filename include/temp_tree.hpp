@@ -1373,6 +1373,40 @@ public:
         return 1;
     }
 
+    // input node has only subtree children
+    // now adding another subtree child with the input signature being the new centroid
+    // move grandchildren if they are closer to the new centroid
+    size_t addSubtree(size_t centroid, vector<size_t> &insertionList, bool unpack = false)
+    {
+        size_t parent = parentLinks[centroid];
+
+        for (size_t subtree : childLinks[parent])
+        {
+            //? centroid should be the last child, but do this for safety
+            if (subtree == centroid)
+            {
+                continue;
+            }
+
+            for (size_t child : childLinks[subtree])
+            {
+                double sim1 = calcSimilarity(means[centroid], means[child]);
+                double sim2 = calcSimilarity(means[subtree], means[child]); //? not accurate cuz after moving, centroid of subtree changes
+                // maybe always keep the first child so it will be the centroid?
+
+                // printMsg("centroid %.2f, child %zu, %.2f\n", sim1, child, sim2);
+
+                if (sim1 > sim2)
+                {
+                    moveParent(child, centroid);
+                }
+            }
+            updateNodeMean(subtree);
+            updatePriority(subtree);
+        }
+        updateParentMean(centroid);
+    }
+
     inline size_t similarityStatus(seq_type sig1, seq_type sig2, double local_stay_t, double offset = 1)
     {
         double local_split_t = split_threshold * offset;
@@ -1926,6 +1960,26 @@ public:
         return dest;
     }
 
+    // use this if children are subtree
+    inline size_t tt_subtree(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node)
+    {
+        size_t dest = 0;
+        double max_similarity = split_threshold;
+        printMsg("++++++++++++++Doing Subtree\n");
+
+        for (size_t subtree : childLinks[node])
+        {
+            double similarity = calcSimilarity(signature, means[subtree]);
+            printMsg("<%zu,%.2f>\n", subtree, similarity);
+            if (similarity > max_similarity)
+            {
+                max_similarity = similarity;
+                dest = subtree;
+            }
+        }
+        return dest;
+    }
+
     inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
         size_t t_parent = 0;
@@ -1933,13 +1987,35 @@ public:
         size_t ambi_split = 0;
         double max_similarity = 0;
 
+        size_t method, dest;
+
+        if (isRootNode[childLinks[node][0]])
+        {
+            dest = tt_subtree(signature, insertionList, idx, node);
+
+            if (dest == 0)
+            {
+                printMsg("ERROR!!! Bad Subtree\n");
+                dest = superCluster(signature, insertionList, idx, node, {}, {}, false);
+                t_parent = parentLinks[dest];
+                isRootNode[t_parent] = 1;
+                addSubtree(t_parent, insertionList);
+                return dest;
+            }
+            else
+            {
+                printMsg("Continue with subtree %zu\n", dest);
+            }
+
+            return tt_root(signature, insertionList, idx, dest);
+        }
+
         // size_t node = root;
         vector<size_t> mismatch;
         vector<size_t> NN_leaves;
         vector<size_t> NN_branches;
         vector<size_t> stay;
 
-        size_t method, dest;
         std::tie(method, dest) = checkRootP(signature, insertionList, mismatch, NN_leaves, NN_branches, stay, node);
 
         switch (method)
