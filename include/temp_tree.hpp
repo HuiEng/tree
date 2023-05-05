@@ -423,7 +423,7 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
-        if (isBranchNode[node] || isRootNode[node])
+        if (isBranchNode[node] || isSuperNode[node] || isRootNode[node])
         {
             seq_type meanSig = means[childLinks[node][0]];
 
@@ -512,14 +512,15 @@ public:
     // RMSD
     double test(size_t node = 0)
     {
-        // for (size_t i = 0; i < childCounts[node]; i++)
-        // {
-        //     for (size_t j = i + 1; j < childCounts[node]; j++)
-        //     {
-        //         double similarity = calcSimilarity(means[childLinks[node][i]], means[childLinks[node][j]]);
-        //         printMsg("%zu,%zu,%.2f\n", childLinks[node][i], childLinks[node][j], similarity);
-        //     }
-        // }
+        for (size_t i = 0; i < childCounts[node]; i++)
+        {
+            for (size_t j = i + 1; j < childCounts[node]; j++)
+            {
+                double similarity = calcSimilarity(means[childLinks[node][i]], means[childLinks[node][j]]);
+                fprintf(stderr, "%zu,%zu,%.2f\n", childLinks[node][i], childLinks[node][j], similarity);
+            }
+        }
+        return 0;
 
         // printMsg(">>>\n");
         // node = 10;
@@ -889,11 +890,14 @@ public:
         childCounts[new_parent]++;
         childLinks[new_parent].push_back(child);
         addSigToMatrix(new_parent, means[child]);
+        // printMsg("moving %zu to %zu \n", child, new_parent);
+
         if (d)
         {
             deleteNode(child);
         }
         parentLinks[child] = new_parent;
+        // printMsg("deleted %zu \n", child);
     }
 
     // haven't update childLinks[t_parent] yet
@@ -1234,33 +1238,43 @@ public:
 
         printTreeJson(stderr);
         printMsg(">> Force split root %zu\n", node);
-
+        size_t del = true;
         // reuse clusterSize to store the new t_parents
         for (size_t i = 0; i < temp_centroids.size(); i++)
         {
             size_t t_parent = createParent(node, insertionList);
             isRootNode[t_parent] = 1;
             clustersSize[i] = t_parent;
+            // if (t_parent == 192)
+            // {
+            //     for (size_t child : children)
+            //     {
+            //         printMsg("--- deleting %zu, %zu\n", matrices[node].size(), childLinks[node].size());
+
+            //         deleteNode(child);
+            //     }
+            //     del = false;
+            //     return 0;
+            // }
         }
 
         for (size_t n = 0; n < clusters.size(); n++)
         {
-            moveParent(children[n], clustersSize[clusters[n]]);
-            // printMsg("--- %zu,%zu\n", clusters[i][n], t_parent);
-        }
+            printMsg("--- %zu,%zu\n", children[n], clustersSize[clusters[n]]);
 
+            moveParent(children[n], clustersSize[clusters[n]], del);
+        }
         for (size_t child : to_remove_children)
         {
             deleteNode(child);
         }
-
         for (size_t t_parent : clustersSize)
         {
             updateNodeMean(t_parent);
             updatePriority(t_parent);
             addSigToMatrix(node, means[t_parent]);
 
-            rotate(t_parent);
+            // rotate(t_parent);
         }
         updateParentMean(node);
         printTreeJson(stderr);
@@ -1376,35 +1390,98 @@ public:
     // input node has only subtree children
     // now adding another subtree child with the input signature being the new centroid
     // move grandchildren if they are closer to the new centroid
-    size_t addSubtree(size_t centroid, vector<size_t> &insertionList, bool unpack = false)
+    size_t addSubtree(size_t node, vector<size_t> &insertionList, bool unpack = false)
     {
-        size_t parent = parentLinks[centroid];
+        size_t clusterCount = 2;
 
-        for (size_t subtree : childLinks[parent])
+        vector<vector<size_t>> clusters(clusterCount);
+        vector<seq_type> temp_centroids(clusterCount);
+        temp_centroids[0] = means[node];
+        for (size_t i = 1; i < clusterCount; i++)
         {
-            //? centroid should be the last child, but do this for safety
-            if (subtree == centroid)
+            temp_centroids[i] = createRandomSig(childLinks[node], (i + 1) * 100);
+        }
+
+        for (size_t child : childLinks[node])
+        {
+            size_t dest = 0;
+            double max_similarity = 0;
+            for (size_t i = 0; i < temp_centroids.size(); i++)
             {
-                continue;
-            }
-
-            for (size_t child : childLinks[subtree])
-            {
-                double sim1 = calcSimilarity(means[centroid], means[child]);
-                double sim2 = calcSimilarity(means[subtree], means[child]); //? not accurate cuz after moving, centroid of subtree changes
-                // maybe always keep the first child so it will be the centroid?
-
-                // printMsg("centroid %.2f, child %zu, %.2f\n", sim1, child, sim2);
-
-                if (sim1 > sim2)
+                // double similarity = calcSimilarity(means[temp_centroids[i]], matrices[node][n]);
+                double similarity = calcSimilarity(temp_centroids[i], means[child]);
+                printMsg("%zu, %f\n", i, similarity);
+                if (similarity > max_similarity)
                 {
-                    moveParent(child, centroid);
+                    max_similarity = similarity;
+                    dest = i;
                 }
             }
-            updateNodeMean(subtree);
-            updatePriority(subtree);
+            printMsg("--- %zu goes to %zu\n", child, dest);
+            clusters[dest].push_back(child);
         }
-        updateParentMean(centroid);
+
+        for (vector<size_t> clu : clusters)
+        {
+            if (clu.size() <= 1)
+            {
+                printMsg("??something is wrong cannot split evenly\n");
+                return 0;
+            }
+        }
+
+        printTreeJson(stderr);
+        printMsg(">> Force add subtree %zu\n", node);
+        size_t parent = parentLinks[node];
+
+        // reuse clusterSize to store the new t_parents
+        for (size_t i = 1; i < temp_centroids.size(); i++)
+        {
+            size_t t_parent = createParent(parent, insertionList);
+            isRootNode[t_parent] = 1;
+            for (size_t child : clusters[i])
+            {
+                moveParent(child, t_parent);
+            }
+            updateNodeMean(t_parent);
+            updatePriority(t_parent);
+            addSigToMatrix(parent, means[t_parent]);
+        }
+
+        updateParentMean(node);
+        printTreeJson(stderr);
+
+        return 1;
+        //     size_t parent = parentLinks[centroid];
+
+        //     for (size_t subtree : childLinks[parent])
+        //     {
+        //         //? centroid should be the last child, but do this for safety
+        //         if (subtree == centroid)
+        //         {
+        //             continue;
+        //         }
+
+        //         size_t t_centroid = childLinks[subtree][0];
+        //         for (size_t i = 1; i < childCounts[subtree]; i++)
+        //         {
+        //             size_t child = childLinks[subtree][i];
+        //             double sim1 = calcSimilarity(means[centroid], means[child]);
+        //             double sim2 = calcSimilarity(means[t_centroid], means[child]); //? not accurate cuz after moving, centroid of subtree changes
+        //             // maybe always keep the first child so it will be the centroid?
+
+        //             // printMsg("centroid %.2f, child %zu, %.2f\n", sim1, child, sim2);
+
+        //             if (sim1 > sim2)
+        //             {
+        //                 printMsg("Moving centroid %.2f, child %zu, %.2f\n", sim1, child, sim2);
+        //                 moveParent(child, centroid);
+        //             }
+        //         }
+        //         updateNodeMean(subtree);
+        //         updatePriority(subtree);
+        //     }
+        //     updateParentMean(centroid);
     }
 
     inline size_t similarityStatus(seq_type sig1, seq_type sig2, double local_stay_t, double offset = 1)
@@ -1595,6 +1672,55 @@ public:
         return 0;
     }
 
+    // check if there is any overlap of the children, if yes
+    // superCluster and dissolve child branch?
+    inline size_t combineChild(size_t node, vector<size_t> &insertionList)
+    {
+
+        set<size_t> candidates;
+        for (size_t i = 0; i < childCounts[node]; i++)
+        {
+            size_t x = childLinks[node][i];
+            if (!isSuperNode[x])
+            {
+                continue;
+            }
+            for (size_t j = i + 1; j < childCounts[node]; j++)
+            {
+                size_t y = childLinks[node][j];
+                if (!isSuperNode[y])
+                {
+                    continue;
+                }
+                double similarity = calcSimilarity(means[x], means[y]);
+                if (similarity > priority[x] && similarity > priority[y])
+                {
+                    fprintf(stderr, ">> gotcha %zu,%zu,%.2f,%.2f,%.2f\n", x, y, similarity, priority[x], priority[y]);
+                    candidates.insert(x);
+                    candidates.insert(y);
+                }
+            }
+        }
+
+        if (candidates.size() == childCounts[node])
+        {
+            fprintf(stderr, "??? ERROR combine children of %zu", node);
+        }
+        else if (candidates.size() > 0)
+        {
+            size_t t_parent = createParent(node, insertionList);
+            isSuperNode[t_parent] = 1;
+            printMsg("*** combine\n");
+            for (size_t child : candidates)
+            {
+                moveParent(child, t_parent);
+            }
+            updateNodeMean(t_parent);
+            addSigToMatrix(node, means[t_parent]); // this should be updated later
+            updateParentMean(node);
+        }
+    }
+
     // dest cannot be super or root
     // in the case of stay size = 1
     // dest = stay[0]
@@ -1603,6 +1729,7 @@ public:
         std::bitset<8> statuses;
         size_t dest = 0;
         double max_similarity = 0;
+        combineChild(node, insertionList);
 
         // check the other children
         for (size_t child : childLinks[node])
@@ -1960,11 +2087,24 @@ public:
         return dest;
     }
 
+    inline bool containSuperChild(size_t node)
+    {
+        for (size_t child : childLinks[node])
+        {
+            if (isSuperNode[child])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // use this if children are subtree
     inline size_t tt_subtree(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node)
     {
         size_t dest = 0;
-        double max_similarity = split_threshold;
+        // double max_similarity = split_threshold;
+        double max_similarity = 0;
         printMsg("++++++++++++++Doing Subtree\n");
 
         for (size_t subtree : childLinks[node])
@@ -1991,23 +2131,31 @@ public:
 
         if (isRootNode[childLinks[node][0]])
         {
-            dest = tt_subtree(signature, insertionList, idx, node);
+            t_parent = tt_subtree(signature, insertionList, idx, node);
+            dest = tt_root(signature, insertionList, idx, t_parent);
 
-            if (dest == 0)
+            if (childCounts[t_parent] > tree_order)
             {
-                printMsg("ERROR!!! Bad Subtree\n");
-                dest = superCluster(signature, insertionList, idx, node, {}, {}, false);
-                t_parent = parentLinks[dest];
-                isRootNode[t_parent] = 1;
+                // forceSplitRoot(insertionList, false, t_parent);
+                // dropBranch(t_parent);
                 addSubtree(t_parent, insertionList);
-                return dest;
-            }
-            else
-            {
-                printMsg("Continue with subtree %zu\n", dest);
             }
 
-            return tt_root(signature, insertionList, idx, dest);
+            // if (dest == 0)
+            // {
+            //     printMsg("ERROR!!! Bad Subtree\n");
+            //     dest = superCluster(signature, insertionList, idx, node, {}, {}, false);
+            //     t_parent = parentLinks[dest];
+            //     isRootNode[t_parent] = 1;
+            //     addSubtree(t_parent, insertionList);
+            //     return dest;
+            // }
+            // else
+            // {
+            //     printMsg("Continue with subtree %zu\n", dest);
+            // }
+
+            return dest;
         }
 
         // size_t node = root;
@@ -2086,6 +2234,11 @@ public:
         case 6:
             printMsg("# NN to 1 branch\n");
             t_parent = NN_branches[0];
+            if (containSuperChild(t_parent))
+            {
+                return tt_branch(signature, insertionList, idx, t_parent);
+            }
+
             if (childCounts[t_parent] > 2)
             {
                 for (size_t child : childLinks[t_parent])
