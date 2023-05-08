@@ -110,6 +110,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     else
     {
+        // split_threshold = 1;
         for (size_t i = 1; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
@@ -117,6 +118,16 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
         }
+        // tree.prepareAmbi();
+
+        // split_threshold = split_node_threshold * 2;
+        // for (size_t i = 1; i < cap; i++)
+        // {
+        //     printMsg("inserting %zu\n", foo[i]);
+        //     size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
+        //     // clusters[foo[i]] = tree.findAncestor(clus);
+        //     clusters[foo[i]] = clus;
+        // }
     }
 
     tree.prepareAmbi();
