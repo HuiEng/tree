@@ -2257,6 +2257,31 @@ public:
         }
     }
 
+    inline size_t searchBestSubtree(seq_type signature, size_t node = 0)
+    {
+        if (!isRootNode[childLinks[node][0]])
+        {
+            return searchBest(signature);
+        }
+        size_t dest = 0;
+        double max_similarity = 0;
+
+        for (size_t subtree : childLinks[node])
+        {
+            size_t candidate = searchBest(signature, subtree);
+            double similarity = calcSimilarity(means[candidate], signature);
+            printMsg(" (%zu, %.2f) ", candidate, calcSimilarity(means[candidate], signature));
+
+            if (similarity > max_similarity)
+            {
+                max_similarity = similarity;
+                dest = candidate;
+            }
+        }
+
+        return dest;
+    }
+
     // find highest overlap among children
     // break tie by checking similarity of the finals
     inline size_t search(seq_type signature, size_t idx = 0, size_t node = 0)
@@ -2550,7 +2575,7 @@ public:
     size_t reinsert(seq_type signature, size_t idx)
     {
         // size_t node = search(signature);
-        size_t node = searchBest(signature);
+        size_t node = searchBestSubtree(signature);
         // size_t node = search2(signature);
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
