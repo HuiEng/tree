@@ -83,13 +83,20 @@ ggplot()+
   )
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
-sigClust<-plotEnt(paste(path,"/sigClust-k9-c48.txt",sep=""))
+sigClust<-plotEnt(paste(path,"/sigClust-k9-c45.txt",sep=""))
 cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
 
 {
 dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s80-l18.txt",sep=""))
 cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
+(
+  ggplot(cluQ_2WMT)+
+    geom_point(aes(x=clu,y=avg_sim,size=size))+
+    # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+    ylim(50,100)
+)
 }
+
 
 # mean(cluQ$avg_sim)
 # avg<- cluQ %>% summarise(across(everything(), list(mean)))
@@ -100,12 +107,7 @@ plotTwo(normSize(cluQ_2WMT, 'sd_sim', TRUE),
         normSize(cluQ_sigClust, 'sd_sim', TRUE),
         ncol(cluQ_2WMT)+1)
 test<-normSize(cluQ_2WMT, 'sd_sim')
-(
-  ggplot(cluQ_2WMT)+
-  geom_point(aes(x=clu,y=avg_sim,size=size))+
-    # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
-    ylim(50,100)
-  )
+
 
 (
   ggplot(cluQ)+
