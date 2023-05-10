@@ -32,6 +32,12 @@ size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
 bool print_ = false;
 
+template <typename T>
+void removeVecValue(vector<T> &vec, T value)
+{
+    vec.erase(std::remove(vec.begin(), vec.end(), value), vec.end());
+}
+
 void printMsg(const char *format, ...)
 {
     if (print_)
@@ -447,7 +453,7 @@ public:
         {
             means[node] = createMeanSig(matrices[node]);
         }
-
+        updatePriority(node);
         // size_t parent = parentLinks[node];
         // matrices[parent][getNodeIdx(node)] = means[node];
     }
@@ -1207,6 +1213,121 @@ public:
     //     return 0;
     // }
 
+    // create ambi and insert to it if there is none
+    // else, add to suitable ambi and turn the ambi to leaf if the prioroty >stay threshold
+    // else create new ambi
+    inline size_t insertBranch(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
+    {
+        if (ambiLinks[branch].size() == 0)
+        {
+            return createAmbiNode(signature, insertionList, branch, idx);
+        }
+        size_t dest = 0;
+        size_t ambi_split = 0;
+        for (size_t ambi : ambiLinks[branch])
+        {
+            // preload sig into matrices to check for priority
+            addSigToMatrix(ambi, signature);
+            updatePriority(ambi);
+            // release preloaded matrix
+            matrices[ambi].pop_back();
+
+            printMsg(">>ambi %zu, %.2f\n", ambi, priority[ambi]);
+
+            if (priority[ambi] >= stay_threshold)
+            {
+                dest = stayNode(signature, insertionList, idx, ambi);
+                printMsg("@@ambi %zu, %.2f\n", dest, priority[ambi]);
+                isAmbiNode[dest] = 0;
+                updateParentMean(dest);
+                //? also remove from ambi link;
+                // ambiLinks[branch].clear();
+                removeVecValue(ambiLinks[branch], ambi);
+                return dest;
+            }
+            else if (priority[ambi] < split_threshold)
+            {
+                ambi_split++;
+            }
+            else
+            {
+                dest = ambi;
+            }
+        }
+        if (ambi_split == ambiLinks[branch].size())
+        {
+            return createAmbiNode(signature, insertionList, branch, idx);
+        }
+        else
+        {
+            return stayNode(signature, insertionList, idx, dest);
+        }
+    }
+
+    // rearrange grandchildren to their best parent
+    inline void recluster(size_t node)
+    {
+        printMsg("reclustering %zu\n", node);
+
+        for (size_t child : childLinks[node])
+        {
+            if (childCounts[child] - ambiLinks[child].size() <= 1)
+            {
+                continue;
+            }
+            for (size_t grandchild : childLinks[child])
+            {
+                if (isAmbiNode[grandchild])
+                {
+                    continue;
+                }
+                double max_simimlarity = 0;
+                size_t dest = child;
+                for (size_t t_parent : childLinks[node])
+                {
+                    double similarity = calcSimilarity(means[t_parent], means[grandchild]);
+                    if (similarity > max_simimlarity)
+                    {
+                        max_simimlarity = similarity;
+                        dest = t_parent;
+                    }
+                }
+
+                if (dest != child)
+                {
+                    moveParent(grandchild, dest);
+                    for (size_t ambi : ambiLinks[child])
+                    {
+                        moveParent(ambi, dest);
+                    }
+                }
+            }
+        }
+
+        // tidy
+        for (size_t child : childLinks[node])
+        {
+            if (childCounts[child] == 0)
+            {
+                deleteNode(child);
+            }
+            else if (childCounts[child] == 1)
+            {
+                size_t grandchild = childLinks[child][0];
+                size_t idx = getNodeIdx(child);
+
+                childLinks[node][idx] = grandchild;
+                parentLinks[grandchild] = node;
+                clearNode(child);
+            }
+            else
+            {
+                updateNodeMean(child);
+            }
+        }
+        updateParentMean(node);
+    }
+
     // dest cannot be super or root
     // in the case of stay size = 1
     // dest = stay[0]
@@ -1222,10 +1343,11 @@ public:
         double max_similarity = 0;
         size_t dest_branch = 0;
         double max_branch_similarity = 0;
-        size_t branchCount;
+        size_t branchCount = 0;
         size_t dest_super = 0;
         double max_super_similarity = 0;
-        size_t superCount;
+        size_t superCount = 0;
+        size_t mismatch = 0;
         // combineChild(node, insertionList);
 
         // check the other children
@@ -1281,13 +1403,14 @@ public:
                         max_similarity = similarity;
                         dest = child;
                     }
-                    printMsg("child %zu\n", dest);
+                    // printMsg("child %zu\n", dest);
                     statuses.set(1);
                 }
 
                 break;
             case SPLIT_F:
                 // mismatch.push_back(child);
+                mismatch++;
                 break;
             case NN_LEAVE_F:
                 NN_leaves.push_back(child);
@@ -1300,7 +1423,14 @@ public:
             }
         }
 
-        if (statuses.count() == 1)
+        if (statuses.none())
+        {
+            return createNode(signature, insertionList, node, idx);
+        }
+
+        size_t t_parent, t_branch;
+        size_t setbits = statuses.count();
+        if (setbits == 1)
         {
             size_t pos;
             for (pos = 0; pos < statuses.size(); ++pos)
@@ -1322,35 +1452,129 @@ public:
                 break;
             case 2:
                 printMsg("N1 or NM Leaf\n");
-                return make_pair(1, dest);
+                t_parent = createBranch(node, insertionList, NN_leaves);
+                return createAmbiNode(signature, insertionList, t_parent, idx);
                 break;
             case 3:
                 printMsg("S1 or SM Branch\n");
                 if (stay_branch.size() > 1)
                 {
-                    createSuper(node, insertionList, stay_branch);
-                    //? recluster();
+                    t_parent = createSuper(node, insertionList, stay_branch);
+                    recluster(t_parent);
                 }
                 return stayNode(signature, insertionList, idx, dest_branch);
                 break;
             case 4:
-                printMsg("N1 or NM Branch\n");
-                return make_pair(1, dest);
+                printMsg("N1 or NM Branch %zu\n", mismatch);
+                if (NN_branches.size() > 1)
+                {
+                    if (mismatch == 0)
+                    {
+                        t_parent = node;
+                    }
+                    else
+                    {
+                        t_parent = createSuper(node, insertionList, NN_branches);
+                    }
+                    dest = createUniBranch(t_parent, insertionList, signature, idx);
+                    recluster(t_parent);
+                    return dest;
+                }
+                else
+                {
+                    return insertBranch(signature, insertionList, idx, NN_branches[0]);
+                }
                 break;
             case 5:
                 printMsg("S1 or SM Super\n");
                 if (stay_super.size() > 1)
                 {
-                    createSuper(node, insertionList, stay_super);
-                    //? recluster();
+                    t_parent = createSuper(node, insertionList, stay_super);
+                    recluster(t_parent);
                 }
                 return stayNode(signature, insertionList, idx, dest_super);
                 break;
             default:
-                printMsg("ERROR!!\n");
+                printMsg("ERROR 1 bit!!\n");
                 break;
             }
         }
+        else if (setbits == 2)
+        {
+            size_t tempbits = (statuses & bitset<8>("00101010")).count();
+            // only stay
+            if (tempbits == 2)
+            {
+                if (statuses.test(5))
+                {
+                    if (statuses.test(1))
+                    {
+                        printMsg("Stay Leaf and Super\n");
+                        dest = stayNode(signature, insertionList, idx, dest);
+                        relocate(stay_super, stay_leaf);
+                        return dest;
+                    }
+                    else
+                    {
+                        printMsg("Stay Branch and Super\n");
+                        dest = stayNode(signature, insertionList, idx, dest_branch);
+                        relocate(stay_super, stay_branch);
+                        return dest;
+                    }
+                }
+                else
+                {
+                    printMsg("Stay Leaf and Branch\n");
+                    dest = stayNode(signature, insertionList, idx, dest);
+                    relocate(stay_branch, stay_leaf);
+                    return dest;
+                }
+            }
+            else if (tempbits == 1)
+            {
+                printMsg("NN Branch and ");
+                if (statuses.test(1))
+                {
+                    printMsg("Stay Leaf\n");
+                    dest = stayNode(signature, insertionList, idx, dest);
+                    t_parent = createSuper(node, insertionList, NN_branches);
+                    createBranch(t_parent, insertionList, stay_leaf);
+                    recluster(t_parent);
+                    return dest;
+                }
+                else if (statuses.test(3))
+                {
+                    printMsg("Stay Branch\n");
+                    dest = stayNode(signature, insertionList, idx, dest_branch);
+                    t_parent = createSuper(node, insertionList, stay_branch);
+                    for (size_t b : NN_branches)
+                    {
+                        moveParent(b, t_parent);
+                    }
+                    recluster(t_parent);
+                    return dest;
+                }
+                else if (statuses.test(5))
+                {
+                    printMsg("Stay Super\n");
+                    dest = stayNode(signature, insertionList, idx, dest_branch);
+                    relocate(stay_super, NN_leaves);
+                    return dest;
+                }
+            }
+            else
+            {
+                printMsg("NN Leaf and NN Branch\n");
+                t_branch = createBranch(node, insertionList, NN_leaves);
+                dest = createNode(signature, insertionList, t_branch, idx);
+                t_parent = createSuper(node, insertionList, NN_branches);
+                moveParent(t_branch, t_parent);
+                recluster(t_parent);
+                return dest;
+            }
+        }
+        printMsg("ERROR!!\n");
+        return 0;
 
         // // cerr << statuses << "\n";
         // // cerr << "Status: " << getMethod(statuses, (NN_branches.size() > 1 || NN_leaves.size() > 1)) << "\n";
@@ -1379,6 +1603,15 @@ public:
         return createAmbiNode(signature, insertionList, t_parent, idx);
     }
 
+    inline size_t createUniBranch(size_t node, vector<size_t> &insertionList, seq_type signature, size_t idx)
+    {
+        size_t t_parent = createParent(node, insertionList);
+        size_t dest = createNode(signature, insertionList, t_parent, idx);
+        addSigToMatrix(node, signature);
+        updateParentMean(t_parent);
+        return dest;
+    }
+
     // create a new branch under "node"
     // then move candidates to the new branch
     inline size_t createBranch(size_t node, vector<size_t> &insertionList, vector<size_t> candidates)
@@ -1404,25 +1637,26 @@ public:
     }
 
     //?
-    inline void relocateLeaves(vector<size_t> NN_branches, vector<size_t> NN_leaves)
+    inline void relocate(vector<size_t> parents, vector<size_t> children)
     {
-        for (size_t leaf : NN_leaves)
+        printMsg("Relocating...\n");
+        for (size_t child : children)
         {
             double max_simimlarity = split_threshold;
             size_t dest = 0;
-            for (size_t branch : NN_branches)
+            for (size_t parent : parents)
             {
-                double similarity = calcSimilarity(means[leaf], means[branch]);
+                double similarity = calcSimilarity(means[child], means[parent]);
                 if (similarity > max_simimlarity)
                 {
                     max_simimlarity = similarity;
-                    dest = branch;
+                    dest = parent;
                 }
             }
             //? maybe find the best level to move
             if (dest != 0)
             {
-                moveParent(leaf, dest);
+                moveParent(child, dest);
             }
         }
     }
@@ -1438,113 +1672,113 @@ public:
 
         // size_t node = root;
 
-        std::tie(method, dest) = checkRootP(signature, insertionList, idx, node);
+        return checkRootP(signature, insertionList, idx, node);
 
-        switch (method)
-        {
-        case 0:
-            printMsg("#mismatch\n");
-            return createNode(signature, insertionList, node, idx);
-            break;
-        case 1:
-            printMsg("#stay in leaf %zu\n", dest);
-            return stayNode(signature, insertionList, idx, dest);
-            break;
-        case 2:
-            printMsg("#NN with leaf: %zu\n", NN_leaves.size());
-            t_parent = node;
-            if (ambiLinks[t_parent].size() == 0)
-            {
-                t_parent = createBranch(node, insertionList, NN_leaves);
-                dest = createAmbiNode(signature, insertionList, t_parent, idx);
-            }
-            else
-            {
-                for (size_t i = 0; i < ambiLinks[t_parent].size(); i++)
-                {
-                    size_t ambi = ambiLinks[t_parent][i];
-                    // dest = ambiLinks[t_parent][0];
-                    // dest = ambi;
+        // switch (method)
+        // {
+        // case 0:
+        //     printMsg("#mismatch\n");
+        //     return createNode(signature, insertionList, node, idx);
+        //     break;
+        // case 1:
+        //     printMsg("#stay in leaf %zu\n", dest);
+        //     return stayNode(signature, insertionList, idx, dest);
+        //     break;
+        // case 2:
+        //     printMsg("#NN with leaf: %zu\n", NN_leaves.size());
+        //     t_parent = node;
+        //     if (ambiLinks[t_parent].size() == 0)
+        //     {
+        //         t_parent = createBranch(node, insertionList, NN_leaves);
+        //         dest = createAmbiNode(signature, insertionList, t_parent, idx);
+        //     }
+        //     else
+        //     {
+        //         for (size_t i = 0; i < ambiLinks[t_parent].size(); i++)
+        //         {
+        //             size_t ambi = ambiLinks[t_parent][i];
+        //             // dest = ambiLinks[t_parent][0];
+        //             // dest = ambi;
 
-                    // dest = stayNode(signature, insertionList, idx, dest);
-                    // updatePriority(dest);
+        //             // dest = stayNode(signature, insertionList, idx, dest);
+        //             // updatePriority(dest);
 
-                    // preload sig into matrices to check for priority
-                    addSigToMatrix(ambi, signature);
-                    double temp_priority = priority[ambi];
-                    updatePriority(ambi);
-                    // release preloaded matrix
-                    matrices[ambi].pop_back();
+        //             // preload sig into matrices to check for priority
+        //             addSigToMatrix(ambi, signature);
+        //             double temp_priority = priority[ambi];
+        //             updatePriority(ambi);
+        //             // release preloaded matrix
+        //             matrices[ambi].pop_back();
 
-                    printMsg(">>ambi %zu, %.2f\n", ambi, priority[ambi]);
+        //             printMsg(">>ambi %zu, %.2f\n", ambi, priority[ambi]);
 
-                    if (priority[ambi] > stay_threshold)
-                    {
-                        dest = stayNode(signature, insertionList, idx, ambi);
-                        printMsg("@@ambi %zu, %.2f\n", dest, priority[dest]);
-                        isAmbiNode[ambi] = 0;
-                        updateParentMean(dest);
-                        //? also remove from ambi link;
-                        // ambiLinks[t_parent].clear();
-                        ambiLinks[t_parent].erase(ambiLinks[t_parent].begin() + i);
-                        return dest;
-                    }
-                    else if (priority[ambi] < split_threshold)
-                    {
+        //             if (priority[ambi] > stay_threshold)
+        //             {
+        //                 dest = stayNode(signature, insertionList, idx, ambi);
+        //                 printMsg("@@ambi %zu, %.2f\n", dest, priority[dest]);
+        //                 isAmbiNode[ambi] = 0;
+        //                 updateParentMean(dest);
+        //                 //? also remove from ambi link;
+        //                 // ambiLinks[t_parent].clear();
+        //                 ambiLinks[t_parent].erase(ambiLinks[t_parent].begin() + i);
+        //                 return dest;
+        //             }
+        //             else if (priority[ambi] < split_threshold)
+        //             {
 
-                        printMsg("??ambi split %zu, %.2f\n", ambi, priority[ambi]);
-                        ambi_split++;
-                        priority[ambi] = temp_priority;
-                        // dest = createAmbiNode(signature, insertionList, t_parent, idx);
-                    }
-                }
-                if (ambi_split == ambiLinks[t_parent].size())
-                {
-                    dest = createAmbiNode(signature, insertionList, t_parent, idx);
-                }
-                else
-                {
-                    dest = stayNode(signature, insertionList, idx, ambiLinks[t_parent][0]);
-                }
-            }
+        //                 printMsg("??ambi split %zu, %.2f\n", ambi, priority[ambi]);
+        //                 ambi_split++;
+        //                 priority[ambi] = temp_priority;
+        //                 // dest = createAmbiNode(signature, insertionList, t_parent, idx);
+        //             }
+        //         }
+        //         if (ambi_split == ambiLinks[t_parent].size())
+        //         {
+        //             dest = createAmbiNode(signature, insertionList, t_parent, idx);
+        //         }
+        //         else
+        //         {
+        //             dest = stayNode(signature, insertionList, idx, ambiLinks[t_parent][0]);
+        //         }
+        //     }
 
-            return dest;
-            break;
-        case 3:
-            dest = stay_supers[0];
-            printMsg("#stay with ONE branch: %zu\n", dest);
-            return tt(signature, insertionList, idx, dest);
-            break;
-        case 4:
-            printMsg("#stay with ALL branch: %zu\n", dest);
-            return tt(signature, insertionList, idx, dest);
-            break;
-        case 5:
-            printMsg("#stay with SOME branch: %zu\n", dest);
-            t_parent = createSuper(node, insertionList, stay_supers);
-            return tt(signature, insertionList, idx, dest);
-            break;
-        case 6:
-            printMsg("#stay with branch(s) and NN with %zu leaves: %zu\n", dest, NN_leaves.size());
-            dest = tt(signature, insertionList, idx, dest);
-            relocateLeaves(NN_branches, NN_leaves);
-            return dest;
-            break;
-        case 7:
-            printMsg("ERROR 7!!!\n");
-            break;
-        case 8:
-            printMsg("ERROR 8!!!\n");
-            break;
-        case 9:
-            t_parent = createSuper(node, insertionList, stay_supers);
-            break;
-        default:
-            printMsg("ERROR!!!\n");
-            break;
-        }
+        //     return dest;
+        //     break;
+        // case 3:
+        //     dest = stay_super[0];
+        //     printMsg("#stay with ONE branch: %zu\n", dest);
+        //     return tt(signature, insertionList, idx, dest);
+        //     break;
+        // case 4:
+        //     printMsg("#stay with ALL branch: %zu\n", dest);
+        //     return tt(signature, insertionList, idx, dest);
+        //     break;
+        // case 5:
+        //     printMsg("#stay with SOME branch: %zu\n", dest);
+        //     t_parent = createSuper(node, insertionList, stay_supers);
+        //     return tt(signature, insertionList, idx, dest);
+        //     break;
+        // case 6:
+        //     printMsg("#stay with branch(s) and NN with %zu leaves: %zu\n", dest, NN_leaves.size());
+        //     dest = tt(signature, insertionList, idx, dest);
+        //     relocate(NN_branches, NN_leaves);
+        //     return dest;
+        //     break;
+        // case 7:
+        //     printMsg("ERROR 7!!!\n");
+        //     break;
+        // case 8:
+        //     printMsg("ERROR 8!!!\n");
+        //     break;
+        // case 9:
+        //     t_parent = createSuper(node, insertionList, stay_supers);
+        //     break;
+        // default:
+        //     printMsg("ERROR!!!\n");
+        //     break;
+        // }
 
-        return 0;
+        // return 0;
     }
 
     inline size_t first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t parent = 0)
