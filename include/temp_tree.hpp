@@ -1236,11 +1236,36 @@ public:
     // else create new ambi
     inline size_t insertBranch(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
     {
+        double max_similarity = stay_threshold;
+        size_t dest = 0;
+        for (size_t child : childLinks[branch])
+        {
+            double similarity = calcSimilarity(means[child], signature);
+            printMsg("b %zu, %.2f\n", child, similarity);
+            if (similarity >= max_similarity)
+            {
+                max_similarity = similarity;
+                dest = child;
+            }
+        }
+
+        if (dest != 0)
+        {
+            dest = stayNode(signature, insertionList, idx, dest);
+            if (isAmbiNode[dest])
+            {
+                isAmbiNode[dest] = 0;
+                updateParentMean(dest);
+                removeVecValue(ambiLinks[branch], dest);
+            }
+            return dest;
+        }
+
         if (ambiLinks[branch].size() == 0)
         {
             return createAmbiNode(signature, insertionList, branch, idx);
         }
-        size_t dest = 0;
+        // size_t dest = 0;
         size_t ambi_split = 0;
         for (size_t ambi : ambiLinks[branch])
         {
@@ -1537,8 +1562,9 @@ public:
                 break;
             case 2:
                 printMsg("N1 or NM Leaf\n");
-                t_parent = createBranch(node, insertionList, NN_leaves);
-                return createAmbiNode(signature, insertionList, t_parent, idx);
+                t_branch = createBranch(node, insertionList, NN_leaves);
+                return insertBranch(signature, insertionList, idx, t_branch);
+                // return createAmbiNode(signature, insertionList, t_branch, idx);
                 break;
             case 3:
                 printMsg("S1 or SM Branch\n");
@@ -1633,12 +1659,15 @@ public:
                     {
                         printMsg("Stay Branch\n");
                         dest = insertBranch(signature, insertionList, idx, dest_branch);
-                        t_parent = createSuper(node, insertionList, stay_branch);
-                        for (size_t b : NN_branches)
+                        if (mismatch > 0)
                         {
-                            moveParent(b, t_parent);
+                            t_parent = createSuper(node, insertionList, stay_branch);
+                            for (size_t b : NN_branches)
+                            {
+                                moveParent(b, t_parent);
+                            }
+                            recluster(t_parent);
                         }
-                        recluster(t_parent);
                         return dest;
                     }
                     else if (statuses.test(5))
@@ -1695,7 +1724,9 @@ public:
             {
                 printMsg("NN Leaf and NN Branch\n");
                 t_branch = createBranch(node, insertionList, NN_leaves);
-                dest = createNode(signature, insertionList, t_branch, idx);
+                // dest = createAmbiNode(signature, insertionList, t_branch, idx);
+                dest = insertBranch(signature, insertionList, idx, t_branch);
+
                 if (node != 0 && mismatch != 0)
                 {
                     t_parent = createSuper(node, insertionList, NN_branches);
