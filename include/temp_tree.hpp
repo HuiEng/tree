@@ -1042,6 +1042,7 @@ public:
         {
             local_stay_t = stay_threshold;
         }
+
         double local_split_t = split_threshold * offset;
         double similarity = calcSimilarity(sig1, sig2);
 
@@ -1094,8 +1095,15 @@ public:
         else if (isBranchNode[child])
         {
             // super can only be stay or split
-            printMsg("(branch %.2f)", priority[child]);
-            return similarityStatusF(means[child], signature, priority[child], 1, true);
+            
+            if (priority[child]==0){
+                // branch only 1 child
+                printMsg("(branch)");
+                return similarityStatusF(means[child], signature, stay_threshold, 1, true);
+            }else{
+                printMsg("(branch %.2f)", priority[child]);
+                return similarityStatusF(means[child], signature, priority[child], 1, true);
+            }
         }
         else
         {
