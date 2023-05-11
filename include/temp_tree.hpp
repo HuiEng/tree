@@ -418,6 +418,7 @@ public:
 
         childLinks[parent][idx] = grandchild;
         parentLinks[grandchild] = parent;
+        deleteNode(child);
         clearNode(child);
     }
 
@@ -1095,12 +1096,15 @@ public:
         else if (isBranchNode[child])
         {
             // super can only be stay or split
-            
-            if (priority[child]==0){
+
+            if (priority[child] == 0)
+            {
                 // branch only 1 child
                 printMsg("(branch)");
                 return similarityStatusF(means[child], signature, stay_threshold, 1, true);
-            }else{
+            }
+            else
+            {
                 printMsg("(branch %.2f)", priority[child]);
                 return similarityStatusF(means[child], signature, priority[child], 1, true);
             }
@@ -1499,6 +1503,12 @@ public:
                     if (priority[child] <= split_threshold)
                     {
                         printMsg("ERROR - split super\n");
+                        // for (size_t grandchild : childLinks[child])
+                        // {
+                        //     moveParent(grandchild, node);
+                        // }
+                        // deleteNode(child);
+                        // clearNode(child);
                     }
                     stay_super.push_back(child);
                     if (similarity > max_super_similarity)
