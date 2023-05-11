@@ -1357,6 +1357,7 @@ public:
                     deleteUnitig(child);
                 }
             }
+            updateNodeMean(node);
             return 0;
         }
 
@@ -1487,6 +1488,10 @@ public:
                 // stay.push_back(child);
                 if (isSuperNode[child])
                 {
+                    if (priority[child] <= split_threshold)
+                    {
+                        printMsg("ERROR - split super\n");
+                    }
                     stay_super.push_back(child);
                     if (similarity > max_super_similarity)
                     {
