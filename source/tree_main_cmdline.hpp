@@ -365,6 +365,7 @@ public:
   double stay_threshold_arg;
   size_t iteration_arg;
   size_t method_arg;
+  unsigned seed_arg;
 
   bool input_given;
   bool tag_given;
@@ -390,7 +391,7 @@ public:
                         minimiser_match_arg(0), capacity_arg(0), method_arg(0),
                         input_given(false),
                         minimiser_match_given(false), capacity_given(false),
-                        random_arg(false), iteration_arg(0),
+                        random_arg(false), iteration_arg(0), seed_arg(0),
                         query_given(false), query_arg(""),
                         split_threshold_given(false), split_threshold_arg(0),
                         stay_threshold_given(false), stay_threshold_arg(0),
@@ -402,7 +403,7 @@ public:
                                               minimiser_match_arg(0), capacity_arg(0), method_arg(0),
                                               input_given(false),
                                               minimiser_match_given(false), capacity_given(false),
-                                              random_arg(false), iteration_arg(0),
+                                              random_arg(false), iteration_arg(0), seed_arg(0),
                                               query_given(false), query_arg(""),
                                               split_threshold_given(false), split_threshold_arg(0),
                                               stay_threshold_given(false), stay_threshold_arg(0),
@@ -422,14 +423,14 @@ public:
         {"minimiser_match", 1, 0, 'm'},
         {"split", 1, 0, 'L'},
         {"stay", 1, 0, 'S'},
-        {"random", 0, 0, 'R'},
+        {"random", 1, 0, 'R'},
         {"iteration", 0, 0, 'I'},
         {"query", 1, 0, 'q'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:RdfI:q:S:L:m:T:p";
+    static const char *short_options = "hVi:o:c:R:dfI:q:S:L:m:T:p";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -513,6 +514,8 @@ public:
         break;
       case 'R':
         random_arg = true;
+        seed_arg = conv_uint<unsigned>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-R=unsigned")
         break;
       case 'I':
         iteration_given = true;
@@ -598,7 +601,7 @@ public:
            " -q, --query                              query file\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
-           " -R,                                      inserting seqs in random order\n"
+           " -R,                                      inserting seqs in random order [defalut seed=0]\n"
            " -I, --iteration                          number or reinsertion [default=0]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
@@ -620,7 +623,8 @@ public:
        << " minimiser_match_arg:" << minimiser_match_arg << "\n";
     os << " capacity_given:" << capacity_given << "\t"
        << " capacity_arg:" << capacity_arg << "\n";
-    os << " random_arg:" << random_arg << "\n";
+    os << " random_arg:" << random_arg << "\n"
+       << " seed_arg:" << seed_arg << "\n";
     os << " iteration_arg:" << iteration_arg << "\n";
     os << " query_given:" << query_given << "\t"
        << " query_arg:" << query_arg << "\n";

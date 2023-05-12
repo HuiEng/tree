@@ -1318,6 +1318,10 @@ public:
     // rearrange grandchildren to their best parent
     inline size_t recluster(size_t node)
     {
+        if (node == 0)
+        {
+            return 0;
+        }
         printMsg("reclustering %zu\n", node);
         bool moved = false;
         for (size_t child : childLinks[node])
@@ -1447,6 +1451,52 @@ public:
         }
     }
 
+    //?
+    inline void relocateLeaf(vector<size_t> parents, vector<size_t> leaves)
+    {
+        printMsg("Relocating Leaf...\n");
+
+        for (size_t leaf : leaves)
+        {
+            double max_simimlarity = split_threshold;
+            size_t dest = 0;
+            for (size_t parent : parents)
+            {
+                double similarity = calcSimilarity(means[leaf], means[parent]);
+                if (similarity > max_simimlarity)
+                {
+                    max_simimlarity = similarity;
+                    dest = parent;
+                }
+            }
+            //? maybe find the best level to move
+            if (dest != 0)
+            {
+                if (priority[leaf] == 0)
+                {
+                    // is singleton
+                    max_simimlarity = 0;
+                    size_t parent = dest;
+                    dest = 0;
+                    for (size_t grandchildren : childLinks[parent])
+                    {
+                        double similarity = calcSimilarity(means[leaf], means[grandchildren]);
+                        if (similarity > max_simimlarity)
+                        {
+                            max_simimlarity = similarity;
+                            dest = grandchildren;
+                        }
+                    }
+                    dissolveSingleton(leaf, dest);
+                }
+                else
+                {
+                    moveParent(leaf, dest);
+                }
+            }
+        }
+    }
+
     // dest cannot be super or root
     // in the case of stay size = 1
     // dest = stay[0]
@@ -1498,10 +1548,8 @@ public:
                 {
                     if (priority[child] <= split_threshold)
                     {
-                        printMsg("ERROR - split super\n");
-                        printTreeJson(stderr);
+                        printMsg("split super\n");
                         dissolveSuper(child);
-                        printTreeJson(stderr);
                         return tt(signature, insertionList, idx, node);
                     }
                     stay_super.push_back(child);
@@ -1740,20 +1788,40 @@ public:
             else
             {
                 printMsg("NN Leaf and NN Branch\n");
-                t_branch = createBranch(node, insertionList, NN_leaves);
-                // dest = createAmbiNode(signature, insertionList, t_branch, idx);
-                dest = insertBranch(signature, insertionList, idx, t_branch);
-
-                if (node != 0 && mismatch != 0)
+                dest = createNode(signature, insertionList, node, idx);
+                NN_leaves.push_back(dest);
+                relocateLeaf(NN_branches, NN_leaves);
+                if (NN_branches.size() > 1 && (node != 0 || mismatch != 0))
                 {
                     t_parent = createSuper(node, insertionList, NN_branches);
                 }
-                else
-                {
-                    t_parent = node;
-                }
-                moveParent(t_branch, t_parent);
-                recluster(t_parent);
+
+                // if (NN_branches.size() < 0)
+                // {
+                //     t_branch = createBranch(node, insertionList, NN_leaves);
+                //     // dest = createAmbiNode(signature, insertionList, t_branch, idx);
+                //     dest = insertBranch(signature, insertionList, idx, t_branch);
+
+                //     if (node != 0 || mismatch != 0)
+                //     {
+                //         t_parent = createSuper(node, insertionList, NN_branches);
+                //     }
+                //     else
+                //     {
+                //         t_parent = node;
+                //     }
+                //     moveParent(t_branch, t_parent);
+                //     recluster(t_parent);
+                // }
+                // else
+                // {
+                //     // printTreeJson(stderr);
+                //     // dest = insertBranch(signature, insertionList, idx, NN_branches[0]);
+                //     dest = createNode(signature, insertionList, node, idx);
+                //     NN_leaves.push_back(dest);
+                //     relocateLeaf(NN_branches, NN_leaves);
+                //     // relocate(NN_branches, NN_leaves);
+                // }
                 return dest;
             }
         }
@@ -2050,9 +2118,18 @@ public:
         // return make_pair(method, dest);
     }
 
+    inline void dissolveSingleton(size_t singleton, size_t dest)
+    {
+        printMsg(">>> Dissolve singleton %zu to %zu\n", singleton, dest);
+        seqIDs[dest].push_back(seqIDs[singleton][0]);
+        addSigToMatrix(dest, means[singleton]);
+        deleteNode(singleton);
+        clearNode(singleton);
+    }
+
     inline void dissolveSuper(size_t parent)
     {
-        printMsg(">>> Dissolving %zu\n", parent);
+        printMsg(">>> Dissolving super %zu\n", parent);
         size_t grandparent = parentLinks[parent];
         vector<size_t> candidates = childLinks[parent];
         for (size_t child : candidates)

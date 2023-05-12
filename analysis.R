@@ -106,7 +106,7 @@ plotTwo(normSize(cluQ_2WMT),normSize(cluQ_sigClust),ncol(cluQ_2WMT)+1)
 plotTwo(normSize(cluQ_2WMT, 'sd_sim', TRUE),
         normSize(cluQ_sigClust, 'sd_sim', TRUE),
         ncol(cluQ_2WMT)+1)
-test<-normBySd(cluQ_2WMT)
+# test<-normBySd(cluQ_2WMT)
 plotTwo(standardise(cluQ_2WMT),
         standardise(cluQ_sigClust),
         ncol(cluQ_2WMT)+1)
