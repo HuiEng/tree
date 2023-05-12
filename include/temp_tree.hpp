@@ -418,7 +418,7 @@ public:
 
         childLinks[parent][idx] = grandchild;
         parentLinks[grandchild] = parent;
-        deleteNode(child);
+        // deleteNode(child);
         clearNode(child);
     }
 
@@ -531,13 +531,9 @@ public:
     // RMSD
     double test(size_t node = 0)
     {
-        for (size_t i = 0; i < childCounts[node]; i++)
+        for (size_t child : childLinks[94])
         {
-            for (size_t j = i + 1; j < childCounts[node]; j++)
-            {
-                double similarity = calcSimilarity(means[childLinks[node][i]], means[childLinks[node][j]]);
-                fprintf(stderr, "%zu,%zu,%.2f\n", childLinks[node][i], childLinks[node][j], similarity);
-            }
+            fprintf(stderr, "%zu\n", child);
         }
         return 0;
 
@@ -1503,12 +1499,10 @@ public:
                     if (priority[child] <= split_threshold)
                     {
                         printMsg("ERROR - split super\n");
-                        // for (size_t grandchild : childLinks[child])
-                        // {
-                        //     moveParent(grandchild, node);
-                        // }
-                        // deleteNode(child);
-                        // clearNode(child);
+                        printTreeJson(stderr);
+                        dissolveSuper(child);
+                        printTreeJson(stderr);
+                        return tt(signature, insertionList, idx, node);
                     }
                     stay_super.push_back(child);
                     if (similarity > max_super_similarity)
@@ -2060,7 +2054,8 @@ public:
     {
         printMsg(">>> Dissolving %zu\n", parent);
         size_t grandparent = parentLinks[parent];
-        for (size_t child : childLinks[parent])
+        vector<size_t> candidates = childLinks[parent];
+        for (size_t child : candidates)
         {
             moveParent(child, grandparent);
         }

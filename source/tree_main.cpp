@@ -129,6 +129,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         //     clusters[foo[i]] = clus;
         // }
     }
+    tree.test();
 
     tree.prepareAmbi();
 
@@ -183,7 +184,6 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         }
     }
     tree.updateTree();
-    // tree.test();
 
     FILE *pFile = fopen("nodeDistance.txt", "w");
     tree.printNodeDistance(pFile, seqs, clusters);
