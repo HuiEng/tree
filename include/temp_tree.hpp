@@ -1788,13 +1788,28 @@ public:
             else
             {
                 printMsg("NN Leaf and NN Branch\n");
-                dest = createNode(signature, insertionList, node, idx);
-                NN_leaves.push_back(dest);
-                relocateLeaf(NN_branches, NN_leaves);
-                if (NN_branches.size() > 1 && (node != 0 || mismatch != 0))
+                t_branch = createBranch(node, insertionList, NN_leaves);
+                // dest = createAmbiNode(signature, insertionList, t_branch, idx);
+                dest = insertBranch(signature, insertionList, idx, t_branch);
+
+                if (node != 0 || mismatch != 0)
                 {
                     t_parent = createSuper(node, insertionList, NN_branches);
+                    moveParent(t_branch, t_parent);
                 }
+                else
+                {
+                    t_parent = node;
+                }
+                recluster(t_parent);
+
+                // dest = createNode(signature, insertionList, node, idx);
+                // NN_leaves.push_back(dest);
+                // relocateLeaf(NN_branches, NN_leaves);
+                // if (NN_branches.size() > 1 && (node != 0 || mismatch != 0))
+                // {
+                //     t_parent = createSuper(node, insertionList, NN_branches);
+                // }
 
                 // if (NN_branches.size() < 0)
                 // {
