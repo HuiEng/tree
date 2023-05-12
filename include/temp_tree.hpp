@@ -1497,6 +1497,34 @@ public:
         }
     }
 
+    // if the from_branch contains only singleton and ambi node(s)
+    // move its ambi nodes to the to_branch
+    // and relocating the singleton
+    inline size_t mergeBranch(size_t to, size_t from, vector<size_t> &insertionList)
+    {
+        if (childCounts[from] - ambiLinks[from].size() > 1)
+        {
+            return 0;
+        }
+
+        // is singleton
+        size_t singleton = childLinks[from][0]; //? may not be the first child
+        printTreeJson(stderr);
+        printMsg(">>> Merging %zu from %zu to %zu\n", singleton, from, to);
+        double max_simimlarity = split_threshold;
+        size_t dest = insertBranch(means[singleton], insertionList, seqIDs[singleton][0], to);
+        for (size_t ambi : ambiLinks[from])
+        {
+            moveParent(ambi, to);
+            ambiLinks[to].push_back(ambi);
+        }
+        deleteNode(from);
+        clearNode(from);
+        updateNodeMean(to);
+        
+        printTreeJson(stderr);
+    }
+
     // dest cannot be super or root
     // in the case of stay size = 1
     // dest = stay[0]
@@ -1796,6 +1824,10 @@ public:
                 {
                     t_parent = createSuper(node, insertionList, NN_branches);
                     moveParent(t_branch, t_parent);
+                    for (size_t b : NN_branches)
+                    {
+                        mergeBranch(t_branch, b, insertionList);
+                    }
                 }
                 else
                 {
