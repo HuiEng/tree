@@ -1509,7 +1509,7 @@ public:
 
         // is singleton
         size_t singleton = childLinks[from][0]; //? may not be the first child
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
         printMsg(">>> Merging %zu from %zu to %zu\n", singleton, from, to);
         double max_simimlarity = split_threshold;
         size_t dest = insertBranch(means[singleton], insertionList, seqIDs[singleton][0], to);
@@ -1521,8 +1521,8 @@ public:
         deleteNode(from);
         clearNode(from);
         updateNodeMean(to);
-        
-        printTreeJson(stderr);
+
+        // printTreeJson(stderr);
     }
 
     // dest cannot be super or root
@@ -1827,6 +1827,10 @@ public:
                     for (size_t b : NN_branches)
                     {
                         mergeBranch(t_branch, b, insertionList);
+                    }
+                    if (childCounts[t_parent] == 1)
+                    {
+                        dissolveSuper(t_parent);
                     }
                 }
                 else
