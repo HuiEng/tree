@@ -130,7 +130,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         //     clusters[foo[i]] = clus;
         // }
     }
-    tree.test();
+    tree.test(214);
 
     tree.prepareAmbi();
 

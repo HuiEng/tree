@@ -531,10 +531,18 @@ public:
     // RMSD
     double test(size_t node = 0)
     {
-        for (size_t child : childLinks[94])
+        size_t parent = parentLinks[node];
+        for (size_t a : childLinks[parent])
         {
-            fprintf(stderr, "%zu\n", child);
+            for (size_t b : childLinks[parent])
+            {
+                printMsg("%zu,%zu,%.2f\n", a, b, calcSimilarity(means[a], means[b]));
+            }
         }
+        moveParent(node, 0);
+        relocate(childLinks[parent], childLinks[node]);
+
+        // kMeans(node);
         return 0;
 
         // printMsg(">>>\n");
@@ -1004,7 +1012,7 @@ public:
         }
 
         printMsg("Rotating %zu with %zu\n", t_parent, candidate);
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
 
         size_t grandparent = parentLinks[t_parent];
         size_t t_parent_idx = getNodeIdx(t_parent);
@@ -1315,13 +1323,92 @@ public:
         }
     }
 
+    // recluster grandchildren, number of cluster = number of children
+    size_t kMeans(size_t grandparent)
+    {
+        vector<size_t> children = childLinks[grandparent];
+        size_t clusterCount = 2;
+        children.size();
+        vector<vector<size_t>> clusters(clusterCount);
+        vector<seq_type> temp_centroids(clusterCount);
+
+        vector<size_t> grandchildren;
+        for (size_t child : children)
+        {
+            grandchildren.insert(grandchildren.end(), childLinks[child].begin(), childLinks[child].end());
+        }
+
+        for (size_t i = 0; i < clusterCount; i++)
+        {
+            temp_centroids[i] = createRandomSig(grandchildren, (i + 1) * 100);
+            // temp_centroids[i] = createRandomSig(grandchildren, children[i]); //(i + 1) * 100);
+            // temp_centroids[i] = means[children[i]];
+        }
+
+        for (size_t grandchild : grandchildren)
+        {
+            size_t dest = 0;
+            double max_similarity = 0;
+            for (size_t i = 0; i < temp_centroids.size(); i++)
+            {
+                double similarity = calcSimilarity(temp_centroids[i], means[grandchild]);
+                printMsg("%zu, %f\n", i, similarity);
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = i;
+                }
+            }
+            printMsg("--- %zu goes to %zu\n", grandchild, dest);
+            clusters[dest].push_back(grandchild);
+        }
+
+        // for (vector<size_t> cluster : clusters)
+        // {
+        //     if (cluster.size() <= 1)
+        //     {
+        //         printMsg("??something is wrong cannot split evenly\n");
+        //         return 0;
+        //     }
+        // }
+
+        if (print_)
+        {
+            printTreeJson(stderr);
+        }
+        printMsg(">> KMeans %zu\n", grandparent);
+
+        size_t i = 0;
+        // reuse clusterSize to store the new t_parents
+        for (vector<size_t> cluster : clusters)
+        {
+            size_t t_parent = children[i];
+            for (size_t grandchild : cluster)
+            {
+                if (parentLinks[grandchild] != t_parent)
+                {
+                    moveParent(grandchild, t_parent);
+                }
+            }
+            updateNodeMean(t_parent);
+            i++;
+        }
+        updateParentMean(grandparent);
+        if (print_)
+        {
+            printTreeJson(stderr);
+        }
+
+        return 1;
+    }
+
     // rearrange grandchildren to their best parent
     inline size_t recluster(size_t node)
     {
-        if (node == 0)
-        {
-            return 0;
-        }
+        // if (node == 0)
+        // {
+        //     return 0;
+        // }
         printMsg("reclustering %zu\n", node);
         bool moved = false;
         for (size_t child : childLinks[node])
@@ -1341,6 +1428,7 @@ public:
                 for (size_t t_parent : childLinks[node])
                 {
                     double similarity = calcSimilarity(means[t_parent], means[grandchild]);
+                    // printMsg("%zu, %zu, %.2f\n", grandchild, t_parent, similarity);
                     if (similarity > max_simimlarity)
                     {
                         max_simimlarity = similarity;
@@ -1427,8 +1515,9 @@ public:
     }
 
     //?
-    inline void relocate(vector<size_t> parents, vector<size_t> children)
+    inline bool relocate(vector<size_t> parents, vector<size_t> children)
     {
+        bool moved = false;
         printMsg("Relocating...\n");
         for (size_t child : children)
         {
@@ -1437,6 +1526,7 @@ public:
             for (size_t parent : parents)
             {
                 double similarity = calcSimilarity(means[child], means[parent]);
+                // printMsg("reloc %zu, %.2f\n", parent, similarity);
                 if (similarity > max_simimlarity)
                 {
                     max_simimlarity = similarity;
@@ -1444,11 +1534,13 @@ public:
                 }
             }
             //? maybe find the best level to move
-            if (dest != 0)
+            if (dest != 0 && dest != parentLinks[child])
             {
                 moveParent(child, dest);
+                moved = true;
             }
         }
+        return moved;
     }
 
     //?
@@ -2193,6 +2285,26 @@ public:
 
     inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
+        if (node != root && priority[node] < split_threshold)
+        {
+            printMsg("add subtree %zu, %.2f\n", node, priority[node]);
+            size_t parent = parentLinks[node];
+            if (addSubtree(node, insertionList) == 0)
+            {
+                size_t last_child = childLinks[node][childCounts[node] - 1];
+                if (relocate(childLinks[parent], vector<size_t>{last_child}))
+                {
+                    printMsg(">> Relocated %zu\n", last_child);
+                    printTreeJson(stderr);
+                    return tt_root(signature, insertionList, idx, parent);
+                }
+            }
+            else
+            {
+                return tt_root(signature, insertionList, idx, parent);
+            }
+        }
+
         if (!isRootNode[childLinks[node][0]])
         {
             return tt(signature, insertionList, idx, node);
@@ -2243,17 +2355,98 @@ public:
         return node;
     }
 
+    size_t addSubtree(size_t node, vector<size_t> &insertionList)
+    {
+        size_t clusterCount = 2;
+        vector<size_t> children = childLinks[node];
+        vector<vector<size_t>> clusters(clusterCount);
+        // vector<seq_type> temp_centroids = {means[children[0]], means[children[children.size() - 1]]};
+
+        vector<seq_type> temp_centroids = getFurthestSigPair(children);
+
+        for (size_t child : children)
+        {
+            size_t dest = 0;
+            double max_similarity = 0;
+            for (size_t i = 0; i < clusterCount; i++)
+            {
+                double similarity = calcSimilarity(temp_centroids[i], means[child]);
+                printMsg("%zu, %f\n", i, similarity);
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = i;
+                }
+            }
+            printMsg("--- %zu goes to %zu\n", child, dest);
+            clusters[dest].push_back(child);
+        }
+
+        for (vector<size_t> cluster : clusters)
+        {
+            if (cluster.size() <= 1)
+            {
+                printMsg("??something is wrong cannot split evenly\n");
+                return 0;
+            }
+        }
+
+        if (print_)
+        {
+            printTreeJson(stderr);
+        }
+        printMsg(">> addSubtree %zu\n", node);
+
+        size_t t_parent = createSuper(parentLinks[node], insertionList, clusters[1]);
+        isSuperNode[t_parent] = 0;
+        isRootNode[t_parent] = 1;
+
+        updateParentMean(node);
+        if (print_)
+        {
+            printTreeJson(stderr);
+        }
+
+        return 1;
+    }
+
+    vector<seq_type> getFurthestSigPair(vector<size_t> children)
+    {
+        double min_similarity = 1;
+        size_t first = 0;
+        size_t second = 0;
+        for (size_t i = 0; i < children.size(); i++)
+        {
+            size_t a = children[i];
+            for (size_t j = i + 1; j < children.size(); j++)
+            {
+                size_t b = children[j];
+                double similarity = calcSimilarity(means[a], means[b]);
+                if (similarity < min_similarity)
+                {
+                    min_similarity = similarity;
+                    first = a;
+                    second = b;
+                }
+            }
+        }
+        printMsg("Furthest pair: %zu,%zu,%.2f\n", first, second, min_similarity);
+        return vector<seq_type>{means[first], means[second]};
+    }
+
     size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0)
     {
         size_t clusterCount = 2;
         vector<size_t> children = childLinks[node];
         vector<vector<size_t>> clusters(clusterCount);
-        vector<seq_type> temp_centroids(clusterCount);
+        // vector<seq_type> temp_centroids(clusterCount);
 
-        for (size_t i = 0; i < clusterCount; i++)
-        {
-            temp_centroids[i] = createRandomSig(children, (i + 1) * 100);
-        }
+        // for (size_t i = 0; i < clusterCount; i++)
+        // {
+        //     temp_centroids[i] = createRandomSig(children, (i + 1) * 100);
+        // }
+
+        vector<seq_type> temp_centroids = getFurthestSigPair(children);
 
         for (size_t child : children)
         {
@@ -2282,7 +2475,10 @@ public:
             }
         }
 
-        printTreeJson(stderr);
+        if (print_)
+        {
+            printTreeJson(stderr);
+        }
         printMsg(">> forceSplitRoot %zu\n", node);
 
         // reuse clusterSize to store the new t_parents
@@ -2298,7 +2494,19 @@ public:
             addSigToMatrix(node, means[t_parent]);
         }
         updateParentMean(node);
-        printTreeJson(stderr);
+        if (print_)
+        {
+            printTreeJson(stderr);
+        }
+
+        if (node != 0)
+        {
+            recluster(node);
+            if (print_)
+            {
+                printTreeJson(stderr);
+            }
+        }
 
         return 1;
     }
