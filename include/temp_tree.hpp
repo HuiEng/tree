@@ -32,6 +32,24 @@ size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
 bool print_ = false;
 
+struct tt_data
+{
+    std::bitset<8> statuses;
+    size_t dest = 0;
+    double max_similarity = 0;
+    size_t dest_branch = 0;
+    double max_branch_similarity = 0;
+    size_t dest_super = 0;
+    double max_super_similarity = 0;
+    size_t mismatch = 0;
+
+    vector<size_t> stay_branch;
+    vector<size_t> stay_leaf;
+    vector<size_t> nn_leaf;
+    vector<size_t> nn_branch;
+    vector<size_t> stay_super;
+};
+
 template <typename T>
 void removeVecValue(vector<T> &vec, T value)
 {
@@ -531,18 +549,18 @@ public:
     // RMSD
     double test(size_t node = 0)
     {
-        size_t parent = parentLinks[node];
-        for (size_t a : childLinks[parent])
-        {
-            for (size_t b : childLinks[parent])
-            {
-                printMsg("%zu,%zu,%.2f\n", a, b, calcSimilarity(means[a], means[b]));
-            }
-        }
-        moveParent(node, 0);
-        relocate(childLinks[parent], childLinks[node]);
+        // size_t parent = parentLinks[node];
+        // for (size_t a : childLinks[parent])
+        // {
+        //     for (size_t b : childLinks[parent])
+        //     {
+        //         printMsg("%zu,%zu,%.2f\n", a, b, calcSimilarity(means[a], means[b]));
+        //     }
+        // }
+        // moveParent(node, 0);
+        // relocate(childLinks[parent], childLinks[node]);
 
-        // kMeans(node);
+        kMeans(node);
         return 0;
 
         // printMsg(">>>\n");
@@ -1327,8 +1345,7 @@ public:
     size_t kMeans(size_t grandparent)
     {
         vector<size_t> children = childLinks[grandparent];
-        size_t clusterCount = 2;
-        children.size();
+        size_t clusterCount = children.size();
         vector<vector<size_t>> clusters(clusterCount);
         vector<seq_type> temp_centroids(clusterCount);
 
@@ -1625,29 +1642,22 @@ public:
         printTreeJson(stderr);
     }
 
-    // dest cannot be super or root
-    // in the case of stay size = 1
-    // dest = stay[0]
-    inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    inline bool containChildRoot(size_t node)
     {
-        vector<size_t> stay_branch, stay_leaf;
-        vector<size_t> NN_leaves;
-        vector<size_t> NN_branches;
-        vector<size_t> stay_super;
+        for (size_t child : childLinks[node])
+        {
+            if (isRootNode[child])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        std::bitset<8> statuses;
-        size_t dest = 0;
-        double max_similarity = 0;
-        size_t dest_branch = 0;
-        double max_branch_similarity = 0;
-        size_t branchCount = 0;
-        size_t dest_super = 0;
-        double max_super_similarity = 0;
-        size_t superCount = 0;
-        size_t mismatch = 0;
-        // combineChild(node, insertionList);
+    inline tt_data getStatus(seq_type signature, size_t node)
+    {
+        tt_data dt;
 
-        // check the other children
         for (size_t child : childLinks[node])
         {
             // skip ambiNode
@@ -1655,14 +1665,6 @@ public:
             {
                 // printMsg("Ambi: %zu\n", child);
                 continue;
-            }
-            if (isSuperNode[child])
-            {
-                superCount++;
-            }
-            else if (isBranchNode[child])
-            {
-                branchCount++;
             }
 
             double similarity = 0;
@@ -1678,67 +1680,77 @@ public:
                     {
                         printMsg("split super\n");
                         dissolveSuper(child);
-                        return tt(signature, insertionList, idx, node);
+                        dt.statuses.set(6);
+                        return getStatus(signature, node);
                     }
-                    stay_super.push_back(child);
-                    if (similarity > max_super_similarity)
+                    dt.stay_super.push_back(child);
+                    if (similarity > dt.max_super_similarity)
                     {
-                        max_super_similarity = similarity;
-                        dest_super = child;
+                        dt.max_super_similarity = similarity;
+                        dt.dest_super = child;
                     }
-                    statuses.set(5);
+                    dt.statuses.set(5);
                 }
                 else if (isBranchNode[child])
                 {
-                    stay_branch.push_back(child);
-                    if (similarity > max_branch_similarity)
+                    dt.stay_branch.push_back(child);
+                    if (similarity > dt.max_branch_similarity)
                     {
-                        max_branch_similarity = similarity;
-                        dest_branch = child;
+                        dt.max_branch_similarity = similarity;
+                        dt.dest_branch = child;
                     }
-                    statuses.set(3);
+                    dt.statuses.set(3);
                 }
                 else
                 {
-                    stay_leaf.push_back(child);
-                    if (similarity > max_similarity)
+                    dt.stay_leaf.push_back(child);
+                    if (similarity > dt.max_similarity)
                     {
-                        max_similarity = similarity;
-                        dest = child;
+                        dt.max_similarity = similarity;
+                        dt.dest = child;
                     }
-                    // printMsg("child %zu\n", dest);
-                    statuses.set(1);
+                    // printMsg("child %zu\n", dt.dest);
+                    dt.statuses.set(1);
                 }
 
                 break;
             case SPLIT_F:
                 // mismatch.push_back(child);
-                mismatch++;
+                dt.mismatch++;
                 break;
             case NN_LEAVE_F:
-                NN_leaves.push_back(child);
-                statuses.set(2);
+                dt.nn_leaf.push_back(child);
+                dt.statuses.set(2);
                 break;
             default:
-                NN_branches.push_back(child);
-                statuses.set(4);
+                dt.nn_branch.push_back(child);
+                dt.statuses.set(4);
                 break;
             }
         }
+        return dt;
+    }
 
-        if (statuses.none())
+    // dest cannot be super or root
+    // in the case of stay size = 1
+    // dest = stay[0]
+    inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    {
+        tt_data dt = getStatus(signature, node);
+
+        if (dt.statuses.none())
         {
             return createNode(signature, insertionList, node, idx);
         }
 
         size_t t_parent, t_branch;
-        size_t setbits = statuses.count();
+        size_t setbits = dt.statuses.count();
         if (setbits == 1)
         {
             size_t pos;
-            for (pos = 0; pos < statuses.size(); ++pos)
+            for (pos = 0; pos < dt.statuses.size(); ++pos)
             {
-                if (statuses.test(pos))
+                if (dt.statuses.test(pos))
                 {
                     break;
                 }
@@ -1747,56 +1759,56 @@ public:
             {
             case 1:
                 printMsg("S1 or SM Leaf\n");
-                if (stay_leaf.size() > 1)
+                if (dt.stay_leaf.size() > 1)
                 {
-                    createBranch(node, insertionList, stay_leaf);
+                    createBranch(node, insertionList, dt.stay_leaf);
                 }
-                return stayNode(signature, insertionList, idx, dest);
+                return stayNode(signature, insertionList, idx, dt.dest);
                 break;
             case 2:
                 printMsg("N1 or NM Leaf\n");
-                t_branch = createBranch(node, insertionList, NN_leaves);
+                t_branch = createBranch(node, insertionList, dt.nn_leaf);
                 return insertBranch(signature, insertionList, idx, t_branch);
                 // return createAmbiNode(signature, insertionList, t_branch, idx);
                 break;
             case 3:
                 printMsg("S1 or SM Branch\n");
-                if (stay_branch.size() > 1)
+                if (dt.stay_branch.size() > 1)
                 {
-                    t_parent = createSuper(node, insertionList, stay_branch);
+                    t_parent = createSuper(node, insertionList, dt.stay_branch);
                     recluster(t_parent);
                 }
-                return insertBranch(signature, insertionList, idx, dest_branch);
+                return insertBranch(signature, insertionList, idx, dt.dest_branch);
                 break;
             case 4:
-                printMsg("N1 or NM Branch %zu\n", mismatch);
-                if (NN_branches.size() > 1)
+                printMsg("N1 or NM Branch %zu\n", dt.mismatch);
+                if (dt.nn_branch.size() > 1)
                 {
-                    if (mismatch == 0)
+                    if (dt.mismatch == 0)
                     {
                         t_parent = node;
                     }
                     else
                     {
-                        t_parent = createSuper(node, insertionList, NN_branches);
+                        t_parent = createSuper(node, insertionList, dt.nn_branch);
                     }
-                    dest = createUniBranch(t_parent, insertionList, signature, idx);
+                    dt.dest = createUniBranch(t_parent, insertionList, signature, idx);
                     recluster(t_parent);
-                    return dest;
+                    return dt.dest;
                 }
                 else
                 {
-                    return insertBranch(signature, insertionList, idx, NN_branches[0]);
+                    return insertBranch(signature, insertionList, idx, dt.nn_branch[0]);
                 }
                 break;
             case 5:
                 printMsg("S1 or SM Super\n");
-                if (stay_super.size() > 1)
+                if (dt.stay_super.size() > 1)
                 {
-                    t_parent = createSuper(node, insertionList, stay_super);
+                    t_parent = createSuper(node, insertionList, dt.stay_super);
                     recluster(t_parent);
                 }
-                return stayNode(signature, insertionList, idx, dest_super);
+                return stayNode(signature, insertionList, idx, dt.dest_super);
                 break;
             default:
                 printMsg("ERROR 1 bit!!\n");
@@ -1805,126 +1817,126 @@ public:
         }
         else if (setbits == 2)
         {
-            size_t tempbits = (statuses & bitset<8>("00101010")).count();
+            size_t tempbits = (dt.statuses & bitset<8>("00101010")).count();
             // only stay
             if (tempbits == 2)
             {
-                if (statuses.test(5))
+                if (dt.statuses.test(5))
                 {
-                    if (statuses.test(1))
+                    if (dt.statuses.test(1))
                     {
                         printMsg("Stay Leaf and Super\n");
-                        dest = stayNode(signature, insertionList, idx, dest);
-                        relocate(stay_super, stay_leaf);
-                        return dest;
+                        dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                        relocate(dt.stay_super, dt.stay_leaf);
+                        return dt.dest;
                     }
                     else
                     {
                         printMsg("Stay Branch and Super\n");
-                        dest = insertBranch(signature, insertionList, idx, dest_branch);
-                        relocate(stay_super, stay_branch);
-                        return dest;
+                        dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                        relocate(dt.stay_super, dt.stay_branch);
+                        return dt.dest;
                     }
                 }
                 else
                 {
                     printMsg("Stay Leaf and Branch\n");
-                    dest = stayNode(signature, insertionList, idx, dest);
-                    relocate(stay_branch, stay_leaf);
-                    return dest;
+                    dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                    relocate(dt.stay_branch, dt.stay_leaf);
+                    return dt.dest;
                 }
             }
             else if (tempbits == 1)
             {
-                if (statuses.test(4))
+                if (dt.statuses.test(4))
                 {
                     printMsg("NN Branch and ");
-                    if (statuses.test(1))
+                    if (dt.statuses.test(1))
                     {
                         printMsg("Stay Leaf\n");
-                        dest = stayNode(signature, insertionList, idx, dest);
-                        t_parent = createSuper(node, insertionList, NN_branches);
-                        t_branch = createBranch(t_parent, insertionList, stay_leaf);
+                        dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                        t_parent = createSuper(node, insertionList, dt.nn_branch);
+                        t_branch = createBranch(t_parent, insertionList, dt.stay_leaf);
                         recluster(t_parent);
-                        return dest;
+                        return dt.dest;
                     }
-                    else if (statuses.test(3))
+                    else if (dt.statuses.test(3))
                     {
                         printMsg("Stay Branch\n");
-                        dest = insertBranch(signature, insertionList, idx, dest_branch);
-                        if (mismatch > 0)
+                        dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                        if (dt.mismatch > 0)
                         {
-                            t_parent = createSuper(node, insertionList, stay_branch);
-                            for (size_t b : NN_branches)
+                            t_parent = createSuper(node, insertionList, dt.stay_branch);
+                            for (size_t b : dt.nn_branch)
                             {
                                 moveParent(b, t_parent);
                             }
                             recluster(t_parent);
                         }
-                        return dest;
+                        return dt.dest;
                     }
-                    else if (statuses.test(5))
+                    else if (dt.statuses.test(5))
                     {
                         printMsg("Stay Super\n");
-                        relocate(stay_super, NN_branches);
-                        if (stay_super.size() > 1)
+                        relocate(dt.stay_super, dt.nn_branch);
+                        if (dt.stay_super.size() > 1)
                         {
-                            t_parent = createSuper(node, insertionList, stay_super);
+                            t_parent = createSuper(node, insertionList, dt.stay_super);
                             // recluster(t_parent);
                             // return stayNode(signature, insertionList, idx, t_parent);
                         }
 
-                        return stayNode(signature, insertionList, idx, dest_super);
+                        return stayNode(signature, insertionList, idx, dt.dest_super);
                     }
                 }
                 else
                 {
                     printMsg("NN Leaf and ");
-                    if (statuses.test(1))
+                    if (dt.statuses.test(1))
                     {
                         printMsg("Stay Leaf\n");
-                        dest = stayNode(signature, insertionList, idx, dest);
-                        t_branch = createBranch(t_parent, insertionList, stay_leaf);
-                        for (size_t l : NN_leaves)
+                        dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                        t_branch = createBranch(t_parent, insertionList, dt.stay_leaf);
+                        for (size_t l : dt.nn_leaf)
                         {
                             moveParent(l, t_branch);
                         }
-                        return dest;
+                        return dt.dest;
                     }
-                    else if (statuses.test(3))
+                    else if (dt.statuses.test(3))
                     {
                         printMsg("Stay Branch\n");
-                        dest = insertBranch(signature, insertionList, idx, dest_branch);
-                        relocate(stay_branch, NN_leaves);
-                        return dest;
+                        dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                        relocate(dt.stay_branch, dt.nn_leaf);
+                        return dt.dest;
                     }
-                    else if (statuses.test(5))
+                    else if (dt.statuses.test(5))
                     {
                         printMsg("Stay Super\n");
-                        relocate(stay_super, NN_leaves);
-                        if (stay_super.size() > 1)
+                        relocate(dt.stay_super, dt.nn_leaf);
+                        if (dt.stay_super.size() > 1)
                         {
-                            t_parent = createSuper(node, insertionList, stay_super);
+                            t_parent = createSuper(node, insertionList, dt.stay_super);
                             // recluster(t_parent);
                             // return stayNode(signature, insertionList, idx, t_parent);
                         }
 
-                        return stayNode(signature, insertionList, idx, dest_super);
+                        return stayNode(signature, insertionList, idx, dt.dest_super);
                     }
                 }
             }
             else
             {
                 printMsg("NN Leaf and NN Branch\n");
-                t_branch = createBranch(node, insertionList, NN_leaves);
-                // dest = createAmbiNode(signature, insertionList, t_branch, idx);
-                dest = insertBranch(signature, insertionList, idx, t_branch);
+                t_branch = createBranch(node, insertionList, dt.nn_leaf);
+                // dt.dest = createAmbiNode(signature, insertionList, t_branch, idx);
+                dt.dest = insertBranch(signature, insertionList, idx, t_branch);
 
-                if (node != 0 || mismatch != 0)
+                if (node != 0 || dt.mismatch != 0)
                 {
-                    t_parent = createSuper(node, insertionList, NN_branches);
+                    t_parent = createSuper(node, insertionList, dt.nn_branch);
                     moveParent(t_branch, t_parent);
-                    for (size_t b : NN_branches)
+                    for (size_t b : dt.nn_branch)
                     {
                         mergeBranch(t_branch, b, insertionList);
                     }
@@ -1939,23 +1951,23 @@ public:
                 }
                 recluster(t_parent);
 
-                // dest = createNode(signature, insertionList, node, idx);
-                // NN_leaves.push_back(dest);
-                // relocateLeaf(NN_branches, NN_leaves);
-                // if (NN_branches.size() > 1 && (node != 0 || mismatch != 0))
+                // dt.dest = createNode(signature, insertionList, node, idx);
+                // dt.nn_leaf.push_back(dt.dest);
+                // relocateLeaf(dt.nn_branch, dt.nn_leaf);
+                // if (dt.nn_branch.size() > 1 && (node != 0 || mismatch != 0))
                 // {
-                //     t_parent = createSuper(node, insertionList, NN_branches);
+                //     t_parent = createSuper(node, insertionList, dt.nn_branch);
                 // }
 
-                // if (NN_branches.size() < 0)
+                // if (dt.nn_branch.size() < 0)
                 // {
-                //     t_branch = createBranch(node, insertionList, NN_leaves);
-                //     // dest = createAmbiNode(signature, insertionList, t_branch, idx);
-                //     dest = insertBranch(signature, insertionList, idx, t_branch);
+                //     t_branch = createBranch(node, insertionList, dt.nn_leaf);
+                //     // dt.dest = createAmbiNode(signature, insertionList, t_branch, idx);
+                //     dt.dest = insertBranch(signature, insertionList, idx, t_branch);
 
                 //     if (node != 0 || mismatch != 0)
                 //     {
-                //         t_parent = createSuper(node, insertionList, NN_branches);
+                //         t_parent = createSuper(node, insertionList, dt.nn_branch);
                 //     }
                 //     else
                 //     {
@@ -1967,140 +1979,140 @@ public:
                 // else
                 // {
                 //     // printTreeJson(stderr);
-                //     // dest = insertBranch(signature, insertionList, idx, NN_branches[0]);
-                //     dest = createNode(signature, insertionList, node, idx);
-                //     NN_leaves.push_back(dest);
-                //     relocateLeaf(NN_branches, NN_leaves);
-                //     // relocate(NN_branches, NN_leaves);
+                //     // dt.dest = insertBranch(signature, insertionList, idx, dt.nn_branch[0]);
+                //     dt.dest = createNode(signature, insertionList, node, idx);
+                //     dt.nn_leaf.push_back(dt.dest);
+                //     relocateLeaf(dt.nn_branch, dt.nn_leaf);
+                //     // relocate(dt.nn_branch, dt.nn_leaf);
                 // }
-                return dest;
+                return dt.dest;
             }
         }
         else if (setbits == 3)
         {
-            if (statuses.test(5))
+            if (dt.statuses.test(5))
             {
                 printMsg("Stay Super and ");
-                if (statuses.test(1))
+                if (dt.statuses.test(1))
                 {
                     printMsg("Stay Leaf and ");
-                    dest = stayNode(signature, insertionList, idx, dest);
-                    if (statuses.test(2))
+                    dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                    if (dt.statuses.test(2))
                     {
                         printMsg("NN Leaf\n");
-                        relocate(stay_super, stay_leaf);
-                        relocate(stay_super, NN_leaves);
+                        relocate(dt.stay_super, dt.stay_leaf);
+                        relocate(dt.stay_super, dt.nn_leaf);
                     }
-                    else if (statuses.test(3))
+                    else if (dt.statuses.test(3))
                     {
                         printMsg("Stay Branch\n");
-                        relocate(stay_branch, stay_leaf);
-                        relocate(stay_super, stay_leaf);
+                        relocate(dt.stay_branch, dt.stay_leaf);
+                        relocate(dt.stay_super, dt.stay_leaf);
                     }
                     else
                     {
                         printMsg("NN branch\n");
-                        relocate(stay_super, stay_leaf);
-                        relocate(stay_super, NN_branches);
+                        relocate(dt.stay_super, dt.stay_leaf);
+                        relocate(dt.stay_super, dt.nn_branch);
                     }
-                    if (stay_super.size() > 1)
+                    if (dt.stay_super.size() > 1)
                     {
-                        t_parent = createSuper(node, insertionList, stay_super);
+                        t_parent = createSuper(node, insertionList, dt.stay_super);
                     }
                     else
                     {
-                        t_parent = stay_super[0];
+                        t_parent = dt.stay_super[0];
                     }
                     recluster(t_parent);
-                    return dest;
+                    return dt.dest;
                 }
-                else if (statuses.test(2))
+                else if (dt.statuses.test(2))
                 {
                     printMsg("NN Leaf and ");
-                    if (statuses.test(3))
+                    if (dt.statuses.test(3))
                     {
                         printMsg("Stay Branch\n");
-                        dest = insertBranch(signature, insertionList, idx, dest_branch);
-                        relocate(stay_branch, NN_leaves);
+                        dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                        relocate(dt.stay_branch, dt.nn_leaf);
 
-                        if (stay_super.size() > 1)
+                        if (dt.stay_super.size() > 1)
                         {
-                            t_parent = createSuper(node, insertionList, stay_super);
-                            t_branch = createSuper(t_parent, insertionList, stay_branch);
+                            t_parent = createSuper(node, insertionList, dt.stay_super);
+                            t_branch = createSuper(t_parent, insertionList, dt.stay_branch);
                             recluster(t_parent);
                         }
                         else
                         {
-                            relocate(stay_super, stay_branch);
+                            relocate(dt.stay_super, dt.stay_branch);
                         }
-                        return dest;
+                        return dt.dest;
                     }
                     else
                     {
                         //?
                         printMsg("NN branch\n");
-                        t_branch = createBranch(node, insertionList, NN_leaves);
-                        dest = createNode(signature, insertionList, t_branch, idx);
+                        t_branch = createBranch(node, insertionList, dt.nn_leaf);
+                        dt.dest = createNode(signature, insertionList, t_branch, idx);
 
-                        moveParent(t_branch, dest_super);
-                        relocate(stay_super, NN_branches);
-                        if (stay_super.size() > 1)
+                        moveParent(t_branch, dt.dest_super);
+                        relocate(dt.stay_super, dt.nn_branch);
+                        if (dt.stay_super.size() > 1)
                         {
-                            t_parent = createSuper(node, insertionList, stay_super);
+                            t_parent = createSuper(node, insertionList, dt.stay_super);
                             recluster(t_parent);
                         }
-                        return dest;
+                        return dt.dest;
                     }
                 }
                 else
                 {
                     printMsg("Stay Branch and NN branch\n");
-                    dest = insertBranch(signature, insertionList, idx, dest_branch);
-                    relocate(stay_super, stay_branch);
-                    relocate(stay_super, NN_branches);
+                    dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                    relocate(dt.stay_super, dt.stay_branch);
+                    relocate(dt.stay_super, dt.nn_branch);
 
-                    if (stay_super.size() > 1)
+                    if (dt.stay_super.size() > 1)
                     {
-                        t_parent = createSuper(node, insertionList, stay_super);
+                        t_parent = createSuper(node, insertionList, dt.stay_super);
                     }
                     else
                     {
-                        t_parent = stay_super[0];
+                        t_parent = dt.stay_super[0];
                     }
                     recluster(t_parent);
-                    return dest;
+                    return dt.dest;
                 }
             }
             else
             {
-                if (statuses.test(1))
+                if (dt.statuses.test(1))
                 {
                     printMsg("Stay Leaf and ");
-                    if (statuses.test(2))
+                    if (dt.statuses.test(2))
                     {
                         printMsg("NN Leaf and ");
-                        if (statuses.test(3))
+                        if (dt.statuses.test(3))
                         {
                             printMsg("Stay Branch\n");
-                            dest = stayNode(signature, insertionList, idx, dest);
-                            relocate(stay_branch, stay_leaf);
-                            relocate(stay_branch, NN_leaves);
-                            if (stay_branch.size() > 1)
+                            dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                            relocate(dt.stay_branch, dt.stay_leaf);
+                            relocate(dt.stay_branch, dt.nn_leaf);
+                            if (dt.stay_branch.size() > 1)
                             {
-                                t_parent = createSuper(node, insertionList, NN_branches);
+                                t_parent = createSuper(node, insertionList, dt.nn_branch);
                                 recluster(t_parent);
                             }
-                            return dest;
+                            return dt.dest;
                         }
                         else
                         {
                             printMsg("NN Branch\n");
-                            dest = stayNode(signature, insertionList, idx, dest);
-                            if (NN_branches.size() > 1)
+                            dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                            if (dt.nn_branch.size() > 1)
                             {
-                                t_parent = createSuper(node, insertionList, NN_branches);
-                                t_branch = createBranch(t_parent, insertionList, NN_leaves);
-                                for (size_t l : stay_leaf)
+                                t_parent = createSuper(node, insertionList, dt.nn_branch);
+                                t_branch = createBranch(t_parent, insertionList, dt.nn_leaf);
+                                for (size_t l : dt.stay_leaf)
                                 {
                                     moveParent(l, t_branch);
                                 }
@@ -2108,148 +2120,148 @@ public:
                             }
                             else
                             {
-                                relocate(NN_branches, stay_leaf);
-                                relocate(NN_branches, NN_leaves);
+                                relocate(dt.nn_branch, dt.stay_leaf);
+                                relocate(dt.nn_branch, dt.nn_leaf);
                             }
-                            return dest;
+                            return dt.dest;
                         }
                     }
                     else
                     {
                         printMsg("Stay Branch and NN branch\n");
-                        dest = stayNode(signature, insertionList, idx, dest);
-                        relocate(stay_branch, stay_leaf);
-                        t_parent = createSuper(node, insertionList, NN_branches);
-                        for (size_t b : stay_branch)
+                        dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                        relocate(dt.stay_branch, dt.stay_leaf);
+                        t_parent = createSuper(node, insertionList, dt.nn_branch);
+                        for (size_t b : dt.stay_branch)
                         {
                             moveParent(b, t_parent);
                         }
                         recluster(t_parent);
-                        return dest;
+                        return dt.dest;
                     }
                 }
                 else
                 {
                     printMsg("NN Leaf and Stay Branch and NN branch\n");
-                    dest = insertBranch(signature, insertionList, idx, dest_branch);
-                    relocate(stay_branch, NN_leaves);
-                    t_parent = createSuper(node, insertionList, NN_branches);
-                    for (size_t b : stay_branch)
+                    dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                    relocate(dt.stay_branch, dt.nn_leaf);
+                    t_parent = createSuper(node, insertionList, dt.nn_branch);
+                    for (size_t b : dt.stay_branch)
                     {
                         moveParent(b, t_parent);
                     }
                     recluster(t_parent);
-                    return dest;
+                    return dt.dest;
                 }
             }
         }
         else if (setbits == 4)
         {
-            if (statuses.test(1))
+            if (dt.statuses.test(1))
             {
                 printMsg("Stay Leaf and ");
-                if (statuses.test(2))
+                if (dt.statuses.test(2))
                 {
                     printMsg("NN Leaf and ");
-                    if (statuses.test(3))
+                    if (dt.statuses.test(3))
                     {
                         printMsg("Stay Branch and ");
-                        if (statuses.test(4))
+                        if (dt.statuses.test(4))
                         {
                             printMsg("NN Branch\n");
-                            dest = stayNode(signature, insertionList, idx, dest);
-                            t_branch = createBranch(node, insertionList, stay_leaf);
-                            for (size_t l : NN_leaves)
+                            dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                            t_branch = createBranch(node, insertionList, dt.stay_leaf);
+                            for (size_t l : dt.nn_leaf)
                             {
                                 moveParent(l, t_branch);
                             }
-                            stay_branch.push_back(t_branch);
-                            t_parent = createSuper(node, insertionList, stay_branch);
-                            for (size_t b : NN_branches)
+                            dt.stay_branch.push_back(t_branch);
+                            t_parent = createSuper(node, insertionList, dt.stay_branch);
+                            for (size_t b : dt.nn_branch)
                             {
                                 moveParent(b, t_parent);
                             }
                             recluster(t_parent);
-                            return dest;
+                            return dt.dest;
                         }
                         else
                         {
                             printMsg("Stay Super\n");
-                            dest = stayNode(signature, insertionList, idx, dest);
-                            relocate(stay_branch, stay_leaf);
-                            relocate(stay_branch, NN_leaves);
-                            relocate(stay_super, stay_branch);
-                            if (stay_super.size() > 1)
+                            dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                            relocate(dt.stay_branch, dt.stay_leaf);
+                            relocate(dt.stay_branch, dt.nn_leaf);
+                            relocate(dt.stay_super, dt.stay_branch);
+                            if (dt.stay_super.size() > 1)
                             {
-                                t_parent = createSuper(node, insertionList, stay_super);
+                                t_parent = createSuper(node, insertionList, dt.stay_super);
                             }
                             else
                             {
-                                t_parent = stay_super[0];
+                                t_parent = dt.stay_super[0];
                             }
                             recluster(t_parent);
-                            return dest;
+                            return dt.dest;
                         }
                     }
                     else
                     {
                         printMsg("NN Branch and Stay Super\n");
-                        dest = stayNode(signature, insertionList, idx, dest);
-                        t_branch = createBranch(node, insertionList, stay_leaf);
-                        for (size_t l : NN_leaves)
+                        dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                        t_branch = createBranch(node, insertionList, dt.stay_leaf);
+                        for (size_t l : dt.nn_leaf)
                         {
                             moveParent(l, t_branch);
                         }
-                        NN_branches.push_back(t_branch);
-                        relocate(stay_super, NN_branches);
-                        if (stay_super.size() > 1)
+                        dt.nn_branch.push_back(t_branch);
+                        relocate(dt.stay_super, dt.nn_branch);
+                        if (dt.stay_super.size() > 1)
                         {
-                            t_parent = createSuper(node, insertionList, stay_super);
+                            t_parent = createSuper(node, insertionList, dt.stay_super);
                         }
                         else
                         {
-                            t_parent = stay_super[0];
+                            t_parent = dt.stay_super[0];
                         }
                         recluster(t_parent);
-                        return dest;
+                        return dt.dest;
                     }
                 }
                 else
                 {
                     printMsg("Stay Branch and NN Branch and Stay Super\n");
-                    dest = stayNode(signature, insertionList, idx, dest);
-                    relocate(stay_branch, stay_leaf);
-                    relocate(stay_super, stay_branch);
-                    relocate(stay_super, NN_branches);
-                    if (stay_super.size() > 1)
+                    dt.dest = stayNode(signature, insertionList, idx, dt.dest);
+                    relocate(dt.stay_branch, dt.stay_leaf);
+                    relocate(dt.stay_super, dt.stay_branch);
+                    relocate(dt.stay_super, dt.nn_branch);
+                    if (dt.stay_super.size() > 1)
                     {
-                        t_parent = createSuper(node, insertionList, stay_super);
+                        t_parent = createSuper(node, insertionList, dt.stay_super);
                     }
                     else
                     {
-                        t_parent = stay_super[0];
+                        t_parent = dt.stay_super[0];
                     }
                     recluster(t_parent);
-                    return dest;
+                    return dt.dest;
                 }
             }
             else
             {
                 printMsg("NN Leaf and Stay Branch and NN Branch and Stay Super\n");
-                dest = insertBranch(signature, insertionList, idx, dest_branch);
-                relocate(stay_branch, NN_leaves);
-                relocate(stay_super, stay_branch);
-                relocate(stay_super, NN_branches);
-                if (stay_super.size() > 1)
+                dt.dest = insertBranch(signature, insertionList, idx, dt.dest_branch);
+                relocate(dt.stay_branch, dt.nn_leaf);
+                relocate(dt.stay_super, dt.stay_branch);
+                relocate(dt.stay_super, dt.nn_branch);
+                if (dt.stay_super.size() > 1)
                 {
-                    t_parent = createSuper(node, insertionList, stay_super);
+                    t_parent = createSuper(node, insertionList, dt.stay_super);
                 }
                 else
                 {
-                    t_parent = stay_super[0];
+                    t_parent = dt.stay_super[0];
                 }
                 recluster(t_parent);
-                return dest;
+                return dt.dest;
             }
         }
 
@@ -2257,16 +2269,16 @@ public:
         return 0;
 
         // // cerr << statuses << "\n";
-        // // cerr << "Status: " << getMethod(statuses, (NN_branches.size() > 1 || NN_leaves.size() > 1)) << "\n";
+        // // cerr << "Status: " << getMethod(statuses, (dt.nn_branch.size() > 1 || dt.nn_leaf.size() > 1)) << "\n";
 
-        // size_t method = getMethod(statuses);//, stay_super.size(), superCount);
+        // size_t method = getMethod(statuses);//, dt.stay_super.size(), superCount);
 
         // // return nearest branch if not staying in any leaf
-        // if (dest == 0)
+        // if (dt.dest == 0)
         // {
-        //     dest = dest_branch;
+        //     dt.dest = dest_branch;
         // }
-        // return make_pair(method, dest);
+        // return make_pair(method, dt.dest);
     }
 
     inline void dissolveSingleton(size_t singleton, size_t dest)
@@ -2293,27 +2305,7 @@ public:
 
     inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (node != root && priority[node] < split_threshold)
-        {
-            printMsg("add subtree %zu, %.2f\n", node, priority[node]);
-            size_t parent = parentLinks[node];
-            if (addSubtree(node, insertionList) == 0)
-            {
-                size_t last_child = childLinks[node][childCounts[node] - 1];
-                if (relocate(childLinks[parent], vector<size_t>{last_child}))
-                {
-                    printMsg(">> Relocated %zu\n", last_child);
-                    printTreeJson(stderr);
-                    return tt_root(signature, insertionList, idx, parent);
-                }
-            }
-            else
-            {
-                return tt_root(signature, insertionList, idx, parent);
-            }
-        }
-
-        if (!isRootNode[childLinks[node][0]])
+        if (!containChildRoot(node))
         {
             return tt(signature, insertionList, idx, node);
         }
@@ -2323,8 +2315,15 @@ public:
         for (size_t child : childLinks[node])
         {
             double similarity = calcSimilarity(means[child], signature);
-            printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-
+            // printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+            if (similarity + split_node_threshold >= priority[child])
+            {
+                printMsg("***(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+            }
+            else
+            {
+                printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+            }
             if (similarity > max_similarity)
             {
                 max_similarity = similarity;
@@ -2332,18 +2331,20 @@ public:
             }
         }
         size_t dest = 0;
-        if (max_similarity < split_threshold)
-        {
-            printMsg("***bad root\n");
-            dest = createUniBranch(node, insertionList, signature, idx);
-            isRootNode[parentLinks[dest]] = 1;
-            // recluster(node);
-        }
-        else
-        {
-            printMsg("traverse root %zu\n", best_root);
-            dest = tt_root(signature, insertionList, idx, best_root);
-        }
+        printMsg("traverse root %zu\n", best_root);
+        dest = tt_root(signature, insertionList, idx, best_root);
+        // if (max_similarity < split_threshold)
+        // {
+        //     printMsg("***bad root\n");
+        //     dest = createUniBranch(node, insertionList, signature, idx);
+        //     isRootNode[parentLinks[dest]] = 1;
+        //     // recluster(node);
+        // }
+        // else
+        // {
+        //     printMsg("traverse root %zu\n", best_root);
+        //     dest = tt_root(signature, insertionList, idx, best_root);
+        // }
         if (childCounts[best_root] > tree_order)
         {
             if (forceSplitRoot(insertionList, best_root) == 1)
@@ -2353,6 +2354,78 @@ public:
         }
         return dest;
     }
+
+    // inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    // {
+    //     if (node != root && priority[node] < split_threshold)
+    //     {
+    //         printMsg("add subtree %zu, %.2f\n", node, priority[node]);
+    //         size_t parent = parentLinks[node];
+    //         if (addSubtree(node, insertionList) == 0)
+    //         {
+    //             size_t last_child = childLinks[node][childCounts[node] - 1];
+    //             if (relocate(childLinks[parent], vector<size_t>{last_child}))
+    //             {
+    //                 printMsg(">> Relocated %zu\n", last_child);
+    //                 printTreeJson(stderr);
+    //                 return tt_root(signature, insertionList, idx, parent);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             return tt_root(signature, insertionList, idx, parent);
+    //         }
+    //     }
+
+    //     if (!isRootNode[childLinks[node][0]])
+    //     {
+    //         return tt(signature, insertionList, idx, node);
+    //     }
+
+    //     double max_similarity = 0;
+    //     size_t best_root = 0;
+    //     for (size_t child : childLinks[node])
+    //     {
+    //         double similarity = calcSimilarity(means[child], signature);
+    //         // printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+    //         if (similarity + split_node_threshold >= priority[child])
+    //         {
+    //             printMsg("***(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+    //         }
+    //         else
+    //         {
+    //             printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+    //         }
+    //         if (similarity > max_similarity)
+    //         {
+    //             max_similarity = similarity;
+    //             best_root = child;
+    //         }
+    //     }
+    //     size_t dest = 0;
+    //     printMsg("traverse root %zu\n", best_root);
+    //     dest = tt_root(signature, insertionList, idx, best_root);
+    //     // if (max_similarity < split_threshold)
+    //     // {
+    //     //     printMsg("***bad root\n");
+    //     //     dest = createUniBranch(node, insertionList, signature, idx);
+    //     //     isRootNode[parentLinks[dest]] = 1;
+    //     //     // recluster(node);
+    //     // }
+    //     // else
+    //     // {
+    //     //     printMsg("traverse root %zu\n", best_root);
+    //     //     dest = tt_root(signature, insertionList, idx, best_root);
+    //     // }
+    //     if (childCounts[best_root] > tree_order)
+    //     {
+    //         if (forceSplitRoot(insertionList, best_root) == 1)
+    //         {
+    //             dissolveSuper(best_root);
+    //         }
+    //     }
+    //     return dest;
+    // }
 
     inline size_t first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t parent = 0)
     {
