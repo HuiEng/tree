@@ -158,12 +158,12 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
     for (size_t run = 0; run < iteration; run++)
     {
-
-        tree.printTreeJson(stderr);
         fprintf(stderr, "Iteration %zu\n", run);
 
         tree.trim();
         tree.prepReinsert();
+        
+        tree.printTreeJson(stderr);
         for (size_t i = 0; i < cap; i++)
         {
             size_t clus = tree.reinsert(seqs[foo[i]], foo[i]);

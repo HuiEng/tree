@@ -35,12 +35,15 @@ bool print_ = false;
 struct tt_data
 {
     std::bitset<8> statuses;
+    bool containsRoot = false;
     size_t dest = 0;
     double max_similarity = 0;
     size_t dest_branch = 0;
     double max_branch_similarity = 0;
     size_t dest_super = 0;
     double max_super_similarity = 0;
+    size_t dest_root = 0;
+    double max_root_similarity = 0;
     size_t mismatch = 0;
 
     vector<size_t> stay_branch;
@@ -48,6 +51,7 @@ struct tt_data
     vector<size_t> nn_leaf;
     vector<size_t> nn_branch;
     vector<size_t> stay_super;
+    vector<size_t> stay_root;
 };
 
 template <typename T>
@@ -1642,16 +1646,38 @@ public:
         printTreeJson(stderr);
     }
 
-    inline bool containChildRoot(size_t node)
+    inline vector<size_t> getChildRoots(size_t node)
     {
+        vector<size_t> roots;
         for (size_t child : childLinks[node])
         {
             if (isRootNode[child])
             {
-                return true;
+                roots.push_back(child);
             }
         }
-        return false;
+        return roots;
+    }
+
+    inline tt_data getStatusRoot(seq_type signature, vector<size_t> roots)
+    {
+        tt_data dt;
+        for (size_t child : roots)
+        {
+
+            double similarity = calcSimilarity(means[child], signature);
+            printMsg("(root %zu, %.2f, %.2f)", child, priority[child], similarity);
+            if (similarity > priority[child])
+            {
+                if (similarity > dt.max_root_similarity)
+                {
+                    dt.max_root_similarity = similarity;
+                    dt.dest_root = child;
+                }
+                dt.statuses.set(6);
+            }
+        }
+        return dt;
     }
 
     inline tt_data getStatus(seq_type signature, size_t node)
@@ -1669,6 +1695,23 @@ public:
 
             double similarity = 0;
             size_t status = 0;
+
+            if (isRootNode[child])
+            {
+                dt.containsRoot = true;
+                similarity = calcSimilarity(means[child], signature);
+                printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
+                if (similarity > priority[child])
+                {
+                    if (similarity > dt.max_root_similarity)
+                    {
+                        dt.max_root_similarity = similarity;
+                        dt.dest_root = child;
+                    }
+                    dt.statuses.set(6);
+                }
+                continue;
+            }
             std::tie(status, similarity) = similarityStatus(child, signature);
             switch (status)
             {
@@ -1734,10 +1777,8 @@ public:
     // dest cannot be super or root
     // in the case of stay size = 1
     // dest = stay[0]
-    inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    inline size_t growtree_without_root(tt_data dt, seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        tt_data dt = getStatus(signature, node);
-
         if (dt.statuses.none())
         {
             return createNode(signature, insertionList, node, idx);
@@ -2281,6 +2322,12 @@ public:
         // return make_pair(method, dt.dest);
     }
 
+    inline size_t tt(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    {
+        tt_data dt = getStatus(signature, node);
+        return growtree_without_root(dt, signature, insertionList, idx, node);
+    }
+
     inline void dissolveSingleton(size_t singleton, size_t dest)
     {
         printMsg(">>> Dissolve singleton %zu to %zu\n", singleton, dest);
@@ -2303,9 +2350,65 @@ public:
         clearNode(parent);
     }
 
+    inline size_t tt_root2(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
+    {
+
+        tt_data dt = getStatus(signature, node);
+        if (!dt.containsRoot)
+        {
+            return growtree_without_root(dt, signature, insertionList, idx, node);
+        }
+
+        if (dt.statuses.test(6))
+        {
+            if (dt.statuses.count() == 1)
+            {
+                printMsg("Traverse best root %zu\n", dt.dest_root);
+                return tt_root(signature, insertionList, idx, dt.dest_root);
+            }
+            else
+            {
+                printMsg("Stay root %zu and others \n", dt.dest_root);
+                //? to be changed
+                return tt_root(signature, insertionList, idx, dt.dest_root);
+            }
+        }
+        else if (dt.statuses.none())
+        {
+            //?
+            printMsg("Mismatch root\n");
+            return createNode(signature, insertionList, node, idx);
+        }
+        else
+        {
+            printMsg("Mismatch root but has others\n");
+            return growtree_without_root(dt, signature, insertionList, idx, node);
+        }
+    }
+
     inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (!containChildRoot(node))
+        if (node != root && priority[node] < split_threshold)
+        {
+            printMsg("add subtree %zu, %.2f\n", node, priority[node]);
+            size_t parent = parentLinks[node];
+            if (addSubtree(node, insertionList) == 0)
+            {
+                size_t last_child = childLinks[node][childCounts[node] - 1];
+                if (relocate(childLinks[parent], vector<size_t>{last_child}))
+                {
+                    printMsg(">> Relocated %zu\n", last_child);
+                    printTreeJson(stderr);
+                    return tt_root(signature, insertionList, idx, parent);
+                }
+            }
+            else
+            {
+                return tt_root(signature, insertionList, idx, parent);
+            }
+        }
+
+        if (!isRootNode[childLinks[node][0]])
         {
             return tt(signature, insertionList, idx, node);
         }
@@ -2354,78 +2457,6 @@ public:
         }
         return dest;
     }
-
-    // inline size_t tt_root(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
-    // {
-    //     if (node != root && priority[node] < split_threshold)
-    //     {
-    //         printMsg("add subtree %zu, %.2f\n", node, priority[node]);
-    //         size_t parent = parentLinks[node];
-    //         if (addSubtree(node, insertionList) == 0)
-    //         {
-    //             size_t last_child = childLinks[node][childCounts[node] - 1];
-    //             if (relocate(childLinks[parent], vector<size_t>{last_child}))
-    //             {
-    //                 printMsg(">> Relocated %zu\n", last_child);
-    //                 printTreeJson(stderr);
-    //                 return tt_root(signature, insertionList, idx, parent);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             return tt_root(signature, insertionList, idx, parent);
-    //         }
-    //     }
-
-    //     if (!isRootNode[childLinks[node][0]])
-    //     {
-    //         return tt(signature, insertionList, idx, node);
-    //     }
-
-    //     double max_similarity = 0;
-    //     size_t best_root = 0;
-    //     for (size_t child : childLinks[node])
-    //     {
-    //         double similarity = calcSimilarity(means[child], signature);
-    //         // printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-    //         if (similarity + split_node_threshold >= priority[child])
-    //         {
-    //             printMsg("***(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-    //         }
-    //         else
-    //         {
-    //             printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-    //         }
-    //         if (similarity > max_similarity)
-    //         {
-    //             max_similarity = similarity;
-    //             best_root = child;
-    //         }
-    //     }
-    //     size_t dest = 0;
-    //     printMsg("traverse root %zu\n", best_root);
-    //     dest = tt_root(signature, insertionList, idx, best_root);
-    //     // if (max_similarity < split_threshold)
-    //     // {
-    //     //     printMsg("***bad root\n");
-    //     //     dest = createUniBranch(node, insertionList, signature, idx);
-    //     //     isRootNode[parentLinks[dest]] = 1;
-    //     //     // recluster(node);
-    //     // }
-    //     // else
-    //     // {
-    //     //     printMsg("traverse root %zu\n", best_root);
-    //     //     dest = tt_root(signature, insertionList, idx, best_root);
-    //     // }
-    //     if (childCounts[best_root] > tree_order)
-    //     {
-    //         if (forceSplitRoot(insertionList, best_root) == 1)
-    //         {
-    //             dissolveSuper(best_root);
-    //         }
-    //     }
-    //     return dest;
-    // }
 
     inline size_t first_insert(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t parent = 0)
     {
@@ -2736,16 +2767,17 @@ public:
 
     inline size_t searchBestSubtree(seq_type signature, size_t node = 0)
     {
-        if (!isRootNode[childLinks[node][0]])
+        if (!isRootNode[node] || !isRootNode[childLinks[node][0]])
         {
             return searchBest(signature);
         }
         size_t dest = 0;
         double max_similarity = 0;
+        printMsg("\n------------- %zu\n", node);
 
         for (size_t subtree : childLinks[node])
         {
-            size_t candidate = searchBest(signature, subtree);
+            size_t candidate = searchBestSubtree(signature, subtree);
             double similarity = calcSimilarity(means[candidate], signature);
             printMsg(" (%zu, %.2f) ", candidate, calcSimilarity(means[candidate], signature));
 
