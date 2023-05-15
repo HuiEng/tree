@@ -1616,7 +1616,7 @@ public:
             return 0;
         }
 
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
         printMsg(">>> Merging %zu from %zu to %zu\n", singleton, from, to);
         double max_simimlarity = split_threshold;
         size_t dest = insertBranch(means[singleton], insertionList, seqIDs[singleton][0], to);
@@ -1629,7 +1629,7 @@ public:
         clearNode(from);
         updateNodeMean(to);
 
-        printTreeJson(stderr);
+        // printTreeJson(stderr);
     }
 
     inline vector<size_t> getChildRoots(size_t node)
@@ -1923,7 +1923,7 @@ public:
                     {
                         printMsg("Stay Leaf\n");
                         dt.dest = stayNode(signature, insertionList, idx, dt.dest);
-                        t_branch = createBranch(node, insertionList, dt.stay_leaf);
+                        t_branch = createBranch(t_parent, insertionList, dt.stay_leaf);
                         for (size_t l : dt.nn_leaf)
                         {
                             moveParent(l, t_branch);
@@ -2400,7 +2400,7 @@ public:
                 if (relocate(childLinks[parent], vector<size_t>{last_child}))
                 {
                     printMsg(">> Relocated %zu\n", last_child);
-                    printTreeJson(stderr);
+                    // printTreeJson(stderr);
                     return tt_root(signature, insertionList, idx, parent);
                 }
             }
@@ -3150,8 +3150,8 @@ public:
 
     size_t reinsert(seq_type signature, size_t idx)
     {
-        // size_t node = search(signature);
-        size_t node = searchBestSubtree(signature);
+        size_t node = search(signature);
+        // size_t node = searchBestSubtree(signature);
         // size_t node = search2(signature);
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
