@@ -1417,6 +1417,7 @@ public:
             {
                 continue;
             }
+            // printMsg(">>>%zu\n",child);
             for (size_t grandchild : childLinks[child])
             {
                 if (isAmbiNode[grandchild])
@@ -1601,7 +1602,14 @@ public:
 
         // is singleton
         size_t singleton = childLinks[from][0]; //? may not be the first child
-        // printTreeJson(stderr);
+
+        if (matrices[singleton].size() > 1)
+        {
+            // is just single child, not singleton
+            return 0;
+        }
+
+        printTreeJson(stderr);
         printMsg(">>> Merging %zu from %zu to %zu\n", singleton, from, to);
         double max_simimlarity = split_threshold;
         size_t dest = insertBranch(means[singleton], insertionList, seqIDs[singleton][0], to);
@@ -1614,7 +1622,7 @@ public:
         clearNode(from);
         updateNodeMean(to);
 
-        // printTreeJson(stderr);
+        printTreeJson(stderr);
     }
 
     // dest cannot be super or root
@@ -2323,8 +2331,19 @@ public:
                 best_root = child;
             }
         }
-        printMsg("traverse root %zu\n", best_root);
-        size_t dest = tt_root(signature, insertionList, idx, best_root);
+        size_t dest = 0;
+        if (max_similarity < split_threshold)
+        {
+            printMsg("***bad root\n");
+            dest = createUniBranch(node, insertionList, signature, idx);
+            isRootNode[parentLinks[dest]] = 1;
+            // recluster(node);
+        }
+        else
+        {
+            printMsg("traverse root %zu\n", best_root);
+            dest = tt_root(signature, insertionList, idx, best_root);
+        }
         if (childCounts[best_root] > tree_order)
         {
             if (forceSplitRoot(insertionList, best_root) == 1)
