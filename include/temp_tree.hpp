@@ -1348,6 +1348,7 @@ public:
     // recluster grandchildren, number of cluster = number of children
     size_t kMeans(size_t grandparent)
     {
+        printMsg(">> KMeans %zu\n", grandparent);
         vector<size_t> children = childLinks[grandparent];
         size_t clusterCount = children.size();
         vector<vector<size_t>> clusters(clusterCount);
@@ -1365,60 +1366,45 @@ public:
             // temp_centroids[i] = createRandomSig(grandchildren, children[i]); //(i + 1) * 100);
             // temp_centroids[i] = means[children[i]];
         }
-
-        for (size_t grandchild : grandchildren)
+        for (size_t iteration = 0; iteration < 4; iteration++)
         {
-            size_t dest = 0;
-            double max_similarity = 0;
-            for (size_t i = 0; i < temp_centroids.size(); i++)
+            for (size_t grandchild : grandchildren)
             {
-                double similarity = calcSimilarity(temp_centroids[i], means[grandchild]);
-                printMsg("%zu, %f\n", i, similarity);
-                if (similarity > max_similarity)
+                size_t dest = 0;
+                double max_similarity = 0;
+                for (size_t i = 0; i < temp_centroids.size(); i++)
                 {
-                    max_similarity = similarity;
-                    dest = i;
+                    double similarity = calcSimilarity(temp_centroids[i], means[grandchild]);
+                    // printMsg("%zu, %f\n", i, similarity);
+                    if (similarity > max_similarity)
+                    {
+                        max_similarity = similarity;
+                        dest = i;
+                    }
                 }
+                // printMsg("--- %zu goes to %zu\n", grandchild, dest);
+                clusters[dest].push_back(grandchild);
             }
-            printMsg("--- %zu goes to %zu\n", grandchild, dest);
-            clusters[dest].push_back(grandchild);
-        }
 
-        // for (vector<size_t> cluster : clusters)
-        // {
-        //     if (cluster.size() <= 1)
-        //     {
-        //         printMsg("??something is wrong cannot split evenly\n");
-        //         return 0;
-        //     }
-        // }
-
-        if (print_)
-        {
-            printTreeJson(stderr);
-        }
-        printMsg(">> KMeans %zu\n", grandparent);
-
-        size_t i = 0;
-        // reuse clusterSize to store the new t_parents
-        for (vector<size_t> cluster : clusters)
-        {
-            size_t t_parent = children[i];
-            for (size_t grandchild : cluster)
+            size_t i = 0;
+            // reuse clusterSize to store the new t_parents
+            for (vector<size_t> cluster : clusters)
             {
-                if (parentLinks[grandchild] != t_parent)
+                size_t t_parent = children[i];
+                for (size_t grandchild : cluster)
                 {
-                    moveParent(grandchild, t_parent);
+                    if (parentLinks[grandchild] != t_parent)
+                    {
+                        moveParent(grandchild, t_parent);
+                    }
                 }
+                updateNodeMean(t_parent);
+                temp_centroids[i] = means[t_parent];
+                cluster.clear();
+                i++;
             }
-            updateNodeMean(t_parent);
-            i++;
         }
         updateParentMean(grandparent);
-        if (print_)
-        {
-            printTreeJson(stderr);
-        }
 
         return 1;
     }
@@ -1937,7 +1923,7 @@ public:
                     {
                         printMsg("Stay Leaf\n");
                         dt.dest = stayNode(signature, insertionList, idx, dt.dest);
-                        t_branch = createBranch(t_parent, insertionList, dt.stay_leaf);
+                        t_branch = createBranch(node, insertionList, dt.stay_leaf);
                         for (size_t l : dt.nn_leaf)
                         {
                             moveParent(l, t_branch);
@@ -2356,21 +2342,37 @@ public:
         tt_data dt = getStatus(signature, node);
         if (!dt.containsRoot)
         {
+            printMsg("No root %zu\n", node);
             return growtree_without_root(dt, signature, insertionList, idx, node);
         }
 
         if (dt.statuses.test(6))
         {
+            if (priority[dt.dest_root] < split_threshold)
+            {
+                printMsg("Dissolve root %zu, retry\n", dt.dest_root);
+                dissolveSuper(dt.dest_root);
+                return tt_root2(signature, insertionList, idx, node);
+            }
             if (dt.statuses.count() == 1)
             {
                 printMsg("Traverse best root %zu\n", dt.dest_root);
-                return tt_root(signature, insertionList, idx, dt.dest_root);
+                return tt_root2(signature, insertionList, idx, dt.dest_root);
             }
             else
             {
                 printMsg("Stay root %zu and others \n", dt.dest_root);
                 //? to be changed
-                return tt_root(signature, insertionList, idx, dt.dest_root);
+                size_t dest = tt_root2(signature, insertionList, idx, dt.dest_root);
+                // size_t temp = dest;
+                // size_t parent = parentLinks[temp];
+                // while (parent != node)
+                // {
+                //     temp = parent;
+                //     parent = parentLinks[temp];
+                // }
+                // moveParent(temp, dt.dest_root);
+                return dest;
             }
         }
         else if (dt.statuses.none())
@@ -2562,6 +2564,34 @@ public:
         size_t clusterCount = 2;
         vector<size_t> children = childLinks[node];
         vector<vector<size_t>> clusters(clusterCount);
+
+        size_t rootCount = getChildRoots(node).size();
+        if (rootCount != 0 && children.size() != rootCount)
+        {
+            printMsg(">>>Imbalance node\n");
+
+            size_t t_parent = createParent(node, insertionList);
+            isRootNode[t_parent] = 1;
+            for (size_t child : children)
+            {
+                if (!isRootNode[child])
+                {
+                    moveParent(child, t_parent);
+                }
+            }
+            updateNodeMean(t_parent);
+            addSigToMatrix(node, means[t_parent]);
+            kMeans(node);
+            for (size_t child : childLinks[node])
+            {
+                if (childCounts[child] <= 1)
+                {
+                    dissolveSuper(child);
+                }
+            }
+            return 0;
+        }
+
         // vector<seq_type> temp_centroids(clusterCount);
 
         // for (size_t i = 0; i < clusterCount; i++)
@@ -2637,7 +2667,8 @@ public:
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         // size_t node = insertSplit(signature, insertionList, idx);
-        size_t node = tt_root(signature, insertionList, idx);
+        // size_t node = tt_root(signature, insertionList, idx);
+        size_t node = tt_root2(signature, insertionList, idx);
         printMsg("inserted %zu at %zu\n\n", idx, node);
         if (childCounts[root] > tree_order)
         {
@@ -2765,11 +2796,11 @@ public:
         }
     }
 
-    inline size_t searchBestSubtree(seq_type signature, size_t node = 0)
+    inline size_t deepFirstSearch(seq_type signature, size_t node = 0)
     {
-        if (!isRootNode[node] || !isRootNode[childLinks[node][0]])
+        if (isBranchNode[node])
         {
-            return searchBest(signature);
+            return searchBest(signature, node);
         }
         size_t dest = 0;
         double max_similarity = 0;
@@ -2791,9 +2822,45 @@ public:
         return dest;
     }
 
+    inline size_t searchBestSubtree(seq_type signature, size_t node = 0)
+    {
+        if (!isRootNode[node])
+        {
+            return search(signature);
+        }
+        size_t dest = 0;
+        double max_similarity = 0;
+
+        for (size_t subtree : childLinks[node])
+        {
+            size_t candidate = subtree;
+            if (isRootNode[subtree])
+            {
+                candidate = searchBestSubtree(signature, subtree);
+                // printMsg("\naaa %zu,%zu\n", subtree, candidate);
+            }
+            else if (childCounts[subtree] > 0)
+            {
+                candidate = search(signature, subtree);
+                // printMsg("\nbbb %zu,%zu\n", subtree, candidate);
+            }
+
+            double similarity = calcSimilarity(means[candidate], signature);
+            // printMsg("\n###(%zu, %.2f)\n", candidate, similarity);
+
+            if (similarity > max_similarity)
+            {
+                max_similarity = similarity;
+                dest = candidate;
+            }
+        }
+
+        return dest;
+    }
+
     // find highest overlap among children
     // break tie by checking similarity of the finals
-    inline size_t search(seq_type signature, size_t idx = 0, size_t node = 0)
+    inline size_t search(seq_type signature, size_t node = 0)
     {
         double best_similarity = 0;
         vector<size_t> candidates;
@@ -2807,9 +2874,9 @@ public:
             }
 
             double similarity = calcSimilarity(means[child], signature);
-            similarity += calcOverlap(signature, means[child]);
+            // similarity += calcOverlap(signature, means[child]);
             printMsg(" <%zu,%.2f> ", child, similarity);
-            printMsg(" (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
+            // printMsg(" (%.2f, %.2f, %.2f) ", calcSimilarity(means[child], signature), calcOverlap(signature, means[child]), priority[child]);
 
             if (similarity > best_similarity)
             {
@@ -2831,7 +2898,7 @@ public:
             if (isBranchNode[best_child])
             {
                 printMsg("\n>%zu\n", best_child);
-                return search(signature, idx, best_child);
+                return search(signature, best_child);
             }
             else
             {
@@ -2850,7 +2917,7 @@ public:
                 double similarity = best_similarity;
                 if (isBranchNode[child])
                 {
-                    leaf = search(signature, idx, child);
+                    leaf = search(signature, child);
                     similarity = calcSimilarity(means[child], signature);
                     similarity += calcOverlap(signature, means[leaf]);
                     printMsg("> leaf %zu\n", leaf);
