@@ -2838,6 +2838,8 @@ public:
         vector<vector<size_t>> children = separateRootChildren(node);
         if (children[0].size() == 0)
         {
+
+            // fprintf(stderr, "\n\n>>>a %zu\n", node);
             return search(signature, node);
         }
 
@@ -2847,6 +2849,8 @@ public:
         // do roots
         for (size_t subtree : children[0])
         {
+            // fprintf(stderr, "\n\n>>>b %zu, %zu\n", node, subtree);
+
             size_t candidate = searchBestSubtree(signature, subtree);
             double similarity = calcSimilarity(means[candidate], signature);
 
@@ -2856,15 +2860,22 @@ public:
                 dest = candidate;
             }
         }
+        // fprintf(stderr, "\n\n>>>c %zu,%zu\n", node, dest);
 
         // do non-roots
-        size_t best_non_root = selectiveSearch(signature, children[1]);
-        double similarity = calcSimilarity(means[best_non_root], signature);
-
-        if (similarity > max_similarity)
+        if (children[1].size() > 0)
         {
-            max_similarity = similarity;
-            dest = best_non_root;
+            // fprintf(stderr, "\n\n>>>d %zu,%zu\n", node, children[1].size());
+
+            size_t best_non_root = selectiveSearch(signature, children[1]);
+            double similarity = calcSimilarity(means[best_non_root], signature);
+
+            if (similarity > max_similarity)
+            {
+                max_similarity = similarity;
+                dest = best_non_root;
+            }
+            // fprintf(stderr, "\n\n>>>e %zu,%zu\n", node, dest);
         }
         return dest;
     }
@@ -3139,6 +3150,7 @@ public:
     void removeAmbi(size_t node = 0)
     {
         // fprintf(stderr, "?>>>> checking %zu\n", node);
+
         size_t cleared = 0;
 
         vector<size_t> children = childLinks[node];
@@ -3228,6 +3240,7 @@ public:
         {
             clearNode(cleared);
         }
+        // fprintf(stderr, "?>>>> checked %zu\n", node);
     }
 
     void trim()
