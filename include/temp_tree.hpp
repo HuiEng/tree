@@ -3141,58 +3141,67 @@ public:
         // fprintf(stderr, "?>>>> checking %zu\n", node);
         size_t cleared = 0;
 
-        if (isBranchNode[node] && priority[node] >= stay_threshold)
+        vector<size_t> children = childLinks[node];
+        if (isRootNode[node] || isSuperNode[node])
         {
-            // fprintf(stderr, "?>>>> drop branch %zu\n", node);
-            size_t parent = parentLinks[node];
-            // size_t child = childLinks[node][0];
-            // moveParent(child, parent);
-            // deleteNode(node);
-            // updateParentMean(child);
-
-            vector<size_t> children = childLinks[node];
-            clearNode(node);
-            // means[node] = means[child];
-            // matrices[node] = matrices[child];
-            // seqIDs[node] = seqIDs[child];
-
-            for (size_t child : children)
-            {
-                if (!isAmbiNode[child])
-                {
-                    seqIDs[node].insert(seqIDs[node].end(), seqIDs[child].begin(), seqIDs[child].end());
-                    matrices[node].insert(matrices[node].end(), matrices[child].begin(), matrices[child].end());
-                }
-                clearNode(child);
-            }
-            parentLinks[node] = parent;
-            updateParentMean(node);
-            // printTreeJson(stderr);
-
-            // // combine branch
-            // matrices[node].clear();
-            // for (size_t child : childLinks[node])
-            // {
-
-            //     if (!isAmbiNode[child])
-            //     {
-            //         seqIDs[node].insert(seqIDs[node].end(), seqIDs[child].begin(), seqIDs[child].end());
-            //         matrices[node].insert(matrices[node].end(), matrices[child].begin(), matrices[child].end());
-            //     }
-            //     clearNode(child);
-            // }
-            // childLinks[node].clear();
-            // childCounts[node] = 0;
-            // isBranchNode[node] = 0;
-            // // updateNodeMean(node);
-            // updateParentMean(node);
-        }
-        else if (childCounts[node] > 0)
-        {
-            vector<size_t> children = childLinks[node];
             for (size_t child : children)
             {
                 removeAmbi(child);
+            }
+        }
+        else if (isBranchNode[node])
+        {
+            if (priority[node] >= stay_threshold)
+            {
+                // fprintf(stderr, "?>>>> drop branch %zu\n", node);
+                size_t parent = parentLinks[node];
+                size_t child = children[0];
+                // moveParent(child, parent);
+                // deleteNode(node);
+                // updateParentMean(child);
+
+                clearNode(node);
+                means[node] = means[child];
+                matrices[node] = matrices[child];
+                seqIDs[node] = seqIDs[child];
+
+                // for (size_t child : children)
+                // {
+                //     if (!isAmbiNode[child])
+                //     {
+                //         seqIDs[node].insert(seqIDs[node].end(), seqIDs[child].begin(), seqIDs[child].end());
+                //         matrices[node].insert(matrices[node].end(), matrices[child].begin(), matrices[child].end());
+                //     }
+                //     clearNode(child);
+                // }
+                parentLinks[node] = parent;
+                updateParentMean(node);
+                // printTreeJson(stderr);
+
+                // // combine branch
+                // matrices[node].clear();
+                // for (size_t child : childLinks[node])
+                // {
+
+                //     if (!isAmbiNode[child])
+                //     {
+                //         seqIDs[node].insert(seqIDs[node].end(), seqIDs[child].begin(), seqIDs[child].end());
+                //         matrices[node].insert(matrices[node].end(), matrices[child].begin(), matrices[child].end());
+                //     }
+                //     clearNode(child);
+                // }
+                // childLinks[node].clear();
+                // childCounts[node] = 0;
+                // isBranchNode[node] = 0;
+                // // updateNodeMean(node);
+                // updateParentMean(node);
+            }
+            else
+            {
+                for (size_t child : children)
+                {
+                    removeAmbi(child);
+                }
             }
         }
         else if (isAmbiNode[node] || seqIDs[node].size() <= singleton)
@@ -3201,6 +3210,10 @@ public:
             cleared = node;
             // clearNode(node);
             // fprintf(stderr, "deleting %zu,%zu\n", node, childCounts[parentLinks[node]]);
+        }
+        else
+        {
+            updateParentMean(node);
         }
         size_t parent = parentLinks[node];
         while (childCounts[parent] <= 1 && parent != root)
