@@ -1632,17 +1632,24 @@ public:
         // printTreeJson(stderr);
     }
 
-    inline vector<size_t> getChildRoots(size_t node)
+    // separate roots and non roots children of node
+    // first list contains roots
+    // second list contains non-roots
+    inline vector<vector<size_t>> separateRootChildren(size_t node)
     {
-        vector<size_t> roots;
+        vector<vector<size_t>> children(2);
         for (size_t child : childLinks[node])
         {
             if (isRootNode[child])
             {
-                roots.push_back(child);
+                children[0].push_back(child);
+            }
+            else
+            {
+                children[1].push_back(child);
             }
         }
-        return roots;
+        return children;
     }
 
     inline tt_data getStatusRoot(seq_type signature, vector<size_t> roots)
@@ -2565,7 +2572,7 @@ public:
         vector<size_t> children = childLinks[node];
         vector<vector<size_t>> clusters(clusterCount);
 
-        size_t rootCount = getChildRoots(node).size();
+        size_t rootCount = separateRootChildren(node)[0].size();
         if (rootCount != 0 && children.size() != rootCount)
         {
             printMsg(">>>Imbalance node\n");
@@ -2667,8 +2674,8 @@ public:
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         // size_t node = insertSplit(signature, insertionList, idx);
-        // size_t node = tt_root(signature, insertionList, idx);
-        size_t node = tt_root2(signature, insertionList, idx);
+        size_t node = tt_root(signature, insertionList, idx);
+        // size_t node = tt_root2(signature, insertionList, idx);
         printMsg("inserted %zu at %zu\n\n", idx, node);
         if (childCounts[root] > tree_order)
         {
@@ -2824,29 +2831,24 @@ public:
 
     inline size_t searchBestSubtree(seq_type signature, size_t node = 0)
     {
-        if (!isRootNode[node])
+        // if (!isRootNode[node])
+        // {
+        //     return search(signature);
+        // }
+        vector<vector<size_t>> children = separateRootChildren(node);
+        if (children[0].size() == 0)
         {
-            return search(signature);
+            return search(signature, node);
         }
+
         size_t dest = 0;
         double max_similarity = 0;
 
-        for (size_t subtree : childLinks[node])
+        // do roots
+        for (size_t subtree : children[0])
         {
-            size_t candidate = subtree;
-            if (isRootNode[subtree])
-            {
-                candidate = searchBestSubtree(signature, subtree);
-                // printMsg("\naaa %zu,%zu\n", subtree, candidate);
-            }
-            else if (childCounts[subtree] > 0)
-            {
-                candidate = search(signature, subtree);
-                // printMsg("\nbbb %zu,%zu\n", subtree, candidate);
-            }
-
+            size_t candidate = searchBestSubtree(signature, subtree);
             double similarity = calcSimilarity(means[candidate], signature);
-            // printMsg("\n###(%zu, %.2f)\n", candidate, similarity);
 
             if (similarity > max_similarity)
             {
@@ -2855,6 +2857,15 @@ public:
             }
         }
 
+        // do non-roots
+        size_t best_non_root = selectiveSearch(signature, children[1]);
+        double similarity = calcSimilarity(means[best_non_root], signature);
+
+        if (similarity > max_similarity)
+        {
+            max_similarity = similarity;
+            dest = best_non_root;
+        }
         return dest;
     }
 
@@ -2865,14 +2876,8 @@ public:
         double best_similarity = 0;
         vector<size_t> candidates;
 
-        for (size_t i = 0; i < childCounts[node]; i++)
+        for (size_t child : childLinks[node])
         {
-            size_t child = childLinks[node][i];
-            if (isAmbiNode[child])
-            {
-                continue;
-            }
-
             double similarity = calcSimilarity(means[child], signature);
             // similarity += calcOverlap(signature, means[child]);
             printMsg(" <%zu,%.2f> ", child, similarity);
@@ -2936,158 +2941,67 @@ public:
 
     // find highest overlap among children
     // break tie by checking similarity of the finals
-    inline size_t search2(seq_type signature, size_t idx = 0, size_t node = 0)
+    inline size_t selectiveSearch(seq_type signature, vector<size_t> children)
     {
-        printMsg("\n");
         double best_similarity = 0;
-        size_t best_branch = 0;
+        vector<size_t> candidates;
 
-        double best_overlap = 0;
-        size_t best_subtree = 0;
-        vector<size_t> overlapAll;
-
-        for (size_t i = 0; i < childCounts[node]; i++)
+        for (size_t child : children)
         {
-            size_t child = childLinks[node][i];
-            if (isAmbiNode[child])
+            double similarity = calcSimilarity(means[child], signature);
+            if (similarity > best_similarity)
             {
-                continue;
+                best_similarity = similarity;
+                candidates.clear();
             }
-            else if (isRootNode[child])
+
+            if (similarity == best_similarity)
             {
-                double overlap = calcOverlap(signature, means[child]);
-                printMsg(" <%zu,o-%.2f> ", child, overlap);
-                if (overlap == 1)
-                {
-                    overlapAll.push_back(child);
-                }
-                else if (overlap == best_overlap)
-                {
-                    double s1 = calcSimilarity(means[best_subtree], signature);
-                    double s2 = calcSimilarity(means[child], signature);
-                    if (s2 > s1)
-                    {
-                        printMsg(" <%zu,s2-%.2f,%.2f> ", child, s1, s2);
-                        best_subtree = child;
-                    }
-                }
-                else if (overlap > best_overlap)
-                {
-                    best_overlap = overlap;
-                    best_subtree = child;
-                }
+                candidates.push_back(child);
+            }
+        }
+
+        size_t best_child = candidates[0];
+
+        if (candidates.size() == 1)
+        {
+            if (isBranchNode[best_child])
+            {
+                printMsg("\n>%zu\n", best_child);
+                return search(signature, best_child);
             }
             else
             {
-                double similarity = calcSimilarity(means[child], signature);
-                printMsg(" <%zu,s-%.2f> ", child, similarity);
-                if (similarity > best_similarity)
-                {
-                    best_similarity = similarity;
-                    best_branch = child;
-                }
+                return best_child;
             }
-        }
-
-        if (overlapAll.size() > 0)
-        {
-            best_subtree = overlapAll[0];
-        }
-        printMsg("@@@ %zu, %zu", best_subtree, overlapAll.size());
-        // if node has no subtree
-        if (best_subtree == 0)
-        {
-            if (isBranchNode[best_branch])
-            {
-                return search2(signature, idx, best_branch);
-            }
-            else
-            {
-                return best_branch;
-            }
-        }
-        else if (overlapAll.size() <= 1)
-        {
-            return search2(signature, idx, best_subtree);
         }
         else
         {
-            printMsg("\n---");
-            double best_subtree_similarity = 0;
-            for (size_t child : overlapAll)
+
+            printMsg("\n*** here\n");
+            double best_dest_similarity = 0;
+            for (size_t child : candidates)
             {
-                double similarity = calcSimilarity(means[child], signature);
-                printMsg(" <%zu,s-%.2f> ", child, similarity);
-                if (similarity > best_subtree_similarity)
+                printMsg("child %zu\n", child);
+                size_t leaf = child;
+                double similarity = best_similarity;
+                if (isBranchNode[child])
                 {
-                    best_subtree_similarity = similarity;
-                    best_subtree = child;
+                    leaf = search(signature, child);
+                    similarity = calcSimilarity(means[child], signature);
+                    similarity += calcOverlap(signature, means[leaf]);
+                    printMsg("> leaf %zu\n", leaf);
+                }
+
+                if (similarity > best_dest_similarity)
+                {
+                    best_dest_similarity = similarity;
+                    best_child = leaf;
                 }
             }
 
-            if (best_branch == 0)
-            {
-                return search2(signature, idx, best_subtree);
-            }
-            else
-            {
-                if (best_subtree_similarity > best_similarity)
-                {
-                    return search2(signature, idx, best_subtree);
-                }
-                if (isBranchNode[best_branch])
-                {
-                    return search2(signature, idx, best_branch);
-                }
-                else
-                {
-                    return best_branch;
-                }
-            }
+            return best_child;
         }
-    }
-
-    // find highest overlap among children
-    // break tie by checking similarity of the finals
-    inline size_t search3(seq_type signature, size_t idx = 0, size_t node = 0, double best_score = 0, double dest = 0)
-    {
-        printMsg("\n");
-        size_t temp_dest = 0;
-        double temp_best_similarity = best_score;
-
-        for (size_t child : childLinks[node])
-        {
-            if (isAmbiNode[child])
-            {
-                continue;
-            }
-            else if (isRootNode[child] || isBranchNode[child])
-            {
-                size_t best_leaf = search3(signature, idx, child, temp_best_similarity);
-                if (best_leaf != 0)
-                {
-                    double similarity = calcSimilarity(means[best_leaf], signature);
-                    printMsg("<%zu,o-%.2f>\n", child, similarity);
-                    if (best_leaf != 0 && similarity > temp_best_similarity)
-                    {
-                        temp_best_similarity = similarity;
-                        temp_dest = child;
-                    }
-                }
-            }
-            else
-            {
-                double similarity = calcSimilarity(means[child], signature);
-                printMsg(" <%zu,s-%.2f> ", child, similarity);
-                if (similarity > temp_best_similarity)
-                {
-                    temp_best_similarity = similarity;
-                    temp_dest = child;
-                }
-            }
-        }
-
-        return temp_dest;
     }
 
     // cluster means still remain
@@ -3124,34 +3038,10 @@ public:
         }
     }
 
-    // update priority of ambi nodes, for debugging only
-    void prepareAmbi(size_t node = 0)
-    {
-        for (size_t child : childLinks[node])
-        {
-            if (isBranchNode[child])
-            {
-                prepareAmbi(child);
-            }
-            else if (isAmbiNode[child])
-            {
-                if (matrices[child].size() > 1)
-                {
-                    updatePriority(child);
-                    if (priority[child] > stay_threshold)
-                    {
-                        isAmbiNode[child] = 0;
-                        //? also remove from ambi link;
-                    }
-                }
-            }
-        }
-    }
-
     size_t reinsert(seq_type signature, size_t idx)
     {
-        size_t node = search(signature);
-        // size_t node = searchBestSubtree(signature);
+        // size_t node = search(signature);
+        size_t node = searchBestSubtree(signature);
         // size_t node = search2(signature);
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
@@ -3243,6 +3133,87 @@ public:
             {
                 dropBranch(child);
             }
+        }
+    }
+
+    void removeAmbi(size_t node = 0)
+    {
+        // fprintf(stderr, "?>>>> checking %zu\n", node);
+        size_t cleared = 0;
+
+        if (isBranchNode[node] && priority[node] >= stay_threshold)
+        {
+            // fprintf(stderr, "?>>>> drop branch %zu\n", node);
+            size_t parent = parentLinks[node];
+            // size_t child = childLinks[node][0];
+            // moveParent(child, parent);
+            // deleteNode(node);
+            // updateParentMean(child);
+
+            vector<size_t> children = childLinks[node];
+            clearNode(node);
+            // means[node] = means[child];
+            // matrices[node] = matrices[child];
+            // seqIDs[node] = seqIDs[child];
+
+            for (size_t child : children)
+            {
+                if (!isAmbiNode[child])
+                {
+                    seqIDs[node].insert(seqIDs[node].end(), seqIDs[child].begin(), seqIDs[child].end());
+                    matrices[node].insert(matrices[node].end(), matrices[child].begin(), matrices[child].end());
+                }
+                clearNode(child);
+            }
+            parentLinks[node] = parent;
+            updateParentMean(node);
+            // printTreeJson(stderr);
+
+            // // combine branch
+            // matrices[node].clear();
+            // for (size_t child : childLinks[node])
+            // {
+
+            //     if (!isAmbiNode[child])
+            //     {
+            //         seqIDs[node].insert(seqIDs[node].end(), seqIDs[child].begin(), seqIDs[child].end());
+            //         matrices[node].insert(matrices[node].end(), matrices[child].begin(), matrices[child].end());
+            //     }
+            //     clearNode(child);
+            // }
+            // childLinks[node].clear();
+            // childCounts[node] = 0;
+            // isBranchNode[node] = 0;
+            // // updateNodeMean(node);
+            // updateParentMean(node);
+        }
+        else if (childCounts[node] > 0)
+        {
+            vector<size_t> children = childLinks[node];
+            for (size_t child : children)
+            {
+                removeAmbi(child);
+            }
+        }
+        else if (isAmbiNode[node] || seqIDs[node].size() <= singleton)
+        {
+            deleteNode(node);
+            cleared = node;
+            // clearNode(node);
+            // fprintf(stderr, "deleting %zu,%zu\n", node, childCounts[parentLinks[node]]);
+        }
+        size_t parent = parentLinks[node];
+        while (childCounts[parent] <= 1 && parent != root)
+        {
+            deleteUnitig(parent);
+            // fprintf(stderr, "unitig %zu,%zu\n", node, parent);
+            parent = parentLinks[parent];
+        }
+
+        // printTreeJson(stderr);
+        if (cleared != 0)
+        {
+            clearNode(cleared);
         }
     }
 

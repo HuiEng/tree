@@ -132,16 +132,17 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     // tree.test();
 
-    tree.prepareAmbi();
-
     // for debugging
     if (iteration_given)
     {
         // prep to remove and reinsert ambi
-        printMsg("\n\n\nBefore\n");
+        fprintf(stderr, "\n\n\nBefore\n");
         tree.printTreeJson(stderr);
+
         singleton = 0;
-        tree.trim();
+        // tree.trim();
+        tree.removeAmbi();
+        singleton = 1;
         printMsg("\n\nReinserting ambi (all)\n");
         tree.prepReinsert();
         for (size_t i = 0; i < cap; i++)
@@ -153,16 +154,16 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         }
 
         tree.printTreeJson(stderr);
-        singleton = 1;
     }
 
     for (size_t run = 0; run < iteration; run++)
     {
         fprintf(stderr, "Iteration %zu\n", run);
 
-        tree.trim();
+        // tree.trim();
+        tree.removeAmbi();
         tree.prepReinsert();
-        
+
         tree.printTreeJson(stderr);
         for (size_t i = 0; i < cap; i++)
         {
