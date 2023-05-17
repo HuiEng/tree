@@ -35,7 +35,6 @@ bool print_ = false;
 struct tt_data
 {
     std::bitset<8> statuses;
-    bool containsRoot = false;
     size_t dest = 0;
     double max_similarity = 0;
     size_t dest_branch = 0;
@@ -1692,7 +1691,6 @@ public:
 
             if (isRootNode[child])
             {
-                dt.containsRoot = true;
                 similarity = calcSimilarity(means[child], signature);
                 printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
                 if (similarity > priority[child])
@@ -2346,29 +2344,42 @@ public:
 
     inline size_t tt_root2(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
+        printMsg(">>>children count %zu, %zu\n", node, childCounts[node]);
 
-        tt_data dt = getStatus(signature, node);
-        if (!dt.containsRoot)
+        if (childCounts[node] > tree_order)
+        {
+            // printMsg(">>>children count %zu, %zu\n", node, childCounts[node]);
+            // printTreeJson(stderr);
+            forceSplitRoot(insertionList, node);
+            // return tt_root2(signature, insertionList, idx, node);
+        }
+
+        vector<vector<size_t>> candidates = separateRootChildren(node);
+        if (candidates[0].size() == 0)
         {
             printMsg("No root %zu\n", node);
-            return growtree_without_root(dt, signature, insertionList, idx, node);
+            // return growtree_without_root(dt, signature, insertionList, idx, node);
+            return tt(signature, insertionList, idx, node);
         }
+
+        tt_data dt = getStatus(signature, node);
 
         if (dt.statuses.test(6))
         {
-            if (priority[dt.dest_root] < split_threshold)
-            {
-                printMsg("Dissolve root %zu, retry\n", dt.dest_root);
-                dissolveSuper(dt.dest_root);
-                return tt_root2(signature, insertionList, idx, node);
-            }
             if (dt.statuses.count() == 1)
             {
                 printMsg("Traverse best root %zu\n", dt.dest_root);
                 return tt_root2(signature, insertionList, idx, dt.dest_root);
             }
+            else if (priority[dt.dest_root] < split_threshold)
+            {
+                printMsg("Ignore root %zu, do others\n", dt.dest_root);
+                dt.statuses.reset(6);
+                return growtree_without_root(dt, signature, insertionList, idx, node);
+            }
             else
             {
+
                 printMsg("Stay root %zu and others \n", dt.dest_root);
                 //? to be changed
                 // size_t dest = tt_root2(signature, insertionList, idx, dt.dest_root);
@@ -2379,9 +2390,10 @@ public:
                 // size_t dest_stay_root = searchBestSubtree(signature, dt.dest_root);
                 // printMsg("here %zu\n", dest_stay_root);
                 // size_t dest = 0;
-                printTreeJson(stderr);
-                relocate(dt.stay_root, separateRootChildren(node)[1]);
-                printTreeJson(stderr);
+
+                // printTreeJson(stderr);
+                relocate(dt.stay_root, candidates[1]);
+                // printTreeJson(stderr);
                 size_t dest = tt_root2(signature, insertionList, idx, dt.dest_root);
 
                 // size_t temp = dest;
@@ -2395,6 +2407,7 @@ public:
                 return dest;
             }
         }
+
         else if (dt.statuses.none())
         {
             //?
@@ -2416,7 +2429,9 @@ public:
             size_t parent = parentLinks[node];
             if (addSubtree(node, insertionList) == 0)
             {
+                printMsg("parent %zu\n", parent);
                 size_t last_child = childLinks[node][childCounts[node] - 1];
+                printMsg("last_child %zu\n", last_child);
                 if (relocate(childLinks[parent], vector<size_t>{last_child}))
                 {
                     printMsg(">> Relocated %zu\n", last_child);
@@ -2531,7 +2546,7 @@ public:
         {
             if (cluster.size() <= 1)
             {
-                printMsg("??something is wrong cannot split evenly\n");
+                printMsg("??something is wrong cannot add subtree evenly\n");
                 return 0;
             }
         }
@@ -2588,7 +2603,7 @@ public:
         size_t rootCount = separateRootChildren(node)[0].size();
         if (rootCount != 0 && children.size() != rootCount)
         {
-            printMsg(">>>Imbalance node\n");
+            printMsg(">>>Imbalance node %zu\n", node);
 
             size_t t_parent = createParent(node, insertionList);
             isRootNode[t_parent] = 1;
@@ -2609,6 +2624,7 @@ public:
                     dissolveSuper(child);
                 }
             }
+            printTreeJson(stderr);
             return 0;
         }
 
@@ -2647,6 +2663,37 @@ public:
                 return 0;
             }
         }
+
+        // bool promote = false;
+        // size_t i = 0;
+        // for (i = 0; i < clusterCount; i++)
+        // {
+        //     if (clusters[i].size() <= 1)
+        //     {
+        //         if (node == root)
+        //         {
+        //             printMsg("??something is wrong cannot split evenly\n");
+        //             return 0;
+        //         }
+        //         else
+        //         {
+        //             promote = true;
+        //             break;
+        //         }
+        //     }
+        // }
+
+        // if (promote)
+        // {
+        //     size_t parent = parentLinks[node];
+        //     for (size_t child : clusters[i])
+        //     {
+        //         moveParent(child, parent);
+        //         printMsg("promoting %zu\n", child);
+        //     }
+        //     updateParentMean(node);
+        //     return 0;
+        // }
 
         if (print_)
         {
@@ -2687,8 +2734,8 @@ public:
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         // size_t node = insertSplit(signature, insertionList, idx);
-        // size_t node = tt_root(signature, insertionList, idx);
-        size_t node = tt_root2(signature, insertionList, idx);
+        size_t node = tt_root(signature, insertionList, idx);
+        // size_t node = tt_root2(signature, insertionList, idx);
         printMsg("inserted %zu at %zu\n\n", idx, node);
         if (childCounts[root] > tree_order)
         {
