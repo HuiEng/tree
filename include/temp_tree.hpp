@@ -1349,7 +1349,8 @@ public:
     size_t kMeans(size_t grandparent)
     {
         printMsg(">> KMeans %zu\n", grandparent);
-        vector<size_t> children = childLinks[grandparent];
+        // vector<size_t> children = childLinks[grandparent];
+        vector<size_t> children = separateRootChildren(grandparent)[0];
         size_t clusterCount = children.size();
         vector<vector<size_t>> clusters(clusterCount);
         vector<seq_type> temp_centroids(clusterCount);
@@ -1930,7 +1931,7 @@ public:
                     {
                         printMsg("Stay Leaf\n");
                         dt.dest = stayNode(signature, insertionList, idx, dt.dest);
-                        t_branch = createBranch(t_parent, insertionList, dt.stay_leaf);
+                        t_branch = createBranch(node, insertionList, dt.stay_leaf);
                         for (size_t l : dt.nn_leaf)
                         {
                             moveParent(l, t_branch);
@@ -2370,7 +2371,19 @@ public:
             {
                 printMsg("Stay root %zu and others \n", dt.dest_root);
                 //? to be changed
+                // size_t dest = tt_root2(signature, insertionList, idx, dt.dest_root);
+
+                // dt.statuses.reset(6);
+                // size_t dest = growtree_without_root(dt, signature, insertionList, idx, node);
+
+                // size_t dest_stay_root = searchBestSubtree(signature, dt.dest_root);
+                // printMsg("here %zu\n", dest_stay_root);
+                // size_t dest = 0;
+                printTreeJson(stderr);
+                relocate(dt.stay_root, separateRootChildren(node)[1]);
+                printTreeJson(stderr);
                 size_t dest = tt_root2(signature, insertionList, idx, dt.dest_root);
+
                 // size_t temp = dest;
                 // size_t parent = parentLinks[temp];
                 // while (parent != node)
@@ -2674,8 +2687,8 @@ public:
     inline size_t insertSplitRoot(seq_type signature, vector<size_t> &insertionList, size_t idx)
     {
         // size_t node = insertSplit(signature, insertionList, idx);
-        size_t node = tt_root(signature, insertionList, idx);
-        // size_t node = tt_root2(signature, insertionList, idx);
+        // size_t node = tt_root(signature, insertionList, idx);
+        size_t node = tt_root2(signature, insertionList, idx);
         printMsg("inserted %zu at %zu\n\n", idx, node);
         if (childCounts[root] > tree_order)
         {
@@ -2831,15 +2844,9 @@ public:
 
     inline size_t searchBestSubtree(seq_type signature, size_t node = 0)
     {
-        // if (!isRootNode[node])
-        // {
-        //     return search(signature);
-        // }
         vector<vector<size_t>> children = separateRootChildren(node);
         if (children[0].size() == 0)
         {
-
-            // fprintf(stderr, "\n\n>>>a %zu\n", node);
             return search(signature, node);
         }
 
@@ -2849,8 +2856,6 @@ public:
         // do roots
         for (size_t subtree : children[0])
         {
-            // fprintf(stderr, "\n\n>>>b %zu, %zu\n", node, subtree);
-
             size_t candidate = searchBestSubtree(signature, subtree);
             double similarity = calcSimilarity(means[candidate], signature);
 
@@ -2860,13 +2865,9 @@ public:
                 dest = candidate;
             }
         }
-        // fprintf(stderr, "\n\n>>>c %zu,%zu\n", node, dest);
-
         // do non-roots
         if (children[1].size() > 0)
         {
-            // fprintf(stderr, "\n\n>>>d %zu,%zu\n", node, children[1].size());
-
             size_t best_non_root = selectiveSearch(signature, children[1]);
             double similarity = calcSimilarity(means[best_non_root], signature);
 
@@ -2875,7 +2876,6 @@ public:
                 max_similarity = similarity;
                 dest = best_non_root;
             }
-            // fprintf(stderr, "\n\n>>>e %zu,%zu\n", node, dest);
         }
         return dest;
     }
