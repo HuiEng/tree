@@ -77,9 +77,8 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     {
         insertionList.push_back(partree_capacity - i);
     }
-
     vector<size_t> foo;
-    for (int i = 0; i < cap; i++)
+    for (int i = 0; i < seqCount; i++)
     {
         foo.push_back(i);
     }
@@ -97,6 +96,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         // foo = temp;
         // foo.resize(cap);
     }
+    foo.resize(cap);
 
     clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
     if (force_split_)
@@ -104,9 +104,9 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         for (size_t i = 1; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
-            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]);
+            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i])+1;
             // clusters[foo[i]] = tree.findAncestor(clus);
-            clusters[foo[i]] = clus;
+            // clusters[foo[i]] = clus;
         }
     }
     else
