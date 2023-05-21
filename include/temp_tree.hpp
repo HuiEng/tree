@@ -1210,8 +1210,6 @@ public:
         {
             return stayNode(signature, insertionList, idx, dest);
         }
-
-        return insertAmbi(signature, insertionList, idx, branch);
     }
 
     // create ambi and insert to it if there is none
@@ -1243,6 +1241,9 @@ public:
             }
             return dest;
         }
+
+        
+        return insertAmbi(signature, insertionList, idx, branch);
     }
 
     // find best leaf from the NN branches, if dest = 0, create new node
