@@ -2222,30 +2222,32 @@ public:
             //     return createNode(signature, insertionList, t_parent, idx);
             // }
 
-            if (dt.nn_branch.size() > 1)
-            {
-                if (dt.nn_leaf.size() > 1)
-                {
-                    t_branch = createBranch(node, insertionList, dt.nn_leaf);
-                }
-                else
-                {
-                    t_branch = dt.nn_leaf[0];
-                }
-                dt.nn_branch.push_back(t_branch);
-                return doNNBranch(signature, node, dt, insertionList, idx);
-            }
-            else
-            {
-                t_branch = dt.nn_branch[0];
-                for (size_t l : dt.nn_leaf)
-                {
-                    moveParent(l, t_branch);
-                    isAmbiNode[l] = 1;
-                }
-                insertVecRange(ambiLinks[t_branch], dt.nn_leaf);
-                return insertBranch(signature, insertionList, idx, t_branch);
-            }
+            t_parent = doTarget_candidates(dt, node, dt.nn_leaf, insertionList, 2);
+            return createNode(signature, insertionList, t_parent, idx);
+            // if (dt.nn_branch.size() > 1)
+            // {
+            //     if (dt.nn_leaf.size() > 1)
+            //     {
+            //         t_branch = createBranch(node, insertionList, dt.nn_leaf);
+            //     }
+            //     else
+            //     {
+            //         t_branch = dt.nn_leaf[0];
+            //     }
+            //     dt.nn_branch.push_back(t_branch);
+            //     return doNNBranch(signature, node, dt, insertionList, idx);
+            // }
+            // else
+            // {
+            //     t_branch = dt.nn_branch[0];
+            //     for (size_t l : dt.nn_leaf)
+            //     {
+            //         moveParent(l, t_branch);
+            //         // isAmbiNode[l] = 1;
+            //     }
+            //     // insertVecRange(ambiLinks[t_branch], dt.nn_leaf);
+            //     return insertBranch(signature, insertionList, idx, t_branch);
+            // }
         }
 
         fprintf(stderr, "ERROR 2 bit %zu!!", idx);
