@@ -437,6 +437,7 @@ public:
         isBranchNode[node] = 0;
         childCounts[node] = 0;
         childLinks[node].clear();
+        ambiLinks[node].clear();
         seqIDs[node].clear();
         matrices[node].clear();
         means[node].clear(); //?
@@ -1162,10 +1163,76 @@ public:
         }
     }
 
+    // assume there is no ambi/ or maybe doesn't matter
+    inline void mergeSingletons(size_t branch)
+    {
+        vector<size_t> singletons;
+        for (size_t child : childLinks[branch])
+        {
+            if (isSingleton(child))
+            {
+                singletons.push_back(child);
+            }
+        }
+
+        if (singletons.size() > 1)
+        {
+            size_t leaf = singletons.back();
+            singletons.pop_back();
+
+            printMsg("merging Singletons at branch %zu, keep leaf %zu\n", branch, leaf);
+            for (size_t singleton : singletons)
+            {
+                insertVecRange(matrices[leaf], matrices[singleton]);
+                insertVecRange(seqIDs[leaf], seqIDs[singleton]);
+                deleteNode(singleton);
+                clearNode(singleton);
+            }
+            updateParentMean(leaf);
+        }
+    }
+
+    inline void mergeLeaves(size_t branch)
+    {
+        size_t leaf = childLinks[branch].back();
+        childLinks[branch].pop_back();
+
+        printMsg("merging branch %zu, keeping leaf %zu\n", branch, leaf);
+        for (size_t child : childLinks[branch])
+        {
+            insertVecRange(matrices[leaf], matrices[child]);
+            insertVecRange(seqIDs[leaf], seqIDs[child]);
+            clearNode(child);
+        }
+
+        childLinks[branch].clear();
+        childLinks[branch].push_back(leaf);
+        childCounts[branch] = 1;
+
+        updateParentMean(leaf);
+    }
+
     inline size_t insertAmbi(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
     {
+        if (childCounts[branch] == 1 && isSingleton(childLinks[branch][0]))
+        {
+            return createNode(signature, insertionList, branch, idx);
+        }
         if (ambiLinks[branch].size() == 0)
         {
+            // just create sibling if target is singleton
+            // if (childCounts[branch] == 1)
+            // {
+            //     if (isSingleton(childLinks[branch][0]))
+            //     {
+            //         return createNode(signature, insertionList, branch, idx);
+            //     }
+            // }
+            // else if (priority[branch] >= stay_threshold)
+            // {
+            //     mergeSingletons(branch);
+            //     // mergeLeaves(branch);
+            // }
             return createAmbiNode(signature, insertionList, branch, idx);
         }
 
@@ -1242,7 +1309,6 @@ public:
             return dest;
         }
 
-        
         return insertAmbi(signature, insertionList, idx, branch);
     }
 
@@ -1572,39 +1638,19 @@ public:
         }
     }
 
-    // if the from_branch contains only singleton and ambi node(s)
-    // move its ambi nodes to the to_branch
-    // and relocating the singleton
-    inline size_t mergeBranch(size_t to, size_t from, vector<size_t> &insertionList)
+    // check if first child of branch is a singleton
+    inline bool isSingleton(size_t child)
     {
-        if (childCounts[from] - ambiLinks[from].size() > 1)
-        {
-            return 0;
-        }
+        return matrices[child].size() == 1;
+        // // is singleton
+        // size_t singleton = childLinks[branch][0]; //? may not be the first child
 
-        // is singleton
-        size_t singleton = childLinks[from][0]; //? may not be the first child
-
-        if (matrices[singleton].size() > 1)
-        {
-            // is just single child, not singleton
-            return 0;
-        }
-
-        // printTreeJson(stderr);
-        printMsg(">>> Merging %zu from %zu to %zu\n", singleton, from, to);
-        double max_simimlarity = split_threshold;
-        size_t dest = insertBranch(means[singleton], insertionList, seqIDs[singleton][0], to);
-        for (size_t ambi : ambiLinks[from])
-        {
-            moveParent(ambi, to);
-            ambiLinks[to].push_back(ambi);
-        }
-        deleteNode(from);
-        clearNode(from);
-        updateNodeMean(to);
-
-        // printTreeJson(stderr);
+        // if (matrices[singleton].size() == 1)
+        // {
+        //     // is just single child, not singleton
+        //     return true;
+        // }
+        // return false;
     }
 
     // separate roots and non roots children of node
@@ -2197,6 +2243,7 @@ public:
                     moveParent(l, t_branch);
                     isAmbiNode[l] = 1;
                 }
+                insertVecRange(ambiLinks[t_branch], dt.nn_leaf);
                 return insertBranch(signature, insertionList, idx, t_branch);
             }
         }
