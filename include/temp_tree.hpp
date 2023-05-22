@@ -26,7 +26,7 @@ using namespace std;
 
 // typedef unsigned char cell_type;
 bloom_parameters parameters;
-size_t partree_capacity = 100;
+size_t partree_capacity = 10000;
 size_t singleton = 1;
 size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
@@ -1249,7 +1249,7 @@ public:
             //         return createNode(signature, insertionList, branch, idx);
             //     }
             // }
-            // else 
+            // else
             // if (priority[branch] >= stay_threshold)
             // {
             //     // mergeSingletons(branch);
@@ -1595,7 +1595,7 @@ public:
             for (size_t parent : parents)
             {
                 double similarity = calcSimilarity(means[child], means[parent]);
-                // printMsg("reloc %zu, %.2f\n", parent, similarity);
+                printMsg("reloc %zu, %.2f\n", parent, similarity);
                 if (similarity > max_simimlarity)
                 {
                     max_simimlarity = similarity;
@@ -2251,6 +2251,15 @@ public:
             // }
 
             t_parent = doTarget_candidates(dt, node, dt.nn_leaf, insertionList, 2);
+            for (size_t child : dt.nn_leaf)
+            {
+                size_t parent = parentLinks[child];
+                if (parent != node)
+                {
+                    isAmbiNode[child] = 1;
+                    ambiLinks[parent].push_back(child);
+                }
+            }
             return createNode(signature, insertionList, t_parent, idx);
             // if (dt.nn_branch.size() > 1)
             // {
@@ -2771,15 +2780,15 @@ public:
         vector<vector<size_t>> clusters(clusterCount);
 
         size_t child = children[0];
-        if (isRootNode[child])
-        {
-            // printTreeJson(stderr);
-            printMsg("HERE\n");
-            for (size_t i = 0; i < 4; i++)
-            {
-                recluster(node);
-            }
-        }
+        // if (isRootNode[child])
+        // {
+        //     // printTreeJson(stderr);
+        //     printMsg("HERE\n");
+        //     for (size_t i = 0; i < 4; i++)
+        //     {
+        //         recluster(node);
+        //     }
+        // }
         children = childLinks[node];
         vector<seq_type> temp_centroids(clusterCount);
 

@@ -104,7 +104,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         for (size_t i = 1; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
-            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i])+1;
+            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]) + 1;
             // clusters[foo[i]] = tree.findAncestor(clus);
             // clusters[foo[i]] = clus;
         }
@@ -142,7 +142,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         singleton = 0;
         // tree.trim();
         tree.removeAmbi();
-        singleton = 1;
+        singleton = 2;
         printMsg("\n\nReinserting ambi (all)\n");
         tree.prepReinsert();
         for (size_t i = 0; i < cap; i++)
@@ -158,11 +158,13 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
     for (size_t run = 0; run < iteration; run++)
     {
-        fprintf(stderr, "Iteration %zu\n", run);
+        fprintf(stderr, "Iteration %zu (singleton = %zu)\n", run, singleton);
 
         // tree.trim();
+
         tree.removeAmbi();
         tree.prepReinsert();
+        // singleton++;
 
         tree.printTreeJson(stderr);
         for (size_t i = 0; i < cap; i++)
