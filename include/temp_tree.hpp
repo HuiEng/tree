@@ -1192,12 +1192,33 @@ public:
         }
     }
 
+    inline void mergeBranch(size_t branch)
+    {
+        size_t parent = parentLinks[branch];
+        vector<size_t> children = childLinks[branch];
+        clearNode(branch);
+        parentLinks[branch] = parent;
+
+        printMsg("merging branch %zu\n", branch);
+        for (size_t child : children)
+        {
+            if (!isAmbiNode[child])
+            {
+                insertVecRange(matrices[branch], matrices[child]);
+                insertVecRange(seqIDs[branch], seqIDs[child]);
+            }
+            clearNode(child);
+        }
+
+        updateParentMean(branch);
+    }
+
     inline void mergeLeaves(size_t branch)
     {
         size_t leaf = childLinks[branch].back();
         childLinks[branch].pop_back();
 
-        printMsg("merging branch %zu, keeping leaf %zu\n", branch, leaf);
+        printMsg("merging leaves at branch %zu, keeping leaf %zu\n", branch, leaf);
         for (size_t child : childLinks[branch])
         {
             insertVecRange(matrices[leaf], matrices[child]);
@@ -1214,13 +1235,13 @@ public:
 
     inline size_t insertAmbi(seq_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
     {
-        if (childCounts[branch] == 1 && isSingleton(childLinks[branch][0]))
-        {
-            return createNode(signature, insertionList, branch, idx);
-        }
+        // if (childCounts[branch] == 1 && isSingleton(childLinks[branch][0]))
+        // {
+        //     return createNode(signature, insertionList, branch, idx);
+        // }
         if (ambiLinks[branch].size() == 0)
         {
-            // just create sibling if target is singleton
+            // // just create sibling if target is singleton
             // if (childCounts[branch] == 1)
             // {
             //     if (isSingleton(childLinks[branch][0]))
@@ -1228,10 +1249,17 @@ public:
             //         return createNode(signature, insertionList, branch, idx);
             //     }
             // }
-            // else if (priority[branch] >= stay_threshold)
+            // else 
+            // if (priority[branch] >= stay_threshold)
             // {
-            //     mergeSingletons(branch);
-            //     // mergeLeaves(branch);
+            //     // mergeSingletons(branch);
+            //     mergeLeaves(branch);
+            //     double similarity = calcSimilarity(means[branch], signature);
+            //     if (similarity>=stay_threshold){
+            //         size_t dest = stayNode(signature, insertionList, idx, childLinks[branch][0]);
+            //         deleteUnitig(branch);
+            //         return dest;
+            //     }
             // }
             return createAmbiNode(signature, insertionList, branch, idx);
         }
@@ -3444,20 +3472,21 @@ public:
         {
             if (priority[node] >= stay_threshold)
             {
-                // fprintf(stderr, "?>>>> drop branch %zu\n", node);
-                size_t parent = parentLinks[node];
-                size_t child = children[0];
-                // moveParent(child, parent);
-                // deleteNode(node);
-                // updateParentMean(child);
+                mergeBranch(node);
+                // // fprintf(stderr, "?>>>> drop branch %zu\n", node);
+                // size_t parent = parentLinks[node];
+                // size_t child = children[0];
+                // // moveParent(child, parent);
+                // // deleteNode(node);
+                // // updateParentMean(child);
 
-                clearNode(node);
-                means[node] = means[child];
-                matrices[node] = matrices[child];
-                seqIDs[node] = seqIDs[child];
+                // clearNode(node);
+                // means[node] = means[child];
+                // matrices[node] = matrices[child];
+                // seqIDs[node] = seqIDs[child];
 
-                parentLinks[node] = parent;
-                updateParentMean(node);
+                // parentLinks[node] = parent;
+                // updateParentMean(node);
             }
             else
             {
