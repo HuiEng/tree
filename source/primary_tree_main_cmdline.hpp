@@ -1,5 +1,5 @@
-#ifndef __BUILD_PARTITION_MAIN_CMDLINE_HPP__
-#define __BUILD_PARTITION_MAIN_CMDLINE_HPP__
+#ifndef __primary_tree_MAIN_CMDLINE_HPP__
+#define __primary_tree_MAIN_CMDLINE_HPP__
 
 #include <stdint.h>
 #include <unistd.h>
@@ -15,7 +15,7 @@
 #include <sstream>
 #include <memory>
 
-class build_partition_main_cmdline
+class primary_tree_main_cmdline
 {
   // Boiler plate stuff. Conversion from string to other formats
   static bool adjust_double_si_suffix(double &res, const char *suffix)
@@ -357,51 +357,60 @@ class build_partition_main_cmdline
 
 public:
   const char *input_arg;
-  const char *output_arg;
-  uint8_t kmer_arg;
-  uint32_t window_arg;
-  uint32_t step_arg;
-  size_t size_arg;
-  size_t element_arg;
+  const char *tag_arg;
+  size_t minimiser_match_arg;
+  size_t capacity_arg;
+  const char *query_arg;
+  double split_threshold_arg;
+  double stay_threshold_arg;
+  size_t iteration_arg;
+  size_t method_arg;
+  unsigned seed_arg;
 
-  bool output_given;
-  bool kmer_given;
-  bool window_given;
-  bool step_given;
-  bool element_given;
-  bool multiple_arg;
-  bool canonical_arg;
-  bool size_given;
-  bool debug;
-  bool set_arg;
-  bool toSingle_arg;
-  bool folder_arg;
+  bool input_given;
+  bool tag_given;
+  bool minimiser_match_given;
+  bool capacity_given;
+  bool random_arg;
+  bool query_given;
+  bool split_threshold_given;
+  bool stay_threshold_given;
+  bool debug_arg;
+  bool print_arg;
+  bool force_split_arg;
+  bool iteration_given;
+  bool single_arg;
 
   enum
   {
     START_OPT = 1000,
     USAGE_OPT,
-    STEP_OPT = 'l',
-    SET_OPT = 'y'
+    DEBUG_OPT = 'd'
   };
 
-  build_partition_main_cmdline() : input_arg(""), output_arg(""),
-                                   kmer_arg(0), window_arg(0), step_arg(0), element_arg(0),
-                                   output_given(false),
-                                   kmer_given(false), window_given(false), step_given(false),
-                                   element_given(false), multiple_arg(false),
-                                   canonical_arg(false), size_given(false),
-                                   size_arg(0), debug(false), set_arg(false), folder_arg(false), toSingle_arg(false)
+  primary_tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false),
+                                minimiser_match_arg(0), capacity_arg(0), method_arg(0),
+                                input_given(false),
+                                minimiser_match_given(false), capacity_given(false),
+                                random_arg(false), iteration_arg(0), seed_arg(0),
+                                query_given(false), query_arg(""),
+                                split_threshold_given(false), split_threshold_arg(0),
+                                stay_threshold_given(false), stay_threshold_arg(0),
+                                debug_arg(false), print_arg(false), force_split_arg(false),
+                                iteration_given(false), single_arg(false)
   {
   }
 
-  build_partition_main_cmdline(int argc, char *argv[]) : input_arg(""), output_arg(""),
-                                                         kmer_arg(0), window_arg(0), step_arg(0), element_arg(0),
-                                                         output_given(false),
-                                                         kmer_given(false), window_given(false), step_given(false),
-                                                         element_given(false), multiple_arg(false),
-                                                         canonical_arg(false), size_given(false),
-                                                         size_arg(0), debug(false), set_arg(false), folder_arg(false), toSingle_arg(false)
+  primary_tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false),
+                                                      minimiser_match_arg(0), capacity_arg(0), method_arg(0),
+                                                      input_given(false),
+                                                      minimiser_match_given(false), capacity_given(false),
+                                                      random_arg(false), iteration_arg(0), seed_arg(0),
+                                                      query_given(false), query_arg(""),
+                                                      split_threshold_given(false), split_threshold_arg(0),
+                                                      stay_threshold_given(false), stay_threshold_arg(0),
+                                                      debug_arg(false), print_arg(false), force_split_arg(false),
+                                                      iteration_given(false), single_arg(false)
   {
     parse(argc, argv);
   }
@@ -409,22 +418,23 @@ public:
   void parse(int argc, char *argv[])
   {
     static struct option long_options[] = {
-        {"output", 1, 0, 'o'},
-        {"folder", 1, 0, 'f'},
-        {"element", 1, 0, 'e'},
-        {"multiple", 0, 0, 'm'},
-        {"canonical", 0, 0, 'C'},
-        {"toSingle", 0, 0, 'x'},
-        {"partition", 0, 0, 'p'},
-        {"size", 1, 0, 's'},
-        {"step", 1, 0, STEP_OPT},
+        {"input", 1, 0, 'i'},
+        {"debug", 0, 0, DEBUG_OPT},
+        {"print", 0, 0, 'p'},
+        {"tag", 1, 0, 'T'},
+        {"single", 0, 0, 'x'},
+        {"capacity", 1, 0, 'c'},
+        {"minimiser_match", 1, 0, 'm'},
+        {"split", 1, 0, 'L'},
+        {"stay", 1, 0, 'S'},
+        {"random", 1, 0, 'R'},
+        {"iteration", 0, 0, 'I'},
+        {"query", 1, 0, 'q'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
-        {"set", 0, 0, SET_OPT},
         {"version", 0, 0, 'V'},
-        {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVo:k:w:mCs:de:fx";
+    static const char *short_options = "hVi:o:c:R:dfI:q:S:L:m:T:px";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -453,68 +463,80 @@ public:
       case USAGE_OPT:
         ::std::cout << usage() << "\nUse --help for more information." << std::endl;
         exit(0);
+      case DEBUG_OPT:
+        debug_arg = true;
+        break;
+      case 'p':
+        print_arg = true;
+        break;
+      case 'f':
+        force_split_arg = true;
+        break;
+      case 'x':
+        single_arg = true;
+        break;
       case 'V':
         print_version();
         exit(0);
       case '?':
         ::std::cerr << "Use --usage or --help for some help\n";
         exit(1);
+      case 'i':
+        input_given = true;
+        input_arg = optarg;
+        break;
+      case 'T':
+        tag_given = true;
+        tag_arg = optarg;
+        break;
+      case 'q':
+        query_given = true;
+        query_arg = optarg;
+        break;
+      case 'L':
+        split_threshold_given = true;
+        split_threshold_arg = conv_double((const char *)optarg, err, false);
+        CHECK_ERR(double, optarg, "-t, --split=double")
+        // split_threshold_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        // CHECK_ERR(size_t, optarg, "-t, --split=size_t")
+        break;
+      case 'S':
+        stay_threshold_given = true;
+        stay_threshold_arg = conv_double((const char *)optarg, err, false);
+        CHECK_ERR(double, optarg, "-t, --stay=double")
+        break;
       case 'o':
-        output_given = true;
-        output_arg = optarg;
+        minimiser_match_given = true;
+        minimiser_match_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-o, --minimiser_match=size_t")
         break;
-      case 'e':
-        element_given = true;
-        element_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-e, --element=size_t")
-        break;
-      case SET_OPT:
-        set_arg = true;
-        break;
-      case 'x':
-        toSingle_arg = true;
-        break;
-      case 'f':
-        folder_arg = true;
-        break;
-      case 'k':
-        kmer_given = true;
-        kmer_arg = conv_uint<uint8_t>((const char *)optarg, err, false);
-        CHECK_ERR(uint8_t, optarg, "-k, --kmerLength=uint8_t")
-        break;
-      case 'w':
-        window_given = true;
-        window_arg = conv_uint<uint32_t>((const char *)optarg, err, false);
-        CHECK_ERR(uint8_t, optarg, "-w, --windowLength=uint32_t")
-        break;
-      case STEP_OPT:
-        step_given = true;
-        step_arg = conv_uint<uint32_t>((const char *)optarg, err, false);
-        CHECK_ERR(uint8_t, optarg, "--step=uint32_t")
+      case 'c':
+        capacity_given = true;
+        capacity_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-c, --primary_treeCapacity=size_t")
         break;
       case 'm':
-        multiple_arg = true;
+        method_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-m=size_t")
         break;
-      case 'C':
-        canonical_arg = true;
+      case 'R':
+        random_arg = true;
+        seed_arg = conv_uint<unsigned>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-R=unsigned")
         break;
-      case 's':
-        size_given = true;
-        size_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-s, --size=size_t")
-        break;
-      case 'd':
-        debug = true;
+      case 'I':
+        iteration_given = true;
+        iteration_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-I, --iteration=size_t")
         break;
       }
     }
 
-    // Parse arguments
-    if (argc - optind < 1)
-      error("Requires at least 1 argument.");
-    input_arg = argv[optind];
+    // // Parse arguments
+    // if(argc - optind < 1)
+    //   error("Requires at least 1 argument.");
   }
-  static const char *usage() { return "Usage: tree pbuild {input_fasta_file} [options] "; }
+  static const char *usage() { return "Usage: primary_tree primary_tree [options] "; }
   class error
   {
     int code_;
@@ -573,23 +595,25 @@ public:
   };
   static const char *help()
   {
-    return "partition input seq(s) into window of length w and select s minimisers per window and store in a bf\n\n"
+    return "Read minimisers BF and get all-against-all Jaccard primary_tree\n\n"
            "Options (default value in (), *required):\n"
-           " -f, --folder                             input is all files in folder [default=false]\n"
-           " -o, --output                             output path\n"
-           "     --output                             print as minimiser set\n"
-           " -e, --element                            expected number of element in BF [default=1000]\n"
-           " -C, --canonical                          canonical [default=FALSE]\n"
-           " -s, --size                               number of minimiser per window [default=3]\n"
-           " -k,                                      kmer length [default=4]\n"
-           " -w,                                      window length [default=8]\n"
-           " --step,                                  step size for winnowing [default=window length]\n"
-           " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
-           " -x, --toSingle                           print wBFL to single BF, plz verify BF size [default=FALSE]\n"
+           " -d, --debug                              print debug files\n"
+           " -p, --print                              print debug msg to stderr [default = false]\n"
+           " -x, --single                             input is singleBF [default = false]\n"
+           " -m,                                      read method, see code for details [default = 0]\n"
+           " -f,                                      force split root [default=false]\n"
+           " -i, --input                              input file or folder\n"
+           " -T, --tag                                [optional] tag for output cluster file\n"
+           " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
+           " -c,                                      primary_tree capacity [default=1000000]\n"
+           " -q, --query                              query file\n"
+           " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
+           " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
+           " -R,                                      inserting seqs in random order [defalut seed=0]\n"
+           " -I, --iteration                          number or reinsertion [default=0]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
-           " -V, --version                            Version\n"
-           " -d, --debug                              print mer in string in stdout";
+           " -V, --version                            Version";
   }
   static const char *hidden() { return ""; }
   void print_version(::std::ostream &os = std::cout) const
@@ -599,25 +623,25 @@ public:
 #endif
     os << PACKAGE_VERSION << "\n";
   }
-  void build_partition(::std::ostream &os = std::cout)
+  void primary_tree(::std::ostream &os = std::cout)
   {
-    os << " input_arg:" << input_arg << "\n";
-    os << " output_given:" << output_given << "\t"
-       << " output_arg:" << output_arg << "\n";
-    os << " kmer_given:" << kmer_given << "\t"
-       << " kmer_arg:" << kmer_arg << "\n";
-    os << " window_given:" << window_given << "\t"
-       << " window_arg:" << window_arg << "\n";
-    os << " step_given:" << step_given << "\t"
-       << " step_arg:" << step_arg << "\n";
-    os << " multiple_arg:" << multiple_arg << "\n";
-    os << " canonical_arg:" << canonical_arg << "\n";
-    os << " size_given:" << size_given << "\n";
-    os << " size_arg:" << size_arg << "\n";
-    os << " set_arg:" << set_arg << "\n";
-    os << " toSingle_arg:" << toSingle_arg << "\n";
-    os << " element_given:" << element_given << "\t"
-       << " element_arg:" << element_arg << "\n";
+    os << " input_given:" << input_given << "\t"
+       << " input_arg:" << input_arg << "\n";
+    os << " minimiser_match_given:" << minimiser_match_given << "\t"
+       << " minimiser_match_arg:" << minimiser_match_arg << "\n";
+    os << " capacity_given:" << capacity_given << "\t"
+       << " capacity_arg:" << capacity_arg << "\n";
+    os << " random_arg:" << random_arg << "\n"
+       << " seed_arg:" << seed_arg << "\n";
+    os << " iteration_arg:" << iteration_arg << "\n";
+    os << " query_given:" << query_given << "\t"
+       << " query_arg:" << query_arg << "\n";
+    os << " split_threshold_given:" << split_threshold_given << "\t"
+       << " split_threshold_arg:" << split_threshold_arg << "\n";
+    os << " stay_threshold_given:" << stay_threshold_given << "\t"
+       << " stay_threshold_arg:" << stay_threshold_arg << "\n";
+    os << " tag_given:" << tag_given << "\t"
+       << " tag_arg:" << tag_arg << "\n";
   }
 };
-#endif // __BUILD_PARTITION_MAIN_CMDLINE_HPP__"
+#endif // __primary_tree_MAIN_CMDLINE_HPP__"

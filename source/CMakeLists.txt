@@ -38,7 +38,7 @@ foreach(file ${files})
     add_library(${lib_we} SHARED ${lib_we}.cpp)
     target_link_libraries (${lib_we} PUBLIC "${PROJECT_NAME}_interface")
     target_link_libraries ("${PROJECT_NAME}" PUBLIC "${lib_we}")
-    install(TARGETS ${lib_we} DESTINATION lib)
+    install(TARGETS ${lib_we} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 endforeach()
 message(STATUS "build_all_subcommands------------------------------------------}")
 
