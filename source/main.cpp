@@ -24,6 +24,7 @@ main_func_t minimiser_main;
 main_func_t partree_main;
 main_func_t partree_multi_main;
 main_func_t tree_main;
+main_func_t primary_tree_main;
 main_func_t test_main;
 main_func_t sos;
 
@@ -45,6 +46,7 @@ cmd_func cmd_list[] = {
     {"partree", &partree_main},
     {"partreeM", &partree_multi_main},
     {"tree", &tree_main},
+    {"prim", &primary_tree_main},
     {"test", &test_main},
 
     /* help in all its form. Must be first non-command */

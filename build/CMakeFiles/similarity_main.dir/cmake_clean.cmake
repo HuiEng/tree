@@ -1,6 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/similarity_main.dir/similarity_main.cpp.o"
-  "CMakeFiles/similarity_main.dir/similarity_main.cpp.o.d"
   "libsimilarity_main.pdb"
   "libsimilarity_main.so"
 )

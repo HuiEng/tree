@@ -3,11 +3,11 @@
 #include "minimiser.hpp"
 #include "bloom_filter.hpp"
 // #include "part_ktree.hpp"
-
+#include <filesystem>
 #include "build_partition_main_cmdline.hpp"
 
 using namespace std;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 static build_partition_main_cmdline args; // Command line switches and arguments
 static uint8_t kmerLength = 4;            // Kmer length
@@ -20,6 +20,30 @@ bool debug = false;
 void writeInt(std::ostream &os, unsigned long long int i)
 {
     os.write(reinterpret_cast<const char *>(&i), sizeof(i));
+}
+
+template <typename view>
+void getMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
+{
+    seqan3::sequence_file_input<dna4_traits> file_in{filename};
+    size_t max = 8;
+    size_t end = -1;
+
+    bloom_filter bf(parameters);
+
+    // Retrieve the sequences and ids.
+    for (auto &[seq, id, qual] : file_in)
+    {
+        for (auto &&hashes : seq | minimiser_view)
+        {
+            for (size_t hash : hashes)
+            {
+                bf.insert(hash);
+            }
+        }
+        bf.print(wf);
+        bf.clear();
+    }
 }
 
 template <typename view>
@@ -290,6 +314,9 @@ int build_partition_main(int argc, char *argv[])
         return 0;
     }
 
+    if (args.toSingle_arg){
+        outfile = rawname + "-single"+ buffer;
+    }
     ofstream wf(outfile, ios::out | ios::binary);
     bloom_filter bf(parameters);
     writeInt(wf, bf.table_size());
@@ -313,6 +340,10 @@ int build_partition_main(int argc, char *argv[])
         if (args.set_arg)
         {
             getPartitionMinimisersSet(partition_view, parameters, args.input_arg, wf);
+        }
+        else if (args.toSingle_arg)
+        {
+            getMinimisers(partition_view, parameters, args.input_arg, wf);
         }
         else
         {

@@ -7,7 +7,7 @@ project (tree CXX)
 # find_package(BF_LIB libbf REQUIRED)
 find_package(OpenMP)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -lstdc++fs")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
 # add seqan3 to search path
@@ -38,7 +38,7 @@ foreach(file ${files})
     add_library(${lib_we} SHARED ${lib_we}.cpp)
     target_link_libraries (${lib_we} PUBLIC "${PROJECT_NAME}_interface")
     target_link_libraries ("${PROJECT_NAME}" PUBLIC "${lib_we}")
-    install(TARGETS ${lib_we} DESTINATION lib)
+    install(TARGETS ${lib_we} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 endforeach()
 message(STATUS "build_all_subcommands------------------------------------------}")
 

@@ -1,6 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/merge_main.dir/merge_main.cpp.o"
-  "CMakeFiles/merge_main.dir/merge_main.cpp.o.d"
   "libmerge_main.pdb"
   "libmerge_main.so"
 )

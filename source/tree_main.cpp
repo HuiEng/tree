@@ -104,7 +104,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         for (size_t i = 1; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
-            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i])+1;
+            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]) + 1;
             // clusters[foo[i]] = tree.findAncestor(clus);
             // clusters[foo[i]] = clus;
         }
@@ -142,7 +142,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         singleton = 0;
         // tree.trim();
         tree.removeAmbi();
-        singleton = 1;
+        // singleton = 1;
         printMsg("\n\nReinserting ambi (all)\n");
         tree.prepReinsert();
         for (size_t i = 0; i < cap; i++)
@@ -158,11 +158,14 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
     for (size_t run = 0; run < iteration; run++)
     {
-        fprintf(stderr, "Iteration %zu\n", run);
+        fprintf(stderr, "Iteration %zu (singleton = %zu)\n", run, singleton);
 
         // tree.trim();
+        singleton++;
+
         tree.removeAmbi();
         tree.prepReinsert();
+        // singleton++;
 
         tree.printTreeJson(stderr);
         for (size_t i = 0; i < cap; i++)
@@ -574,7 +577,25 @@ int tree_main(int argc, char *argv[])
 
     size_t method = args.method_arg;
 
-    if (method == 1)
+    fprintf(stderr, "method %zu\n", method);
+
+    if (method == 0)
+    {
+        vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
+        if (signatureSize == 0)
+        {
+            fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+            return 0;
+        }
+        if (cap == 0)
+        {
+            cap = seqs.size();
+        }
+
+        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+        clusters = clusterSignatures(seqs);
+    }
+    else if (method == 1)
     {
         {
             size_t batch_size = 300;
@@ -608,19 +629,10 @@ int tree_main(int argc, char *argv[])
     }
     else
     {
-        vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
-        if (signatureSize == 0)
-        {
-            fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
-            return 0;
-        }
-        if (cap == 0)
-        {
-            cap = seqs.size();
-        }
+        vector<cell_type> seqs;
+        signatureSize = readSignatures(inputFile, seqs);
 
-        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
-        clusters = clusterSignatures(seqs);
+        fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqs.size() / signatureSize, signatureSize);
     }
     fprintf(stderr, "writing output...\n");
 

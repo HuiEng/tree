@@ -1,6 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/build_main.dir/build_main.cpp.o"
-  "CMakeFiles/build_main.dir/build_main.cpp.o.d"
   "libbuild_main.pdb"
   "libbuild_main.so"
 )

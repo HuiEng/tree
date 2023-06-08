@@ -72,6 +72,21 @@ size_t countSetBits(const cell_type *a, size_t signatureSize)
 
 static const std::size_t bits_per_char = 0x08; // 8 bits in 1 char(unsigned)
 
+inline void toBinaryIdxCell(FILE *stream, cell_type letter, int offset)
+{
+   int binary[bits_per_char];
+   for (int n = 0; n < bits_per_char; n++)
+      binary[bits_per_char - 1 - n] = (letter >> n) & 1;
+
+   for (int n = 0; n < bits_per_char; n++)
+   {
+      if (binary[n] > 0)
+      {
+         fprintf(stream, "%d,", n + offset);
+      }
+   }
+}
+
 static const unsigned char bit_mask[bits_per_char] = {
     0x01, // 00000001
     0x02, // 00000010
@@ -533,26 +548,11 @@ public:
       fprintf(stdout, "\n");
    }
 
-   inline void toBinaryIdx(FILE *stream, cell_type letter, int offset)
-   {
-      int binary[bits_per_char];
-      for (int n = 0; n < bits_per_char; n++)
-         binary[bits_per_char - 1 - n] = (letter >> n) & 1;
-
-      for (int n = 0; n < bits_per_char; n++)
-      {
-         if (binary[n] > 0)
-         {
-            fprintf(stream, "%d,", n + offset);
-         }
-      }
-   }
-
    inline void printBFIdx(FILE *stream)
    {
       for (int i = 0; i < bit_table_.size(); i++)
       {
-         toBinaryIdx(stream, bit_table_[i], i * bits_per_char);
+         toBinaryIdxCell(stream, bit_table_[i], i * bits_per_char);
       }
       fprintf(stream, "\n");
    }

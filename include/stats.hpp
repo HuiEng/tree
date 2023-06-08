@@ -224,7 +224,7 @@ void calcAllStatsKmers(vector<cell_type> seqs)
 }
 
 // Jaccard stats
-void calcAllStatsKmersBatch(vector<cell_type> seqs)
+stats calcAllStatsKmersBatch(vector<cell_type> seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
     vector<stats> allStats;
@@ -243,7 +243,10 @@ void calcAllStatsKmersBatch(vector<cell_type> seqs)
         }
         allStats.push_back(summarise(data));
     }
-    findStatMeans(allStats).printStats();
+
+    stats ans = findStatMeans(allStats);
+    ans.printStats();
+    return ans;
 }
 
 // // Jaccard stats
@@ -285,6 +288,17 @@ double getSplitThreshold(const string bfIn, size_t sample_size = 100, size_t run
     max_seqCount = sample_size;
     runs = runs_;
     return calcAllStatsBatch(seqs, &calcJaccardGlobal).q3 / 100;
+}
+
+// stats return in percentage, coverts to decimal
+double getSplitThresholdSingle(const string bfIn, size_t sample_size = 100, size_t runs_ = 10)
+{
+    vector<cell_type> seqs;
+    signatureSize = readSignaturesSample(bfIn, seqs, sample_size * runs_);
+    fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
+    max_seqCount = sample_size;
+    runs = runs_;
+    return calcAllStatsKmersBatch(seqs).q3 / 100;
 }
 
 #endif

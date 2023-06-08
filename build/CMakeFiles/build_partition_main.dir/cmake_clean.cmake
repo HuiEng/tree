@@ -1,6 +1,5 @@
 file(REMOVE_RECURSE
   "CMakeFiles/build_partition_main.dir/build_partition_main.cpp.o"
-  "CMakeFiles/build_partition_main.dir/build_partition_main.cpp.o.d"
   "libbuild_partition_main.pdb"
   "libbuild_partition_main.so"
 )

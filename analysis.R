@@ -3,35 +3,93 @@ library(DescTools)
 library(patchwork) # To display 2 charts together
 source("C://DataCopied/Research/R/createShiny.R")
 
-cluQuality<-function(dt,sim,ND=TRUE){
-  temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
-  names(temp)[names(temp) == 'cluster'] <- 'clusterB'
-  temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
-  names(temp)[names(temp) == 'cluster'] <- 'clusterA'
-  
-  # temp<-temp%>%filter(clusterA==clusterB & aseq!=bseq)
-  # clu<-temp%>%group_by(clusterA)%>%
-  #   summarise(avg_sim=mean(identity.),
-  #             size=length(unique(bseq))+1)
-  
-  temp<-temp%>%filter(clusterA==clusterB)
-  clu<-temp%>%group_by(clusterA)%>%
-    summarise(avg_sim=mean(identity.),
-              size=length(unique(bseq)))
-  
-  names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
-  clu$clu<-seq.int(nrow(clu))-1
-  
-  if (ND){
-    nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
-    nodeDistance<-nodeDistance%>%group_by(clu)%>%
-      summarise(avg_nodeDistance=mean(HD))
-    clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
-  }
-  clu
+install.packages('jsonlite')
+install.packages('curl')
+library(jsonlite)
+seq<-"CGGTCAGTCCGTTTGTTCTTGTGGCGAGTGTTGCCGTTTTCTTGACCGCGACCGCCAATCTTACCTTTTTTGATAAAATCAGCCAAACCTATCCCATCGCGGACAATCTCGGCTTTGTGCTGACGATCGCTGTCGTGCTCTTTGGCGCGATGCTACTGATCACCACGCTGTTATCATCGTATCGCTATGTGCTAAAGCCTGTGTTGATTTTGCTATTAATCATGGGCGCGGTGACCAGTTATTTTACTGACACTTATGGCACGGTCTATGATACGACCATGCTCCAAAATGCCCTACAGACCGACCAAGCCGAGACCAAGGATCTATTAAACGCAGCGTTTATCATGCGTATCATTGGTTTGGGTGTGCTACCAAGTTTGCTTGTGGCTTTTGTTAAGGTGGATTATCCGACTTGGGGCAAGGGTTTGATGCGCCGATTGGGCTTGATCGTGGCAAGTCTTGCGCTGATTTTACTGCCTGTGGTGGCGTTCAGCAGTCATTATGCCAGTTTCTTTCGCGTGCATAAGCCGCTGCGTAGCTATGTCAATCCGATCATGCCAATCTACTCGGTGGGTAAGCTTGCCAGTATTGAGTATAAAAAAGCCAGTGCGCCAAAAGATACCATTTATCACGCCAAAGACGCGGTACAAGCAACCAAGCCTGATATGCGTAAGCCACGCCTAGTGGTGTTCGTCGTCGGTGAGACGGCACGCGCCGATCATGTCAGCTTCAATGGCTATGAGCGCGATACTTTCCCACAGCTTGCCAAGATCGATGGCGTGACCAATTTTAGCAATGTCACATCGTGCGGCACATCGACGGCGTATTCTGTGCCGTGTATGTTCAGCTATCTGGGCGCGGATGAGTATGATGTCGATACCGCCAAATACCAAGAAAATGTGCTGGATACGCTGGATCGCTTGGGCGTAAGTATCTTGTGGCGTGATAATAATTCGGACTCAAAAGGCGTGATGGATAAGCTGCCAAAAGCGCAATTTGCCGATTATAAATCCGCGACCAACAACGCCATCTGCAACACCAATCCTTATAACGAATGCCGCGATGTCGGTATGCTCGTTGGCTTAGATGACTTTGTCGCTGCCAATAACGGCAAAGATATGCTGATCATGCTGCACCAAATGGGCAATCACGGGCCTGCGTATTTTAAGCGATATGATGAAAAGTTTGCCAAATTCACGCCAGTGTGTGAAGGTAATGAGCTTGCCAAGTGCGAACATCAGTCCTTGATCAATGCTTATGACAATGCCTTGCTTGCCACCGATGATTTCATCGCTCAAAGTATCCAGTGGCTGCAGACGCACAGCAATGCCTATGATGTCTCAATGCTGTATGTCAGCGATCATGGCGAAAGTCTGGGTGAGAACGGTGTCTATCTACATGGTATGCCAAATGCCTTTGCACCAAAAGAACAGCGCAGTGTGCCTGCATTTTTCTGGACGGATAAGCAAACTGGCATCACGCCAATGGCAACCGATACCGTCCTGACC"
+
+search <- function(seq, threshold=1){
+  url=paste("http://api.bigsi.io/search?threshold=",str(threshold),"&seq=", seq, sep="")
+  result <- fromJSON(url)
+  return (names(result[[seq]][["results"]]))
 }
+x<-search(seq)
+# 
+# cluQuality<-function(dt,sim,ND=TRUE){
+#   temp<-merge(sim,dt,by.y = c("seqID"),by.x=c("bseq"))
+#   names(temp)[names(temp) == 'cluster'] <- 'clusterB'
+#   temp<-merge(temp,dt,by.y = c("seqID"),by.x=c("aseq"))
+#   names(temp)[names(temp) == 'cluster'] <- 'clusterA'
+#   
+#   # temp<-temp%>%filter(clusterA==clusterB & aseq!=bseq)
+#   # clu<-temp%>%group_by(clusterA)%>%
+#   #   summarise(avg_sim=mean(identity.),
+#   #             size=length(unique(bseq))+1)
+#   
+#   temp<-temp%>%filter(clusterA==clusterB)
+#   clu<-temp%>%group_by(clusterA)%>%
+#     summarise(avg_sim=mean(identity.),
+#               size=length(unique(bseq)))
+#   
+#   names(clu)[names(clu) == 'clusterA'] <- 'clus_id'
+#   clu$clu<-seq.int(nrow(clu))-1
+#   
+#   if (ND){
+#     nodeDistance<-read.csv(paste(path,"/nodeDistance",".txt",sep=""))
+#     nodeDistance<-nodeDistance%>%group_by(clu)%>%
+#       summarise(avg_nodeDistance=mean(HD))
+#     clu<-merge(clu,nodeDistance,by.x="clus_id",by.y="clu")
+#   }
+#   clu
+# }
+
+dt<-read.csv(r"(C:\DataCopied\Research\tree\data\howdesbt\howdeSBT.stretcherall)",
+             skip = 15)
+
+quantile(dt$identity.)
+quantile(dt$similarity.)
+hist(dt$identity.)
 
 
+lab<-c(0,"split threshold","","stay threshold","100%")
+dt<-data.frame(x=seq(-2,2),y=dnorm(seq(-2,2))/2)
+dt<-dt%>%mutate(y=y-min(y))
+
+t<-data.frame(x=c(-1.3,0,1.3),y=0.08,similarity=c("SPLIT","NN","STAY"))
+p<-ggplot(dt, aes(x,y))+
+  stat_function(fun = dnorm)
+p<-ggplot_build(p)
+p<-p$data[[1]]
+p<-p%>%mutate(y=y-min(y))
+
+# dt$y<-(0.05*seq.int(nrow(x)))
+ggplot(p, aes(x,y)) +
+  geom_line(colour="white")+
+  
+  geom_area(fill="orange")+
+  geom_area(data=p[p$x%in%c(-2,-1),],fill="red")+
+  geom_area(data=p[p$x%in%c(1,2),],fill="yellow")+
+  # stat_function(fun = dnorm) +
+  # stat_function(fun = dnorm,
+  #               xlim = c(-2,-1),
+  #               geom = "area",fill="red") +
+  # stat_function(fun = dnorm,
+  #               xlim = c(-1,1),
+  #               geom = "area",fill="orange") +
+  # stat_function(fun = dnorm,
+  #               xlim = c(1,2),
+  #               geom = "area",fill="yellow") +
+  geom_text(data=t,aes(label=similarity),size=6)+
+  scale_x_continuous(name="similarity",breaks=dt$x,
+                   labels=lab)+
+  theme(
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  ) 
 
 ######################## iterations ##################################
 path<-"C://DataCopied/Research/tree/data/toy/toy-k9-w100-s5-s60-l20"
@@ -81,13 +139,50 @@ ggplot()+
     name = "HD",
     sec.axis = sec_axis(~.+60, name="avg_sim")
   )
+######################## rabbitSim ##################################
+source("C://DataCopied/Research/R/toyFunctions.R")
+path<-"C://DataCopied/Research/tree/data/toy/rabbitSim"
+# water<-mirror(read.csv(paste(path,"/toy_simulated.stretcherall",sep="")))
+# colnames(water)[1:2]<-c("i","j")
+clusterSize<-101
+sigClust<-plotEnt(paste(path,"/sigClust-toy_simulated-c42.txt",sep=""),clusterSize)
+cluQ_sigClust<-cluQualityGT(sigClust)
+
+{
+  dt<-plotEnt(paste(path,"/toy_simulated-k17-w100-s5-s80-l5.txt",sep=""),clusterSize)
+  
+  cluQ_2WMT<-cluQualityGT(dt)
+  (
+    ggplot(cluQ_2WMT)+
+      geom_point(aes(x=clu,y=ent,size=size))
+      # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+      # ylim(50,100)
+  )
+}
+###############################################################
+
+
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
-sigClust<-plotEnt(paste(path,"/sigClust-k9-c45.txt",sep=""))
+sigClust<-plotEnt(paste(path,"/sigClust-k9-c47.txt",sep=""))
 cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
 
 {
+ktree<-plotEnt(paste(path,"-new/ktree.txt",sep=""))
+cluQ_ktree<-cluQuality(ktree,water,4,FALSE)
+(
+  ggplot(cluQ_ktree)+
+    geom_point(aes(x=clu,y=avg_sim,size=size))+
+    # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+    ylim(50,100)
+)
+}
+{
+  # dt<-plotEnt(paste(path,"-new/toy-k9-w100-s5-b100-s80-l18.txt",sep=""))
+  
 dt<-plotEnt(paste(path,"/toy-k9-w100-s5-s80-l18.txt",sep=""))
+  # dt<-plotEnt(paste(path,"/rabbitSim/toy_simulated-k17-w100-s5-s80-l5.txt",sep=""))
+  
 cluQ_2WMT<-cluQuality(dt,water,4,FALSE)
 (
   ggplot(cluQ_2WMT)+

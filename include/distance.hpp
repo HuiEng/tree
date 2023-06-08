@@ -30,17 +30,16 @@ void toBinaryIdx(FILE *stream, vector<cell_type> sig)
 {
     for (int i = 0; i < signatureSize; i++)
     {
-        int binary[bits_per_char];
-        for (int n = 0; n < bits_per_char; n++)
-            binary[bits_per_char - 1 - n] = (sig[i] >> n) & 1;
+        toBinaryIdxCell(stream, sig[i], i * bits_per_char);
+    }
+    fprintf(stream, "\n");
+}
 
-        for (int n = 0; n < bits_per_char; n++)
-        {
-            if (binary[n] > 0)
-            {
-                fprintf(stream, "%zu,", n + i * bits_per_char);
-            }
-        }
+void toBinaryIdx(FILE *stream, const cell_type *sig)
+{
+    for (int i = 0; i < signatureSize; i++)
+    {
+        toBinaryIdxCell(stream, *(sig + i), i * bits_per_char);
     }
     fprintf(stream, "\n");
 }

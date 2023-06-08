@@ -14,12 +14,12 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fstream>
 #include "bloom_filter.hpp"
 
 using namespace std;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 typedef size_t sig_type;
 size_t max_fileSize = 1000000000;
 

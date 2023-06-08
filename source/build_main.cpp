@@ -1,14 +1,14 @@
 #include "bloom_filter.hpp"
 #include "minimiser.hpp"
 #include <random>
-
+#include <filesystem>
 #include "build_main_cmdline.hpp"
 // #include "bf/all.hpp"
 
 // using namespace bf;
 
 using namespace std;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 static build_main_cmdline args;   // Command line switches and arguments
 static uint8_t kmerLength = 4;    // Kmer length
