@@ -258,258 +258,258 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     return clusters;
 }
 
-vector<size_t> clusterSignaturesBatch(const vector<vector<seq_type>> &seqs)
-{
-    vector<size_t> clusters(cap);
-    tree_type tree(partree_capacity);
+// vector<size_t> clusterSignaturesBatch(const vector<vector<seq_type>> &seqs)
+// {
+//     vector<size_t> clusters(cap);
+//     tree_type tree(partree_capacity);
 
-    size_t firstNodes = 1;
-    if (firstNodes > cap)
-        firstNodes = cap;
+//     size_t firstNodes = 1;
+//     if (firstNodes > cap)
+//         firstNodes = cap;
 
-    vector<size_t> insertionList; // potential nodes idx except root; root is always 0
+//     vector<size_t> insertionList; // potential nodes idx except root; root is always 0
 
-    // node 0 reserved for root, node 1 reserved for leaves idx
-    for (size_t i = firstNodes; i < partree_capacity; i++)
-    {
-        insertionList.push_back(partree_capacity - i);
-    }
+//     // node 0 reserved for root, node 1 reserved for leaves idx
+//     for (size_t i = firstNodes; i < partree_capacity; i++)
+//     {
+//         insertionList.push_back(partree_capacity - i);
+//     }
 
-    size_t i = 1;
-    clusters[0] = tree.first_insert(seqs[0][0], insertionList, 0);
-    if (force_split_)
-    {
-        for (vector<seq_type> batch : seqs)
-        {
-            for (seq_type seq : batch)
-            {
-                printMsg("inserting %zu\n", i);
-                size_t clus = tree.insertSplitRoot(seq, insertionList, i);
-                clusters[i] = clus;
-                i++;
-            }
-        }
-        i = 0;
-    }
-    else
-    {
-        for (vector<seq_type> batch : seqs)
-        {
-            for (seq_type seq : batch)
-            {
-                printMsg("inserting %zu\n", i);
-                size_t clus = tree.insert(seq, insertionList, i);
-                clusters[i] = clus;
-                i++;
-            }
-        }
-        i = 0;
-    }
+//     size_t i = 1;
+//     clusters[0] = tree.first_insert(seqs[0][0], insertionList, 0);
+//     if (force_split_)
+//     {
+//         for (vector<seq_type> batch : seqs)
+//         {
+//             for (seq_type seq : batch)
+//             {
+//                 printMsg("inserting %zu\n", i);
+//                 size_t clus = tree.insertSplitRoot(seq, insertionList, i);
+//                 clusters[i] = clus;
+//                 i++;
+//             }
+//         }
+//         i = 0;
+//     }
+//     else
+//     {
+//         for (vector<seq_type> batch : seqs)
+//         {
+//             for (seq_type seq : batch)
+//             {
+//                 printMsg("inserting %zu\n", i);
+//                 size_t clus = tree.insert(seq, insertionList, i);
+//                 clusters[i] = clus;
+//                 i++;
+//             }
+//         }
+//         i = 0;
+//     }
 
-    if (iteration > 0)
-    {
-        printMsg("\n\n\nBefore\n");
-        tree.printTreeJson(stderr);
+//     if (iteration > 0)
+//     {
+//         printMsg("\n\n\nBefore\n");
+//         tree.printTreeJson(stderr);
 
-        singleton = 1;
-        tree.trim();
-        singleton = 2;
-    }
+//         singleton = 1;
+//         tree.trim();
+//         singleton = 2;
+//     }
 
-    for (size_t run = 0; run < iteration; run++)
-    {
-        tree.printTreeJson(stderr);
-        fprintf(stderr, "Iteration %zu\n", run);
-        tree.prepReinsert();
-        for (vector<seq_type> batch : seqs)
-        {
-            for (seq_type seq : batch)
-            {
-                size_t clus = tree.reinsert(seq, i);
+//     for (size_t run = 0; run < iteration; run++)
+//     {
+//         tree.printTreeJson(stderr);
+//         fprintf(stderr, "Iteration %zu\n", run);
+//         tree.prepReinsert();
+//         for (vector<seq_type> batch : seqs)
+//         {
+//             for (seq_type seq : batch)
+//             {
+//                 size_t clus = tree.reinsert(seq, i);
 
-                printMsg("\n found %zu at %zu\n", i, clus);
-                clusters[i] = clus;
-                i++;
-            }
-        }
-        i = 0;
-        tree.trim();
+//                 printMsg("\n found %zu at %zu\n", i, clus);
+//                 clusters[i] = clus;
+//                 i++;
+//             }
+//         }
+//         i = 0;
+//         tree.trim();
 
-        if (debug_)
-        {
-            // auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
-            // FILE *nFile = fopen(fileName.c_str(), "w");
-            // tree.printNodeDistance(nFile, seqs, clusters);
+//         if (debug_)
+//         {
+//             // auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
+//             // FILE *nFile = fopen(fileName.c_str(), "w");
+//             // tree.printNodeDistance(nFile, seqs, clusters);
 
-            auto fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
-            FILE *cFile = fopen(fileName.c_str(), "w");
-            outputClusters(cFile, clusters);
-        }
-    }
-    tree.updateTree();
+//             auto fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+//             FILE *cFile = fopen(fileName.c_str(), "w");
+//             outputClusters(cFile, clusters);
+//         }
+//     }
+//     tree.updateTree();
 
-    // FILE *pFile = fopen("nodeDistance.txt", "w");
-    // tree.printNodeDistance(pFile, seqs, clusters);
+//     // FILE *pFile = fopen("nodeDistance.txt", "w");
+//     // tree.printNodeDistance(pFile, seqs, clusters);
 
-    // Recursively destroy all locks
-    tree.destroyLocks();
+//     // Recursively destroy all locks
+//     tree.destroyLocks();
 
-    tree.printTreeJson(stdout);
+//     tree.printTreeJson(stdout);
 
-    FILE *hFile = fopen("hierarchy.txt", "w");
-    fprintf(hFile, "parent,child,rank\n");
-    tree.outputHierarchy(hFile);
+//     FILE *hFile = fopen("hierarchy.txt", "w");
+//     fprintf(hFile, "parent,child,rank\n");
+//     tree.outputHierarchy(hFile);
 
-    return clusters;
-}
+//     return clusters;
+// }
 
-tree_type readInsertCluster(const string file_path, vector<size_t> &clusters, vector<size_t> &insertionList)
-{
-    size_t i = 0;
-    tree_type tree(partree_capacity);
+// tree_type readInsertCluster(const string file_path, vector<size_t> &clusters, vector<size_t> &insertionList)
+// {
+//     size_t i = 0;
+//     tree_type tree(partree_capacity);
 
-    size_t firstNodes = 1;
-    // vector<size_t> insertionList; // potential nodes idx except root; root is always 0
-    // node 0 reserved for root, node 1 reserved for leaves idx
-    for (size_t n = firstNodes; n < partree_capacity; n++)
-    {
-        insertionList.push_back(partree_capacity - n);
-    }
+//     size_t firstNodes = 1;
+//     // vector<size_t> insertionList; // potential nodes idx except root; root is always 0
+//     // node 0 reserved for root, node 1 reserved for leaves idx
+//     for (size_t n = firstNodes; n < partree_capacity; n++)
+//     {
+//         insertionList.push_back(partree_capacity - n);
+//     }
 
-    ifstream rfSize(file_path, ios::binary | ios::ate);
-    if (!rfSize.is_open())
-    {
-        fprintf(stderr, "Invalid File. Please try again\n");
-        exit(0);
-    }
-    ifstream rf(file_path, ios::out | ios::binary);
+//     ifstream rfSize(file_path, ios::binary | ios::ate);
+//     if (!rfSize.is_open())
+//     {
+//         fprintf(stderr, "Invalid File. Please try again\n");
+//         exit(0);
+//     }
+//     ifstream rf(file_path, ios::out | ios::binary);
 
-    unsigned long long int length;
-    if (rf)
-        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
-    signatureSize = length;
+//     unsigned long long int length;
+//     if (rf)
+//         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+//     signatureSize = length;
 
-    vector<cell_type> bf(length);
-    size_t s = 0;
-    seq_type tseq;
+//     vector<cell_type> bf(length);
+//     size_t s = 0;
+//     seq_type tseq;
 
-    while (rf)
-    {
-        rf.read((char *)&bf[s], sizeof(cell_type));
-        s++;
-        if (s == length)
-        {
-            if (isEmpty(bf))
-            {
-                printMsg("inserting %zu\n", i);
-                clusters.push_back(tree.insert(tseq, insertionList, i));
-                i++;
-                tseq.clear();
-            }
-            else
-            {
-                tseq.push_back(bf);
-            }
-            fill(bf.begin(), bf.end(), 0);
-            s = 0;
-        }
-    }
+//     while (rf)
+//     {
+//         rf.read((char *)&bf[s], sizeof(cell_type));
+//         s++;
+//         if (s == length)
+//         {
+//             if (isEmpty(bf))
+//             {
+//                 printMsg("inserting %zu\n", i);
+//                 clusters.push_back(tree.insert(tseq, insertionList, i));
+//                 i++;
+//                 tseq.clear();
+//             }
+//             else
+//             {
+//                 tseq.push_back(bf);
+//             }
+//             fill(bf.begin(), bf.end(), 0);
+//             s = 0;
+//         }
+//     }
 
-    rf.close();
+//     rf.close();
 
-    return tree;
-}
+//     return tree;
+// }
 
-void readReinsertCluster(const string file_path, tree_type &tree, vector<size_t> &clusters)
-{
-    size_t i = 0;
-    ifstream rfSize(file_path, ios::binary | ios::ate);
-    if (!rfSize.is_open())
-    {
-        fprintf(stderr, "Invalid File. Please try again\n");
-        exit(0);
-    }
-    ifstream rf(file_path, ios::out | ios::binary);
+// void readReinsertCluster(const string file_path, tree_type &tree, vector<size_t> &clusters)
+// {
+//     size_t i = 0;
+//     ifstream rfSize(file_path, ios::binary | ios::ate);
+//     if (!rfSize.is_open())
+//     {
+//         fprintf(stderr, "Invalid File. Please try again\n");
+//         exit(0);
+//     }
+//     ifstream rf(file_path, ios::out | ios::binary);
 
-    unsigned long long int length;
-    if (rf)
-        rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+//     unsigned long long int length;
+//     if (rf)
+//         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
 
-    vector<cell_type> bf(length);
-    size_t s = 0;
-    seq_type tseq;
+//     vector<cell_type> bf(length);
+//     size_t s = 0;
+//     seq_type tseq;
 
-    while (rf)
-    {
-        rf.read((char *)&bf[s], sizeof(cell_type));
-        s++;
-        if (s == length)
-        {
-            if (isEmpty(bf))
-            {
-                size_t clus = tree.reinsert(tseq, i);
-                printMsg("\n found %zu at %zu\n", i, clus);
-                clusters[i] = clus;
-                i++;
-                tseq.clear();
-            }
-            else
-            {
-                tseq.push_back(bf);
-            }
-            fill(bf.begin(), bf.end(), 0);
-            s = 0;
-        }
-    }
+//     while (rf)
+//     {
+//         rf.read((char *)&bf[s], sizeof(cell_type));
+//         s++;
+//         if (s == length)
+//         {
+//             if (isEmpty(bf))
+//             {
+//                 size_t clus = tree.reinsert(tseq, i);
+//                 printMsg("\n found %zu at %zu\n", i, clus);
+//                 clusters[i] = clus;
+//                 i++;
+//                 tseq.clear();
+//             }
+//             else
+//             {
+//                 tseq.push_back(bf);
+//             }
+//             fill(bf.begin(), bf.end(), 0);
+//             s = 0;
+//         }
+//     }
 
-    rf.close();
-}
+//     rf.close();
+// }
 
-vector<size_t> readClusterBatch(const string file_path)
-{
-    vector<size_t> clusters;
-    vector<size_t> insertionList;
-    tree_type tree = readInsertCluster(file_path, clusters, insertionList);
+// vector<size_t> readClusterBatch(const string file_path)
+// {
+//     vector<size_t> clusters;
+//     vector<size_t> insertionList;
+//     tree_type tree = readInsertCluster(file_path, clusters, insertionList);
 
-    fprintf(stderr, "Loaded %zu seqs...\n", clusters.size());
+//     fprintf(stderr, "Loaded %zu seqs...\n", clusters.size());
 
-    if (iteration > 0)
-    {
-        printMsg("\n\n\nBefore\n");
-        tree.printTreeJson(stderr);
+//     if (iteration > 0)
+//     {
+//         printMsg("\n\n\nBefore\n");
+//         tree.printTreeJson(stderr);
 
-        singleton = 1;
-        tree.trim();
-        singleton = 2;
-    }
+//         singleton = 1;
+//         tree.trim();
+//         singleton = 2;
+//     }
 
-    for (size_t run = 0; run < iteration; run++)
-    {
-        tree.printTreeJson(stderr);
-        fprintf(stderr, "Iteration %zu\n", run);
-        tree.prepReinsert();
-        readReinsertCluster(file_path, tree, clusters);
-        tree.trim();
+//     for (size_t run = 0; run < iteration; run++)
+//     {
+//         tree.printTreeJson(stderr);
+//         fprintf(stderr, "Iteration %zu\n", run);
+//         tree.prepReinsert();
+//         readReinsertCluster(file_path, tree, clusters);
+//         tree.trim();
 
-        if (debug_)
-        {
-            auto fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
-            FILE *cFile = fopen(fileName.c_str(), "w");
-            outputClusters(cFile, clusters);
-        }
-    }
+//         if (debug_)
+//         {
+//             auto fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+//             FILE *cFile = fopen(fileName.c_str(), "w");
+//             outputClusters(cFile, clusters);
+//         }
+//     }
 
-    // Recursively destroy all locks
-    tree.destroyLocks();
+//     // Recursively destroy all locks
+//     tree.destroyLocks();
 
-    tree.printTreeJson(stdout);
+//     tree.printTreeJson(stdout);
 
-    FILE *hFile = fopen("hierarchy.txt", "w");
-    fprintf(hFile, "parent,child,rank\n");
-    tree.outputHierarchy(hFile);
+//     FILE *hFile = fopen("hierarchy.txt", "w");
+//     fprintf(hFile, "parent,child,rank\n");
+//     tree.outputHierarchy(hFile);
 
-    return clusters;
-}
+//     return clusters;
+// }
 
 int tree_main(int argc, char *argv[])
 {
@@ -595,39 +595,39 @@ int tree_main(int argc, char *argv[])
         fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
         clusters = clusterSignatures(seqs);
     }
-    else if (method == 1)
-    {
-        {
-            size_t batch_size = 300;
-            vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
+    // else if (method == 1)
+    // {
+    //     {
+    //         size_t batch_size = 300;
+    //         vector<vector<seq_type>> seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
 
-            if (cap == 0)
-            {
-                seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
-            }
-            else
-            {
-                seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize, cap);
-            }
-            if (signatureSize == 0)
-            {
-                fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
-                return 0;
-            }
+    //         if (cap == 0)
+    //         {
+    //             seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize);
+    //         }
+    //         else
+    //         {
+    //             seqs_batch = readPartitionBFBatch(inputFile, batch_size, signatureSize, cap);
+    //         }
+    //         if (signatureSize == 0)
+    //         {
+    //             fprintf(stderr, "Something is wrong with the input data, please generate signature with diff params\n");
+    //             return 0;
+    //         }
 
-            size_t temp = seqs_batch.size() - 1;
-            size_t seqCount = temp * batch_size + seqs_batch[temp].size();
-            fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
-            cap = seqCount;
+    //         size_t temp = seqs_batch.size() - 1;
+    //         size_t seqCount = temp * batch_size + seqs_batch[temp].size();
+    //         fprintf(stderr, " Batch Loaded %zu seqs...\n", seqCount);
+    //         cap = seqCount;
 
-            clusters = clusterSignaturesBatch(seqs_batch);
-        }
-    }
-    else if (method == 2)
-    {
-        clusters = readClusterBatch(inputFile);
-    }
-    else
+    //         clusters = clusterSignaturesBatch(seqs_batch);
+    //     }
+    // }
+    // else if (method == 2)
+    // {
+    //     clusters = readClusterBatch(inputFile);
+    // }
+    // else
     {
         vector<cell_type> seqs;
         signatureSize = readSignatures(inputFile, seqs);

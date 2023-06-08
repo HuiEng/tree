@@ -531,6 +531,7 @@ size_t estimateSeqCount(ifstream &rf)
             i = 0;
         }
     }
+    return 0;
 }
 
 vector<vector<vector<cell_type>>> readPartitionBFSample(const string file_path, size_t &signatureSize, size_t sampleSize)

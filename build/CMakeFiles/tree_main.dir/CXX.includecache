@@ -57,6 +57,10 @@ distance.hpp
 /mnt/c/DataCopied/Research/tree/include/distance.hpp
 
 /mnt/c/DataCopied/Research/tree/include/temp_tree.hpp
+tidy_tree.hpp
+/mnt/c/DataCopied/Research/tree/include/tidy_tree.hpp
+
+/mnt/c/DataCopied/Research/tree/include/tidy_tree.hpp
 omp.h
 -
 bitset

@@ -9,7 +9,6 @@
 // As the space to be used is determined at runtime, we use
 // parallel arrays, not structs
 
-<<<<<<< HEAD
 #ifndef INCLUDE_TIDY_TREE_HPP
 #define INCLUDE_TIDY_TREE_HPP
 #include <omp.h>
@@ -80,6 +79,13 @@ void printMsg(const char *format, ...)
     }
 }
 
+template <typename T>
+T returnEmpy()
+{
+    T empty;
+    return empty;
+}
+
 // Derived class
 template <typename s_type, typename const_s_type, typename sVec_type>
 class tidy_tree
@@ -102,7 +108,7 @@ public:
     vector<omp_lock_t> locks;   // n locks
     size_t capacity = 0;        // Set during construction, currently can't change
 
-    virtual s_type getMeanSig(size_t node) {}
+    virtual s_type getMeanSig(size_t node) {return returnEmpy<s_type>(); }
 
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
@@ -112,18 +118,18 @@ public:
 
     virtual double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0) { return 0; }
 
-    virtual sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s) { return nullptr; }
+    virtual sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s = 0) { return returnEmpy<sVec_type>(); }
 
-    virtual inline sVec_type getNonAmbiMatrix(size_t node) { return nullptr; }
+    virtual inline sVec_type getNonAmbiMatrix(size_t node) { return returnEmpy<sVec_type>(); }
 
-    virtual sVec_type unionNodeMean(size_t node) { return nullptr; }
+    virtual sVec_type unionNodeMean(size_t node) { return returnEmpy<sVec_type>(); }
 
     // union mean of children
     virtual inline void updateNodeMean(size_t node) {}
 
     virtual inline void updateMatrixIdx(size_t parent, size_t idx, size_t node) {}
 
-    virtual inline double calcAvgSim(size_t node) {}
+    virtual inline double calcAvgSim(size_t node) { return 0; }
 
     virtual void clearMean(size_t node) {}
 
@@ -431,7 +437,6 @@ public:
         return false;
     }
 
-    
     inline void updateParentMean(size_t node)
     {
         while (node != root)
@@ -447,7 +452,7 @@ public:
             }
             else
             {
-                matrices[parent][idx] = getMeanSig(node);
+                updateMatrixIdx(parent, idx, node);
             }
             node = parent;
         }
@@ -644,7 +649,6 @@ public:
         updateParentMean(branch);
     }
 
-    
     inline size_t insertAmbi(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
     {
 
@@ -977,7 +981,7 @@ public:
         tt_data dt;
         for (size_t child : roots)
         {
-///???
+            ///???
             double similarity = calcSimilarityWrap(getMeanSig(child), signature);
             printMsg("(root %zu, %.2f, %.2f)", child, priority[child], similarity);
             if (similarity > priority[child])
@@ -1010,7 +1014,7 @@ public:
             size_t status = 0;
 
             if (isRootNode[child])
-            {///???
+            { ///???
                 similarity = calcSimilarityWrap(getMeanSig(child), signature);
                 printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
                 if (similarity > priority[child])
@@ -1697,7 +1701,6 @@ public:
 
         printMsg(">>Stat>> ERROR!!\n");
         return 0;
-
     }
 
     inline size_t tt(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
@@ -1779,10 +1782,10 @@ public:
         size_t dest = 0;
         printMsg("traverse root %zu\n", best_root);
         dest = tt_root(signature, insertionList, idx, best_root);
-        
+
         if (childCounts[best_root] > tree_order)
         {
-            
+
             if (forceSplitRoot(insertionList, best_root) == 1)
             {
                 dissolveSuper(best_root);
@@ -1802,7 +1805,6 @@ public:
         printMsg("inserted %zu at %zu\n\n", idx, node);
         return node;
     }
-    
 
     size_t addSubtree(size_t node, vector<size_t> &insertionList)
     {
@@ -1818,7 +1820,8 @@ public:
             double max_similarity = 0;
             for (size_t i = 0; i < clusterCount; i++)
             {
-                double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
+                // double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
+                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
                 printMsg("%zu, %f\n", i, similarity);
                 if (similarity > max_similarity)
                 {
@@ -1875,7 +1878,8 @@ public:
             double max_similarity = 0;
             for (size_t i = 0; i < temp_centroids.size(); i++)
             {
-                double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
+                // double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
+                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
                 printMsg("%zu, %f\n", i, similarity);
                 if (similarity > max_similarity)
                 {
@@ -2046,7 +2050,7 @@ public:
         {
             double similarity = calcSimilarityWrap(getMeanSig(child), signature);
             printMsg(" <%zu,%.2f> ", child, similarity);
-            
+
             if (similarity > best_similarity)
             {
                 best_similarity = similarity;
@@ -2286,218 +2290,6 @@ public:
     inline void destroyLocks()
     {
         destroyLocks(root);
-=======
-#ifndef INCLUDE_primary_tree_HPP
-#define INCLUDE_primary_tree_HPP
-#include "tidy_tree.hpp"
-// #include "temp_tree.hpp"
-
-using namespace std;
-size_t signatureWidth = signatureSize * sizeof(cell_type);
-
-// typedef const cell_type *s_type;
-typedef cell_type *s_type;
-typedef const cell_type *const_s_type;
-typedef vector<cell_type> sVec_type;
-
-
-sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
-{
-    sVec_type meanSig;
-    size_t seqCount = clusterSigs.size() / signatureSize;
-    vector<int> unflattenedSignature(signatureWidth);
-
-    for (size_t i = 0; i < seqCount; i++)
-    {
-        const cell_type *signatureData = &clusterSigs[i * signatureSize];
-        for (size_t i = 0; i < signatureWidth; i++)
-        {
-            cell_type signatureMask = (cell_type)1 << (i % bits_per_char);
-            if (signatureMask & signatureData[i / bits_per_char])
-            {
-                unflattenedSignature[i] += 1;
-            }
-            else
-            {
-                unflattenedSignature[i] -= 1;
-            }
-        }
-    }
-    cell_type *flattenedSignature = &meanSig[0];
-    for (size_t i = 0; i < signatureWidth; i++)
-    {
-        if (unflattenedSignature[i] > 0)
-        {
-            flattenedSignature[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-        }
-    }
-    return meanSig;
-}
-
-// Derived class
-class primary_tree : public tidy_tree<s_type, const_s_type, sVec_type>
-{
-public:
-    using tidy_tree::tidy_tree;
-
-    s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
-
-    void updateMeanSig(size_t node, const_s_type signature)
-    {
-        memcpy(&means[node * signatureSize], signature, signatureWidth);
-    }
-
-    ///?
-    void addSigToMatrix(size_t node, const_s_type signature)
-    {
-        matrices[node].insert(matrices[node].end(), signature, signature + signatureSize);
-    }
-
-    double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i)
-    {
-        return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
-    }
-
-    double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0)
-    {
-        return calcSimilarity(a, b, signatureSize);
-    }
-
-    sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s )
-    {
-        unsigned seed = s;
-        if (seed == 0)
-        {
-            seed = chrono::system_clock::now().time_since_epoch().count();
-        }
-        default_random_engine rng(seed);
-
-        sVec_type clusterSigs(signatureSize * clusterCount);
-        sVec_type sigs = matrices[node];
-        size_t signatureCount = childCounts[node]; // sigs.size() / signatureSize;
-        uniform_int_distribution<size_t> dist(0, signatureCount - 1);
-        bool finished = false;
-
-        unordered_set<string> uniqueSigs;
-        for (size_t i = 0; i < signatureCount; i++)
-        {
-            size_t sig = dist(rng);
-            string sigData(signatureWidth, ' ');
-            memcpy(&sigData[0], &sigs[sig * signatureSize], signatureWidth);
-            uniqueSigs.insert(sigData);
-            if (uniqueSigs.size() >= clusterCount)
-            {
-                finished = true;
-                break;
-            }
-        }
-
-        size_t i = 0;
-        for (const auto &sig : uniqueSigs)
-        {
-            memcpy(&clusterSigs[i * signatureSize], sig.data(), signatureWidth);
-            i++;
-        }
-
-        if (!finished)
-        {
-            if (uniqueSigs.size() != 1)
-            {
-                fprintf(stderr, "This should not happen\n");
-                exit(1);
-            }
-            for (size_t i = 0; i < signatureSize; i++)
-            {
-                clusterSigs.push_back(clusterSigs[i]);
-            }
-        }
-
-        return clusterSigs;
-    }
-
-
-    inline sVec_type getNonAmbiMatrix(size_t node)
-    {
-        sVec_type temp_matrix;
-        for (size_t child : childLinks[node])
-        {
-            if (!isAmbiNode[child])
-            {
-                s_type sig = getMeanSig(child);
-                temp_matrix.insert(temp_matrix.end(), sig, sig + signatureSize);
-            }
-        }
-
-        return temp_matrix;
-    }
-
-    //?
-    sVec_type unionNodeMean(size_t node)
-    {
-        sVec_type meanSig(signatureSize, 0);
-        for (size_t child : childLinks[node])
-        {
-            for (size_t i = 0; i < signatureSize; i++)
-            {
-                meanSig[i] |= means[child * signatureSize + i];
-            }
-        }
-        return meanSig;
-    }
-
-    // union mean of children
-    inline void updateNodeMean(size_t node)
-    {
-        if (isRootNode[node])
-        {
-            updateMeanSig(node, &unionNodeMean(node)[0]);
-        }
-        else if (isBranchNode[node] || isSuperNode[node])
-        {
-            updateMeanSig(node, &createMeanSig(getNonAmbiMatrix(node))[0]);
-        }
-        else
-        {
-            updateMeanSig(node, &createMeanSig(matrices[node])[0]);
-        }
-
-        updatePriority(node);
-    }
-
-    inline void updateMatrixIdx(size_t parent, size_t idx, size_t node)
-    {
-        memcpy(&matrices[parent][idx * signatureSize], getMeanSig(node), signatureWidth);
-    }
-
-    inline double calcAvgSim(size_t node)
-    {
-        sVec_type temp_matrix = matrices[node];
-        if (isBranchNode[node])
-        {
-            temp_matrix = getNonAmbiMatrix(node);
-        }
-        if (temp_matrix.size() <= 1)
-        {
-            return 0;
-        }
-
-        double sumDistance = 0;
-        s_type meanSig = &createMeanSig(temp_matrix)[0];
-
-        for (size_t i = 0; i += signatureSize; i++)
-        {
-            double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
-            sumDistance += distance;
-        }
-
-        return sumDistance / (temp_matrix.size() / signatureSize);
-    }
-
-    void clearMean(size_t node)
-    {
-        s_type sig = getMeanSig(node);
-        fill(sig, sig + signatureSize, 0);
->>>>>>> 7d7dfbb5ca924824ed232a598c0f72d870ac4d19
     }
 };
 
