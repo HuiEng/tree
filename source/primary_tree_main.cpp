@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // int primary_tree_main(int argc, char *argv[]) { return 0; }
+=======
+>>>>>>> 7d7dfbb5ca924824ed232a598c0f72d870ac4d19
 #include <random>
 #include "primary_tree_main_cmdline.hpp"
 #include "primary_tree.hpp"
@@ -84,6 +87,7 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
+<<<<<<< HEAD
 // vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
 // {
 //     size_t seqCount = seqs.size() / signatureSize;
@@ -206,13 +210,141 @@ void compressClusterList(vector<size_t> &clusters)
 
 //     return clusters;
 // }
+=======
+vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
+{
+    size_t seqCount = seqs.size() / signatureSize;
+    vector<size_t> clusters(cap);
+    primary_tree_type primary_tree(partree_capacity);
+    // primary_tree.means.resize(partree_capacity * signatureSize);
+
+    size_t firstNodes = 1;
+    if (firstNodes > seqCount)
+        firstNodes = seqCount;
+
+    vector<size_t> insertionList; // potential nodes idx except root; root is always 0
+
+    default_random_engine rng;
+
+    // node 0 reserved for root, node 1 reserved for leaves idx
+    for (size_t i = firstNodes; i < partree_capacity; i++)
+    {
+        insertionList.push_back(partree_capacity - i);
+    }
+    vector<size_t> foo;
+    for (int i = 0; i < seqCount; i++)
+    {
+        foo.push_back(i);
+    }
+
+    if (random_)
+    {
+        // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        shuffle(foo.begin(), foo.end(), default_random_engine(seed));
+    }
+    foo.resize(cap);
+
+    clusters[foo[0]] = primary_tree.first_insert(&seqs[foo[0] * signatureSize], insertionList, foo[0]);
+    if (force_split_)
+    {
+        for (size_t i = 1; i < cap; i++)
+        {
+            printMsg("inserting %zu\n", foo[i]);
+            size_t clus = primary_tree.insertSplitRoot(&seqs[foo[i] * signatureSize], insertionList, foo[i]) + 1;
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i < cap; i++)
+        {
+            printMsg("inserting %zu\n", foo[i]);
+            size_t clus = primary_tree.insert(&seqs[foo[i] * signatureSize], insertionList, foo[i]);
+            clusters[foo[i]] = clus;
+        }
+    }
+
+    // // for debugging
+    // if (iteration_given)
+    // {
+    //     // prep to remove and reinsert ambi
+    //     fprintf(stderr, "\n\n\nBefore\n");
+    //     primary_tree.printTreeJson(stderr);
+
+    //     singleton = 0;
+    //     // primary_tree.trim();
+    //     primary_tree.removeAmbi();
+    //     singleton = 2;
+    //     printMsg("\n\nReinserting ambi (all)\n");
+    //     primary_tree.prepReinsert();
+    //     for (size_t i = 0; i < cap; i++)
+    //     {
+    //         size_t clus = primary_tree.reinsert(&seqs[foo[i] * signatureSize], foo[i]);
+    //         printMsg("\n Reinsert %zu at %zu\n", foo[i], clus);
+    //         // clusters[foo[i]] = primary_tree.findAncestor(clus);
+    //         clusters[foo[i]] = clus;
+    //     }
+
+    //     primary_tree.printTreeJson(stderr);
+    // }
+
+    // for (size_t run = 0; run < iteration; run++)
+    // {
+    //     fprintf(stderr, "Iteration %zu (singleton = %zu)\n", run, singleton);
+
+    //     // primary_tree.trim();
+
+    //     primary_tree.removeAmbi();
+    //     primary_tree.prepReinsert();
+    //     // singleton++;
+
+    //     primary_tree.printTreeJson(stderr);
+    //     for (size_t i = 0; i < cap; i++)
+    //     {
+    //         size_t clus = primary_tree.reinsert(&seqs[foo[i] * signatureSize], foo[i]);
+
+    //         printMsg("\n found %zu at %zu\n", foo[i], clus);
+    //         // clusters[foo[i]] = primary_tree.findAncestor(clus);
+    //         clusters[foo[i]] = clus;
+    //     }
+
+    //     if (debug_)
+    //     {
+    //         auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
+    //         FILE *nFile = fopen(fileName.c_str(), "w");
+    //         primary_tree.printNodeDistance(nFile, seqs, clusters);
+
+    //         fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+    //         FILE *cFile = fopen(fileName.c_str(), "w");
+    //         outputClusters(cFile, clusters);
+    //     }
+    // }
+    // primary_tree.updateTree();
+
+    // FILE *pFile = fopen("nodeDistance.txt", "w");
+    // primary_tree.printNodeDistance(pFile, seqs, clusters);
+
+    // Recursively destroy all locks
+    primary_tree.destroyLocks();
+
+    primary_tree.printTreeJson(stdout);
+    // FILE *hFile = fopen("hierarchy.txt", "w");
+    // fprintf(hFile, "parent,child,rank\n");
+    // primary_tree.outputHierarchy(hFile);
+
+    return clusters;
+}
+>>>>>>> 7d7dfbb5ca924824ed232a598c0f72d870ac4d19
 
 int primary_tree_main(int argc, char *argv[])
 {
     split_threshold = 0.5;
     stay_threshold = 0.8;
     minimiser_match_threshold = 4;
+<<<<<<< HEAD
     // partree_capacity = 10000;
+=======
+    partree_capacity = 10000;
+>>>>>>> 7d7dfbb5ca924824ed232a598c0f72d870ac4d19
 
     args.parse(argc, argv);
     ios::sync_with_stdio(false); // No sync with stdio -> faster
@@ -283,7 +415,11 @@ int primary_tree_main(int argc, char *argv[])
     }
 
     fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqs.size() / signatureSize, signatureSize);
+<<<<<<< HEAD
     // clusters = clusterSignatures2(seqs);
+=======
+    clusters = clusterSignatures2(seqs);
+>>>>>>> 7d7dfbb5ca924824ed232a598c0f72d870ac4d19
 
     fprintf(stderr, "writing output...\n");
 
