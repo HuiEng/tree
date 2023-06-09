@@ -108,7 +108,7 @@ public:
     vector<omp_lock_t> locks;   // n locks
     size_t capacity = 0;        // Set during construction, currently can't change
 
-    virtual s_type getMeanSig(size_t node) {return returnEmpy<s_type>(); }
+    virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
 
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
@@ -649,6 +649,44 @@ public:
         updateParentMean(branch);
     }
 
+    // // use it when all children are singletons
+    // void dissolveBranch(size_t branch)
+    // {
+    //     matrices[branch].clear();
+    //     for (size_t child:childLinks[branch]){
+    //         insertVecRange(matrices[branch], )
+    //     }
+    // }
+
+    void mergeAmbi(size_t branch)
+    {
+        vector<size_t> candidates;
+        for (size_t ambi : ambiLinks[branch])
+        {
+            if (isSingleton(ambi))
+            {
+                candidates.push_back(ambi);
+            }
+        }
+        if (candidates.size() > 1)
+        {
+            size_t dest = candidates.back();
+            candidates.pop_back();
+            printMsg("Merging ambis: ");
+            for (size_t s_ambi : candidates)
+            {
+                printMsg("%zu,", s_ambi);
+                insertVecRange(matrices[dest], matrices[s_ambi]);
+                insertVecRange(seqIDs[dest], seqIDs[s_ambi]);
+                removeVecValue(ambiLinks[branch], s_ambi);
+                deleteNode(s_ambi);
+                clearNode(s_ambi);
+            }
+            printMsg("\n To: %zu\n", dest);
+            updateNodeMean(dest);
+        }
+    }
+
     inline size_t insertAmbi(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
     {
 
@@ -656,6 +694,8 @@ public:
         {
             return createAmbiNode(signature, insertionList, branch, idx);
         }
+
+        printMsg("InsertAmbi %zu\n", branch);
 
         size_t dest = 0;
         size_t ambi_split = 0;
@@ -1499,6 +1539,7 @@ public:
             printMsg(">>Stat>> NN Leaf and NN Branch\n");
 
             t_parent = doTarget_candidates(dt, node, dt.nn_leaf, insertionList, 2);
+
             for (size_t child : dt.nn_leaf)
             {
                 size_t parent = parentLinks[child];
@@ -1508,7 +1549,18 @@ public:
                     ambiLinks[parent].push_back(child);
                 }
             }
+
+            for (size_t branch : dt.nn_branch)
+            {
+                mergeAmbi(branch);
+            }
+            mergeAmbi(node);
+            updateParentMean(node);
+            // this works better for non force split
             return createNode(signature, insertionList, t_parent, idx);
+
+            // // this works better for force split
+            // return tt(signature, insertionList, idx, node);
         }
 
         fprintf(stderr, "ERROR 2 bit %zu!!", idx);
@@ -1729,6 +1781,7 @@ public:
         }
         deleteNode(parent);
         clearNode(parent);
+        updateParentMean(grandparent);
     }
 
     inline size_t tt_root(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
@@ -1939,7 +1992,7 @@ public:
     inline size_t insertSplitRoot(const_s_type signature, vector<size_t> &insertionList, size_t idx)
     {
         size_t node = tt_root(signature, insertionList, idx);
-        printMsg("inserted %zu at %zu\n\n", idx, node);
+        printMsg("inserted %zu at %zu,%zu,%zu\n\n", idx, node, childCounts[root], tree_order);
         if (childCounts[root] > tree_order)
         {
             forceSplitRoot(insertionList);

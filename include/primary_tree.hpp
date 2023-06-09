@@ -80,7 +80,7 @@ public:
         return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
     }
 
-    double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0)
+    double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0)
     {
         return calcSimilarity(a, b, signatureSize);
     }

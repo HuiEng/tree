@@ -100,15 +100,40 @@ public:
 
     sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s)
     {
+        // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
         unsigned seed = s;
         if (seed == 0)
         {
             seed = chrono::system_clock::now().time_since_epoch().count();
         }
-        default_random_engine rng(seed);
+
+        // find the smallest windows count
+        vector<size_t> children = childLinks[node];
+        size_t winNum = means[children[0]].size();
+        for (size_t child : children)
+        {
+            s_type matrix = means[child];
+            if (matrix.size() < winNum)
+            {
+                winNum = matrix.size();
+            }
+        }
+
+        s_type randomSig(winNum); // = means[children[dist(rng)]];randomSig.resize(winNum);
 
         sVec_type clusterSigs(clusterCount);
-        
+        for (size_t i = 0; i < clusterCount; i++)
+        {
+            default_random_engine rng(seed + (i + 1) * 100);
+            uniform_int_distribution<size_t> dist(0, children.size() - 1);
+            for (size_t w = 0; w < winNum; w++)
+            {
+                size_t s = dist(rng);
+                randomSig[w] = means[children[s]][w];
+            }
+            clusterSigs[i] = randomSig;
+        }
+
         return clusterSigs;
     }
 
