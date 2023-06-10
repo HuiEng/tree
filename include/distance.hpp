@@ -124,6 +124,11 @@ size_t calcHDWrap(seq_type shorter, seq_type longer)
     return c;
 }
 
+size_t calcHD(const cell_type *a, const cell_type *b)
+{
+    return calcHDBF(a, b, signatureSize);
+}
+
 size_t calcHD(seq_type a, seq_type b)
 {
     if (a.size() < b.size())

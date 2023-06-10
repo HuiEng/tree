@@ -22,7 +22,6 @@ typedef cell_type *s_type;
 typedef const cell_type *const_s_type;
 typedef vector<cell_type> sVec_type;
 
-
 sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
 {
     sVec_type meanSig;
@@ -85,7 +84,7 @@ public:
         return calcSimilarity(a, b, signatureSize);
     }
 
-    sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s )
+    sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s)
     {
         unsigned seed = s;
         if (seed == 0)
@@ -136,7 +135,6 @@ public:
 
         return clusterSigs;
     }
-
 
     inline sVec_type getNonAmbiMatrix(size_t node)
     {
@@ -219,6 +217,17 @@ public:
     {
         s_type sig = getMeanSig(node);
         fill(sig, sig + signatureSize, 0);
+    }
+
+    void printNodeDistance(FILE *stream, sVec_type seqs, vector<size_t> &clusters)
+    {
+        fprintf(stream, "seq_id,clu,HD\n");
+        for (size_t i = 0; i < clusters.size(); i++)
+        {
+            size_t tnode = clusters[i];
+            double distance = calcHD(getMeanSig(tnode), &seqs[i * signatureSize]);
+            fprintf(stream, "%zu,%zu,%.4f\n", i, tnode, distance);
+        }
     }
 };
 

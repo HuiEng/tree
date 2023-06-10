@@ -116,7 +116,7 @@ public:
 
     virtual double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i) { return 0; }
 
-    virtual double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0) { return 0; }
+    virtual double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0) { return 0; }
 
     virtual sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s = 0) { return returnEmpy<sVec_type>(); }
 
@@ -311,16 +311,7 @@ public:
         fprintf(stream, "%zu,%zu,%.4f", tnode, idx, distance);
     }
 
-    void printNodeDistance(FILE *stream, const sVec_type &seqs, vector<size_t> &clusters)
-    {
-        fprintf(stream, "seq_id,clu,HD\n");
-        for (size_t i = 0; i < clusters.size(); i++)
-        {
-            size_t tnode = clusters[i];
-            double distance = calcHD(getMeanSig(tnode), seqs[i]);
-            fprintf(stream, "%zu,%zu,%.4f\n", i, tnode, distance);
-        }
-    }
+    void printNodeDistance(FILE *stream, sVec_type seqs, vector<size_t> &clusters) {}
 
     void printTreeJson(FILE *stream, size_t node = 0)
     {
@@ -1562,8 +1553,7 @@ public:
             // // this works better for force split
             // return tt(signature, insertionList, idx, node);
         }
-        
-        
+
         fprintf(stderr, "ERROR 2 bit %zu!!", idx);
         return 0;
     }

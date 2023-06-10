@@ -213,6 +213,17 @@ public:
     {
         means[node].clear();
     }
+
+    void printNodeDistance(FILE *stream, sVec_type seqs, vector<size_t> &clusters)
+    {
+        fprintf(stream, "seq_id,clu,HD\n");
+        for (size_t i = 0; i < clusters.size(); i++)
+        {
+            size_t tnode = clusters[i];
+            double distance = calcHD(getMeanSig(tnode), seqs[i]);
+            fprintf(stream, "%zu,%zu,%.4f\n", i, tnode, distance);
+        }
+    }
 };
 
 #endif

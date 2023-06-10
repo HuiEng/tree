@@ -49,6 +49,16 @@ size_t BFunion(const cell_type *a, const cell_type *b, size_t signatureSize)
    return c;
 }
 
+size_t calcHDBF(const cell_type *a, const cell_type *b, size_t signatureSize)
+{
+   size_t c = 0;
+   for (size_t i = 0; i < signatureSize; i++)
+   {
+      c += __builtin_popcountll(a[i] ^ b[i]);
+   }
+   return c;
+}
+
 // Jaccard similarity
 double calcSimilarity(const cell_type *a, const cell_type *b, size_t signatureSize)
 {
