@@ -930,6 +930,7 @@ public:
         {
             moveParent(child, t_parent);
         }
+        
         addSigToMatrix(node, getMeanSig(t_parent));
         updateParentMean(t_parent);
         return t_parent;

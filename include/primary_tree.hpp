@@ -24,16 +24,21 @@ typedef vector<cell_type> sVec_type;
 
 sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
 {
-    sVec_type meanSig;
+    sVec_type meanSig(signatureSize);
     size_t seqCount = clusterSigs.size() / signatureSize;
-    vector<int> unflattenedSignature(signatureWidth);
 
+    if (seqCount == 1)
+    {
+    }
+    vector<int> unflattenedSignature(signatureWidth);
+    
     for (size_t i = 0; i < seqCount; i++)
     {
         const cell_type *signatureData = &clusterSigs[i * signatureSize];
         for (size_t i = 0; i < signatureWidth; i++)
         {
             cell_type signatureMask = (cell_type)1 << (i % bits_per_char);
+            printMsg("%zu,");
             if (signatureMask & signatureData[i / bits_per_char])
             {
                 unflattenedSignature[i] += 1;
@@ -44,14 +49,17 @@ sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
             }
         }
     }
+    printMsg("\n>>>\n");
     cell_type *flattenedSignature = &meanSig[0];
     for (size_t i = 0; i < signatureWidth; i++)
     {
         if (unflattenedSignature[i] > 0)
         {
+            printMsg("%zu,");
             flattenedSignature[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
         }
     }
+    printMsg("\n>>>\n");
     return meanSig;
 }
 
@@ -204,7 +212,7 @@ public:
         double sumDistance = 0;
         s_type meanSig = &createMeanSig(temp_matrix)[0];
 
-        for (size_t i = 0; i += signatureSize; i++)
+        for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
         {
             double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
             sumDistance += distance;
