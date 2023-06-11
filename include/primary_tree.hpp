@@ -72,59 +72,9 @@ sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
         }
     }
 
-    printMsg("--------------cd %zu, %zu\n", c, d);
-    toBinaryIdx(stderr, &meanSig[0]);
-    printMsg("--------------cd-------\n");
-
     return meanSig;
 }
 
-// sVec_type createMeanSig(sVec_type clusterSigs)
-// {
-//     printMsg(">>> creating mean\n");
-//     sVec_type meanSig(signatureSize);
-//     size_t seqCount = clusterSigs.size() / signatureSize;
-//     vector<size_t> counters(signatureWidth);
-
-//     for (size_t i = 0; i < seqCount; i++)
-//     {
-//         const cell_type *signatureData = &clusterSigs[i * signatureSize];
-//         // toBinaryIdx(stderr, signatureData);
-//         for (size_t i = 0; i < signatureSize; i++)
-//         {
-//             // for (int n = 0; n < bits_per_char; n++)
-//             // {
-//             //     if ((signatureData[i] >> n) & 1)
-//             //     {
-//             //         counters[i * bits_per_char + n]++;
-//             //     }
-//             // }
-//             cell_type signatureMask = (cell_type)1 << (i % bits_per_char);
-
-//             if (signatureMask & signatureData[i / bits_per_char])
-//             {
-//                 printMsg("%zu,",i);
-//                 counters[i]++;
-//             }
-//             printMsg("\n");
-//         }
-//     }
-// printMsg(">>>\n");
-//     cell_type *flattenedSignature = &meanSig[0];
-//     for (int i = 0; i < signatureWidth; i++)
-//     {
-//         // make it upperbound
-//         if (counters[i] >= (seqCount + 1) / 2)
-//         {
-//             printMsg("%zu,",i);
-//             flattenedSignature[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
-//         }
-//     }
-
-//     // toBinaryIdx(stderr, flattenedSignature);
-//     printMsg(">>>\n");
-//     return meanSig;
-// }
 
 // Derived class
 class primary_tree : public tidy_tree<s_type, const_s_type, sVec_type>
@@ -150,46 +100,8 @@ public:
         return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
     }
 
-    size_t bfu(const cell_type *a, const cell_type *b, size_t signatureSize)
-    {
-        size_t c = 0;
-        cerr << "a\n";
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            cerr << __builtin_popcountll(a[i]) << ",";
-        }
-        cerr << "\n";
-        cerr << "b\n";
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            cerr << __builtin_popcountll(b[i]) << ",";
-        }
-        cerr << "\n";
-        cerr << "union\n";
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            c += __builtin_popcountll(a[i] | b[i]);
-            cerr << __builtin_popcountll(a[i] | b[i]) << ",";
-        }
-        cerr << "\n";
-        return c;
-    }
-
     double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0)
     {
-        double i = BFintersect(a, b, signatureSize);
-        double u = BFunion(a, b, signatureSize);
-        // printMsg("???%.2f,%.2f,%zu\n", i, u, bfu(a, b, signatureSize));
-
-        // sVec_type tempSig(signatureSize);
-        // double c = 0;
-        // for (size_t i = 0; i < signatureSize; i++)
-        // {
-        //     tempSig[i] = a[i] | b[i];
-        //     c += __builtin_popcountll(tempSig[i]);
-        // }
-        // toBinaryIdx(stderr, &tempSig[0]);
-        // printMsg("> %.2f ????????????????\n", c);
         return calcSimilarity(a, b, signatureSize);
     }
 
@@ -257,8 +169,6 @@ public:
             }
         }
 
-        printMatrtix(temp_matrix);
-
         return temp_matrix;
     }
 
@@ -314,16 +224,12 @@ public:
         double sumDistance = 0;
         sVec_type meanVec = createMeanSig(temp_matrix);
         s_type meanSig = &meanVec[0];
-        printMsg("-------------- create meansig\n");
-        toBinaryIdx(stderr, meanSig);
+
         for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
         {
-            // printMsg("--------------b %zu\n", i / signatureSize);
-            // toBinary(stderr, &temp_matrix[i]);
             double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
             sumDistance += distance;
         }
-        printMsg("--------------\n");
         return sumDistance / seqCount;
     }
 
