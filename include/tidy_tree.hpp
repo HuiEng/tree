@@ -544,6 +544,7 @@ public:
         printMsg(">>Ambi\n");
         ambiLinks[node].push_back(dest);
         isAmbiNode[dest] = 1;
+        updatePriority(node);
         return dest;
     }
 
@@ -930,7 +931,7 @@ public:
         {
             moveParent(child, t_parent);
         }
-        
+
         addSigToMatrix(node, getMeanSig(t_parent));
         updateParentMean(t_parent);
         return t_parent;

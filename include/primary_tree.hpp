@@ -24,44 +24,90 @@ typedef vector<cell_type> sVec_type;
 
 sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
 {
-    sVec_type meanSig(signatureSize);
     size_t seqCount = clusterSigs.size() / signatureSize;
+    // if (seqCount==1){
+    //     return clusterSigs;
+    // }
 
-    if (seqCount == 1)
-    {
-    }
-    vector<int> unflattenedSignature(signatureWidth);
-    
+    sVec_type meanSig(signatureSize);
+    vector<int> unflattenedSignature(signatureSize * bits_per_char);
+
     for (size_t i = 0; i < seqCount; i++)
     {
         const cell_type *signatureData = &clusterSigs[i * signatureSize];
-        for (size_t i = 0; i < signatureWidth; i++)
+        for (size_t i = 0; i < unflattenedSignature.size(); i++)
         {
             cell_type signatureMask = (cell_type)1 << (i % bits_per_char);
-            printMsg("%zu,");
+
             if (signatureMask & signatureData[i / bits_per_char])
             {
                 unflattenedSignature[i] += 1;
             }
-            else
-            {
-                unflattenedSignature[i] -= 1;
-            }
+            // else
+            // {
+            //     unflattenedSignature[i] -= 1;
+            // }
         }
     }
-    printMsg("\n>>>\n");
+
     cell_type *flattenedSignature = &meanSig[0];
-    for (size_t i = 0; i < signatureWidth; i++)
+    for (size_t i = 0; i < unflattenedSignature.size(); i++)
     {
-        if (unflattenedSignature[i] > 0)
+        if (unflattenedSignature[i] >= (seqCount + 1) / 2)
         {
-            printMsg("%zu,");
             flattenedSignature[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
         }
     }
-    printMsg("\n>>>\n");
+
     return meanSig;
 }
+
+// sVec_type createMeanSig(sVec_type clusterSigs)
+// {
+//     printMsg(">>> creating mean\n");
+//     sVec_type meanSig(signatureSize);
+//     size_t seqCount = clusterSigs.size() / signatureSize;
+//     vector<size_t> counters(signatureWidth);
+
+//     for (size_t i = 0; i < seqCount; i++)
+//     {
+//         const cell_type *signatureData = &clusterSigs[i * signatureSize];
+//         // toBinaryIdx(stderr, signatureData);
+//         for (size_t i = 0; i < signatureSize; i++)
+//         {
+//             // for (int n = 0; n < bits_per_char; n++)
+//             // {
+//             //     if ((signatureData[i] >> n) & 1)
+//             //     {
+//             //         counters[i * bits_per_char + n]++;
+//             //     }
+//             // }
+//             cell_type signatureMask = (cell_type)1 << (i % bits_per_char);
+
+//             if (signatureMask & signatureData[i / bits_per_char])
+//             {
+//                 printMsg("%zu,",i);
+//                 counters[i]++;
+//             }
+//             printMsg("\n");
+//         }
+//     }
+// printMsg(">>>\n");
+//     cell_type *flattenedSignature = &meanSig[0];
+//     for (int i = 0; i < signatureWidth; i++)
+//     {
+//         // make it upperbound
+//         if (counters[i] >= (seqCount + 1) / 2)
+//         {
+//             printMsg("%zu,",i);
+//             flattenedSignature[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
+//         }
+//     }
+
+//     // toBinaryIdx(stderr, flattenedSignature);
+//     printMsg(">>>\n");
+//     return meanSig;
+// }
 
 // Derived class
 class primary_tree : public tidy_tree<s_type, const_s_type, sVec_type>
@@ -89,6 +135,10 @@ public:
 
     double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0)
     {
+        // printMsg(">>>a\n");
+        // toBinaryIdx(stderr,a);
+        // printMsg(">>>b\n");
+        // toBinaryIdx(stderr,b);
         return calcSimilarity(a, b, signatureSize);
     }
 
@@ -176,19 +226,21 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
+        sVec_type meanSig;
         if (isRootNode[node])
         {
-            updateMeanSig(node, &unionNodeMean(node)[0]);
+            meanSig = unionNodeMean(node);
         }
         else if (isBranchNode[node] || isSuperNode[node])
         {
-            updateMeanSig(node, &createMeanSig(getNonAmbiMatrix(node))[0]);
+            meanSig = createMeanSig(getNonAmbiMatrix(node));
         }
         else
         {
-            updateMeanSig(node, &createMeanSig(matrices[node])[0]);
+            meanSig = createMeanSig(matrices[node]);
         }
 
+        updateMeanSig(node, &meanSig[0]);
         updatePriority(node);
     }
 
@@ -204,7 +256,8 @@ public:
         {
             temp_matrix = getNonAmbiMatrix(node);
         }
-        if (temp_matrix.size() <= 1)
+        size_t seqCount = temp_matrix.size() / signatureSize;
+        if (seqCount <= 1)
         {
             return 0;
         }
@@ -218,7 +271,7 @@ public:
             sumDistance += distance;
         }
 
-        return sumDistance / (temp_matrix.size() / signatureSize);
+        return sumDistance / seqCount;
     }
 
     void clearMean(size_t node)
