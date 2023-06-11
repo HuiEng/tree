@@ -592,7 +592,7 @@ int tree_main(int argc, char *argv[])
             cap = seqs.size();
         }
 
-        fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+        fprintf(stderr, "Loaded %zu seqs, signatureSize %zu...\n", seqs.size(), signatureSize);
         clusters = clusterSignatures(seqs);
     }
     // else if (method == 1)
@@ -628,13 +628,13 @@ int tree_main(int argc, char *argv[])
     //     clusters = readClusterBatch(inputFile);
     // }
     // else
-    {
-        vector<cell_type> seqs;
-        signatureSize = readSignatures(inputFile, seqs);
+    // {
+    //     vector<cell_type> seqs;
+    //     signatureSize = readSignatures(inputFile, seqs);
 
-        fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqs.size() / signatureSize, signatureSize);
-    }
-    fprintf(stderr, "writing output...\n");
+    //     fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqs.size() / signatureSize, signatureSize);
+    // }
+    // fprintf(stderr, "writing output...\n");
 
     size_t firstindex = inputFile.find_last_of("/") + 1;
     size_t lastindex = inputFile.find_last_of(".");

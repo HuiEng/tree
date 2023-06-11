@@ -177,6 +177,17 @@ cluQ_ktree<-cluQuality(ktree,water,4,FALSE)
     ylim(50,100)
 )
 }
+
+{
+  prim<-plotEnt(paste(path,"-new/toy-single-k9-w100-s5-b1536-s80-l9.txt",sep=""))
+  cluQ_priim<-cluQuality(ktree,water,4,FALSE)
+  (
+    ggplot(cluQ_priim)+
+      geom_point(aes(x=clu,y=avg_sim,size=size))+
+      # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+      ylim(50,100)
+  )
+}
 {
   # dt<-plotEnt(paste(path,"-new/toy-k9-w100-s5-b100-s80-l18.txt",sep=""))
   
