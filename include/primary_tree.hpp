@@ -270,31 +270,6 @@ public:
         return calcAvgSim(temp_matrix);
     }
 
-    void test(size_t node)
-    {
-        toBinaryIdx(stderr, getMeanSig(node));
-        printMsg(">>>Before %zu, %.2f\n", node, priority[node]);
-        sVec_type temp_matrix = matrices[node];
-        for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
-        {
-            printMsg(">>>\n");
-            toBinaryIdx(stderr, &temp_matrix[i]);
-        }
-
-        size_t seqCount = temp_matrix.size() / signatureSize;
-        double sumDistance = 0;
-        s_type meanSig = &createMeanSig(temp_matrix)[0];
-
-        for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
-        {
-            double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
-            printMsg("---%zu, %.2f\n", i / signatureSize, distance);
-
-            sumDistance += distance;
-        }
-
-        printMsg(">>>After %zu, %.2f\n", node, sumDistance / seqCount);
-    }
 };
 
 #endif

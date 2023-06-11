@@ -193,7 +193,6 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
             outputClusters(cFile, clusters);
         }
     }
-    primary_tree.test(1);
     primary_tree.updateTree();
 
     FILE *pFile = fopen("nodeDistance.txt", "w");
@@ -280,12 +279,13 @@ int primary_tree_main(int argc, char *argv[])
     vector<cell_type> seqs;
     signatureSize = readSignatures(inputFile, seqs);
     signatureWidth = signatureSize * sizeof(cell_type);
+    size_t seqCount = seqs.size() / signatureSize;
     if (cap == 0)
     {
-        cap = seqs.size();
+        cap = seqCount;
     }
 
-    fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqs.size() / signatureSize, signatureSize);
+    fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
     clusters = clusterSignatures2(seqs);
 
     fprintf(stderr, "writing output...\n");
