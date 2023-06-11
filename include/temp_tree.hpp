@@ -185,13 +185,8 @@ public:
     }
 
     //?
-    inline double calcAvgSim(size_t node)
+    inline double calcAvgSim(sVec_type temp_matrix)
     {
-        sVec_type temp_matrix = matrices[node];
-        if (isBranchNode[node])
-        {
-            temp_matrix = getNonAmbiMatrix(node);
-        }
         if (temp_matrix.size() <= 1)
         {
             return 0;
@@ -209,6 +204,17 @@ public:
         return sumDistance / temp_matrix.size();
     }
 
+    inline double calcAvgSim(size_t node)
+    {
+        sVec_type temp_matrix = matrices[node];
+        if (isBranchNode[node])
+        {
+            temp_matrix = getNonAmbiMatrix(node);
+        }
+        
+        return calcAvgSim(temp_matrix);
+    }
+
     void clearMean(size_t node)
     {
         means[node].clear();
@@ -223,6 +229,15 @@ public:
             double distance = calcHD(getMeanSig(tnode), seqs[i]);
             fprintf(stream, "%zu,%zu,%.4f\n", i, tnode, distance);
         }
+    }
+
+    double preloadPriority(size_t ambi, const_s_type signature)
+    {
+        // preload sig into matrices to check for priority
+        sVec_type temp_matrix = matrices[ambi];
+        temp_matrix.push_back(signature);
+
+        return calcAvgSim(temp_matrix);
     }
 };
 

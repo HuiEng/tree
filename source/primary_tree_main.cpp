@@ -136,6 +136,8 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
         }
     }
 
+    primary_tree.printTreeJson(stderr);
+
     // for debugging
     if (iteration_given)
     {
@@ -191,6 +193,7 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
             outputClusters(cFile, clusters);
         }
     }
+    primary_tree.test(1);
     primary_tree.updateTree();
 
     FILE *pFile = fopen("nodeDistance.txt", "w");

@@ -22,6 +22,16 @@ typedef cell_type *s_type;
 typedef const cell_type *const_s_type;
 typedef vector<cell_type> sVec_type;
 
+void printMatrtix(sVec_type temp_matrix)
+{
+    printMsg("printing matrices\n");
+    for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
+    {
+        toBinaryIdx(stderr, &temp_matrix[i]);
+    }
+    printMsg("done print\n");
+}
+
 sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
 {
     size_t seqCount = clusterSigs.size() / signatureSize;
@@ -31,7 +41,7 @@ sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
 
     sVec_type meanSig(signatureSize);
     vector<int> unflattenedSignature(signatureSize * bits_per_char);
-
+    size_t c = 0;
     for (size_t i = 0; i < seqCount; i++)
     {
         const cell_type *signatureData = &clusterSigs[i * signatureSize];
@@ -42,6 +52,7 @@ sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
             if (signatureMask & signatureData[i / bits_per_char])
             {
                 unflattenedSignature[i] += 1;
+                c++;
             }
             // else
             // {
@@ -49,15 +60,21 @@ sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
             // }
         }
     }
+    size_t d = 0;
 
     cell_type *flattenedSignature = &meanSig[0];
     for (size_t i = 0; i < unflattenedSignature.size(); i++)
     {
         if (unflattenedSignature[i] >= (seqCount + 1) / 2)
         {
+            d++;
             flattenedSignature[i / bits_per_char] |= (cell_type)1 << (i % bits_per_char);
         }
     }
+
+    printMsg("--------------cd %zu, %zu\n", c, d);
+    toBinaryIdx(stderr, &meanSig[0]);
+    printMsg("--------------cd-------\n");
 
     return meanSig;
 }
@@ -133,12 +150,46 @@ public:
         return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
     }
 
+    size_t bfu(const cell_type *a, const cell_type *b, size_t signatureSize)
+    {
+        size_t c = 0;
+        cerr << "a\n";
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            cerr << __builtin_popcountll(a[i]) << ",";
+        }
+        cerr << "\n";
+        cerr << "b\n";
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            cerr << __builtin_popcountll(b[i]) << ",";
+        }
+        cerr << "\n";
+        cerr << "union\n";
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            c += __builtin_popcountll(a[i] | b[i]);
+            cerr << __builtin_popcountll(a[i] | b[i]) << ",";
+        }
+        cerr << "\n";
+        return c;
+    }
+
     double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0)
     {
-        // printMsg(">>>a\n");
-        // toBinaryIdx(stderr,a);
-        // printMsg(">>>b\n");
-        // toBinaryIdx(stderr,b);
+        double i = BFintersect(a, b, signatureSize);
+        double u = BFunion(a, b, signatureSize);
+        // printMsg("???%.2f,%.2f,%zu\n", i, u, bfu(a, b, signatureSize));
+
+        // sVec_type tempSig(signatureSize);
+        // double c = 0;
+        // for (size_t i = 0; i < signatureSize; i++)
+        // {
+        //     tempSig[i] = a[i] | b[i];
+        //     c += __builtin_popcountll(tempSig[i]);
+        // }
+        // toBinaryIdx(stderr, &tempSig[0]);
+        // printMsg("> %.2f ????????????????\n", c);
         return calcSimilarity(a, b, signatureSize);
     }
 
@@ -206,6 +257,8 @@ public:
             }
         }
 
+        printMatrtix(temp_matrix);
+
         return temp_matrix;
     }
 
@@ -229,7 +282,8 @@ public:
         sVec_type meanSig;
         if (isRootNode[node])
         {
-            meanSig = unionNodeMean(node);
+            // meanSig = unionNodeMean(node);
+            meanSig = createMeanSig(matrices[node]);
         }
         else if (isBranchNode[node] || isSuperNode[node])
         {
@@ -249,13 +303,8 @@ public:
         memcpy(&matrices[parent][idx * signatureSize], getMeanSig(node), signatureWidth);
     }
 
-    inline double calcAvgSim(size_t node)
+    inline double calcAvgSim(sVec_type temp_matrix)
     {
-        sVec_type temp_matrix = matrices[node];
-        if (isBranchNode[node])
-        {
-            temp_matrix = getNonAmbiMatrix(node);
-        }
         size_t seqCount = temp_matrix.size() / signatureSize;
         if (seqCount <= 1)
         {
@@ -263,15 +312,30 @@ public:
         }
 
         double sumDistance = 0;
-        s_type meanSig = &createMeanSig(temp_matrix)[0];
-
+        sVec_type meanVec = createMeanSig(temp_matrix);
+        s_type meanSig = &meanVec[0];
+        printMsg("-------------- create meansig\n");
+        toBinaryIdx(stderr, meanSig);
         for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
         {
+            // printMsg("--------------b %zu\n", i / signatureSize);
+            // toBinary(stderr, &temp_matrix[i]);
             double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
             sumDistance += distance;
         }
-
+        printMsg("--------------\n");
         return sumDistance / seqCount;
+    }
+
+    inline double calcAvgSim(size_t node)
+    {
+        sVec_type temp_matrix = matrices[node];
+        if (isBranchNode[node])
+        {
+            temp_matrix = getNonAmbiMatrix(node);
+        }
+
+        return calcAvgSim(temp_matrix);
     }
 
     void clearMean(size_t node)
@@ -289,6 +353,41 @@ public:
             double distance = calcHD(getMeanSig(tnode), &seqs[i * signatureSize]);
             fprintf(stream, "%zu,%zu,%.4f\n", i, tnode, distance);
         }
+    }
+
+    double preloadPriority(size_t ambi, const_s_type signature)
+    {
+        // preload sig into matrices to check for priority
+        sVec_type temp_matrix = matrices[ambi];
+        temp_matrix.insert(temp_matrix.end(), signature, signature + signatureSize);
+
+        return calcAvgSim(temp_matrix);
+    }
+
+    void test(size_t node)
+    {
+        toBinaryIdx(stderr, getMeanSig(node));
+        printMsg(">>>Before %zu, %.2f\n", node, priority[node]);
+        sVec_type temp_matrix = matrices[node];
+        for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
+        {
+            printMsg(">>>\n");
+            toBinaryIdx(stderr, &temp_matrix[i]);
+        }
+
+        size_t seqCount = temp_matrix.size() / signatureSize;
+        double sumDistance = 0;
+        s_type meanSig = &createMeanSig(temp_matrix)[0];
+
+        for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
+        {
+            double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
+            printMsg("---%zu, %.2f\n", i / signatureSize, distance);
+
+            sumDistance += distance;
+        }
+
+        printMsg(">>>After %zu, %.2f\n", node, sumDistance / seqCount);
     }
 };
 

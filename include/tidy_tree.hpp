@@ -133,6 +133,8 @@ public:
 
     virtual void clearMean(size_t node) {}
 
+    virtual double preloadPriority(size_t node, const_s_type signature) { return 0; }
+
     void reserve(size_t capacity)
     {
         // For safety, only call this at startup currently
@@ -528,7 +530,7 @@ public:
         addSigToMatrix(t_parent, getMeanSig(new_node));
 
         if (isBranchNode[t_parent])
-        {
+        {printMsg("--------------b %zu, %.2f\n", new_node, t_parent);
             updatePriority(t_parent);
         }
 
@@ -693,26 +695,29 @@ public:
         size_t ambi_split = 0;
         for (size_t ambi : ambiLinks[branch])
         {
-            // preload sig into matrices to check for priority
-            addSigToMatrix(ambi, signature);
-            updatePriority(ambi);
-            // release preloaded matrix
-            matrices[ambi].pop_back();
+            // // preload sig into matrices to check for priority
+            // addSigToMatrix(ambi, signature);
+            // updatePriority(ambi);
+            // // release preloaded matrix
+            // matrices[ambi].pop_back();
 
-            printMsg(">>ambi %zu, %.2f\n", ambi, priority[ambi]);
+            double preload_priority = preloadPriority(ambi, signature);
 
-            if (priority[ambi] >= stay_threshold)
+            printMsg(">>ambi %zu, %.2f\n", ambi, preload_priority);
+
+            if (preload_priority >= stay_threshold)
             {
                 dest = stayNode(signature, insertionList, idx, ambi);
-                printMsg("@@ambi %zu, %.2f\n", dest, priority[ambi]);
                 isAmbiNode[dest] = 0;
                 updateParentMean(dest);
+                printMsg("@@ambi %zu, %.2f\n", dest, priority[ambi]);
+
                 //? also remove from ambi link;
                 // ambiLinks[branch].clear();
                 removeVecValue(ambiLinks[branch], ambi);
                 return dest;
             }
-            else if (priority[ambi] < split_threshold)
+            else if (preload_priority < split_threshold)
             {
                 ambi_split++;
             }
@@ -749,7 +754,7 @@ public:
                 dest = child;
             }
         }
-
+        
         if (dest != 0)
         {
             dest = stayNode(signature, insertionList, idx, dest);

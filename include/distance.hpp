@@ -44,14 +44,14 @@ void toBinaryIdx(FILE *stream, const cell_type *sig)
     fprintf(stream, "\n");
 }
 
-void toBinary(FILE *stream, vector<cell_type> sig)
+void toBinary(FILE *stream, cell_type *sig)
 {
     //   fprintf(stderr, "%p: ", sig);
     for (size_t i = 0; i < signatureSize; i++)
     {
         int binary[bits_per_char];
         for (int n = 0; n < bits_per_char; n++)
-            binary[bits_per_char - 1 - n] = (sig[i] >> n) & 1;
+            binary[bits_per_char - 1 - n] = (*(sig + i) >> n) & 1;
 
         for (int n = 0; n < bits_per_char; n++)
             fprintf(stream, "%d", binary[n]);
@@ -64,7 +64,7 @@ void dbgPrintSignature(FILE *stream, seq_type seq)
 {
     for (auto window : seq)
     {
-        toBinary(stream, window);
+        toBinary(stream, &window[0]);
     }
     fprintf(stream, "\n");
 }
