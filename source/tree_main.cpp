@@ -560,11 +560,16 @@ int tree_main(int argc, char *argv[])
         fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
     }
 
-    cap = args.capacity_arg;
+    cap = args.sizeCap_arg;
     if (args.iteration_given)
     {
         iteration_given = true;
         iteration = args.iteration_arg;
+    }
+
+    if (args.capacity_given)
+    {
+        partree_capacity = args.capacity_arg;
     }
 
     debug_ = args.debug_arg;

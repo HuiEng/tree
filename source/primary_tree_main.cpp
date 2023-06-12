@@ -89,7 +89,7 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
     size_t seqCount = seqs.size() / signatureSize;
     vector<size_t> clusters(cap);
     primary_tree_type primary_tree(partree_capacity);
-    // primary_tree.means.resize(partree_capacity * signatureSize);
+    primary_tree.means.resize(partree_capacity * signatureSize);
 
     size_t firstNodes = 1;
     if (firstNodes > seqCount)
@@ -262,11 +262,16 @@ int primary_tree_main(int argc, char *argv[])
         fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
     }
 
-    cap = args.capacity_arg;
+    cap = args.sizeCap_arg;
     if (args.iteration_given)
     {
         iteration_given = true;
         iteration = args.iteration_arg;
+    }
+
+    if (args.capacity_given)
+    {
+        partree_capacity = args.capacity_arg;
     }
 
     debug_ = args.debug_arg;

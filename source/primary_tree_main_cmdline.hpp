@@ -360,6 +360,7 @@ public:
   const char *tag_arg;
   size_t minimiser_match_arg;
   size_t capacity_arg;
+  size_t sizeCap_arg;
   const char *query_arg;
   double split_threshold_arg;
   double stay_threshold_arg;
@@ -371,6 +372,7 @@ public:
   bool tag_given;
   bool minimiser_match_given;
   bool capacity_given;
+  bool sizeCap_given;
   bool random_arg;
   bool query_given;
   bool split_threshold_given;
@@ -389,9 +391,9 @@ public:
   };
 
   primary_tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false),
-                                minimiser_match_arg(0), capacity_arg(0), method_arg(0),
+                                minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
                                 input_given(false),
-                                minimiser_match_given(false), capacity_given(false),
+                                minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                 random_arg(false), iteration_arg(0), seed_arg(0),
                                 query_given(false), query_arg(""),
                                 split_threshold_given(false), split_threshold_arg(0),
@@ -402,9 +404,9 @@ public:
   }
 
   primary_tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false),
-                                                      minimiser_match_arg(0), capacity_arg(0), method_arg(0),
+                                                      minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
                                                       input_given(false),
-                                                      minimiser_match_given(false), capacity_given(false),
+                                                      minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                                       random_arg(false), iteration_arg(0), seed_arg(0),
                                                       query_given(false), query_arg(""),
                                                       split_threshold_given(false), split_threshold_arg(0),
@@ -423,7 +425,8 @@ public:
         {"print", 0, 0, 'p'},
         {"tag", 1, 0, 'T'},
         {"single", 0, 0, 'x'},
-        {"capacity", 1, 0, 'c'},
+        {"capacity", 1, 0, 'C'},
+        {"size_cap", 1, 0, 'c'},
         {"minimiser_match", 1, 0, 'm'},
         {"split", 1, 0, 'L'},
         {"stay", 1, 0, 'S'},
@@ -434,7 +437,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:R:dfI:q:S:L:m:T:px";
+    static const char *short_options = "hVi:o:c:C:R:dfI:q:S:L:m:T:px";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -510,10 +513,15 @@ public:
         minimiser_match_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-o, --minimiser_match=size_t")
         break;
-      case 'c':
+      case 'C':
         capacity_given = true;
         capacity_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-c, --primary_treeCapacity=size_t")
+        CHECK_ERR(size_t, optarg, "-C, --capacity=size_t")
+        break;
+      case 'c':
+        sizeCap_given = true;
+        sizeCap_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-c, --size_cap=size_t")
         break;
       case 'm':
         method_arg = conv_uint<size_t>((const char *)optarg, err, false);
@@ -605,7 +613,8 @@ public:
            " -i, --input                              input file or folder\n"
            " -T, --tag                                [optional] tag for output cluster file\n"
            " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
-           " -c,                                      primary_tree capacity [default=1000000]\n"
+           " -C, --capacity                           primary_tree capacity [default=0]\n"
+           " -c, --size_cap                           Only cluster the first c seqs [default=10000]\n"
            " -q, --query                              query file\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
