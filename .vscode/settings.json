@@ -95,5 +95,6 @@
         "clocale": "cpp",
         "source_location": "cpp",
         "stop_token": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "C:/DataCopied/Research/tree/source"
 }

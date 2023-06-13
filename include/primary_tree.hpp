@@ -192,8 +192,8 @@ public:
         sVec_type meanSig;
         if (isRootNode[node])
         {
-            // meanSig = unionNodeMean(node);
-            meanSig = createMeanSig(matrices[node]);
+            meanSig = unionNodeMean(node);
+            // meanSig = createMeanSig(matrices[node]);
         }
         else if (isBranchNode[node] || isSuperNode[node])
         {

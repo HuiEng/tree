@@ -276,3 +276,1081 @@ make: *** [Makefile:121: cmTC_2e1d8/fast] Error 2
 
 
 
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e4876/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_e4876.dir/build.make CMakeFiles/cmTC_e4876.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e4876.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_e4876.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_e4876.dir/build.make:66: CMakeFiles/cmTC_e4876.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_e4876/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_dfda1/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_dfda1.dir/build.make CMakeFiles/cmTC_dfda1.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_dfda1.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_dfda1.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_dfda1.dir/build.make:66: CMakeFiles/cmTC_dfda1.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_dfda1/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_eb7ef/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_eb7ef.dir/build.make CMakeFiles/cmTC_eb7ef.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_eb7ef.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_eb7ef.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_eb7ef.dir/build.make:66: CMakeFiles/cmTC_eb7ef.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_eb7ef/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_91d4f/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_91d4f.dir/build.make CMakeFiles/cmTC_91d4f.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_91d4f.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_91d4f.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_91d4f.dir/build.make:66: CMakeFiles/cmTC_91d4f.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_91d4f/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_10228/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_10228.dir/build.make CMakeFiles/cmTC_10228.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_10228.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_10228.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_10228.dir/build.make:66: CMakeFiles/cmTC_10228.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_10228/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_775cf/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_775cf.dir/build.make CMakeFiles/cmTC_775cf.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_775cf.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_775cf.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_775cf.dir/build.make:66: CMakeFiles/cmTC_775cf.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_775cf/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e7ef5/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_e7ef5.dir/build.make CMakeFiles/cmTC_e7ef5.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e7ef5.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_e7ef5.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_e7ef5.dir/build.make:66: CMakeFiles/cmTC_e7ef5.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_e7ef5/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b8ef2/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b8ef2.dir/build.make CMakeFiles/cmTC_b8ef2.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b8ef2.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_b8ef2.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_b8ef2.dir/build.make:66: CMakeFiles/cmTC_b8ef2.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_b8ef2/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b4cfb/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b4cfb.dir/build.make CMakeFiles/cmTC_b4cfb.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b4cfb.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_b4cfb.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_b4cfb.dir/build.make:66: CMakeFiles/cmTC_b4cfb.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_b4cfb/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_86a8f/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_86a8f.dir/build.make CMakeFiles/cmTC_86a8f.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_86a8f.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_86a8f.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_86a8f.dir/build.make:66: CMakeFiles/cmTC_86a8f.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_86a8f/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ceeef/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_ceeef.dir/build.make CMakeFiles/cmTC_ceeef.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_ceeef.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_ceeef.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_ceeef.dir/build.make:66: CMakeFiles/cmTC_ceeef.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_ceeef/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_4eb97/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_4eb97.dir/build.make CMakeFiles/cmTC_4eb97.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_4eb97.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_4eb97.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_4eb97.dir/build.make:66: CMakeFiles/cmTC_4eb97.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_4eb97/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b2a5e/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b2a5e.dir/build.make CMakeFiles/cmTC_b2a5e.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b2a5e.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_b2a5e.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_b2a5e.dir/build.make:66: CMakeFiles/cmTC_b2a5e.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_b2a5e/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_08a07/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_08a07.dir/build.make CMakeFiles/cmTC_08a07.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_08a07.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_08a07.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_08a07.dir/build.make:66: CMakeFiles/cmTC_08a07.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_08a07/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d2026/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_d2026.dir/build.make CMakeFiles/cmTC_d2026.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_d2026.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_d2026.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_d2026.dir/build.make:66: CMakeFiles/cmTC_d2026.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_d2026/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_7a034/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_7a034.dir/build.make CMakeFiles/cmTC_7a034.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_7a034.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_7a034.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_7a034.dir/build.make:66: CMakeFiles/cmTC_7a034.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_7a034/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e3655/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_e3655.dir/build.make CMakeFiles/cmTC_e3655.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e3655.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_e3655.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_e3655.dir/build.make:66: CMakeFiles/cmTC_e3655.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_e3655/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_40447/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_40447.dir/build.make CMakeFiles/cmTC_40447.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_40447.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_40447.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_40447.dir/build.make:66: CMakeFiles/cmTC_40447.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_40447/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_808c0/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_808c0.dir/build.make CMakeFiles/cmTC_808c0.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_808c0.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_808c0.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_808c0.dir/build.make:66: CMakeFiles/cmTC_808c0.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_808c0/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_86e0d/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_86e0d.dir/build.make CMakeFiles/cmTC_86e0d.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_86e0d.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_86e0d.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_86e0d.dir/build.make:66: CMakeFiles/cmTC_86e0d.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_86e0d/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_bcdcb/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_bcdcb.dir/build.make CMakeFiles/cmTC_bcdcb.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_bcdcb.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_bcdcb.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_bcdcb.dir/build.make:66: CMakeFiles/cmTC_bcdcb.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_bcdcb/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0f566/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_0f566.dir/build.make CMakeFiles/cmTC_0f566.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_0f566.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_0f566.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_0f566.dir/build.make:66: CMakeFiles/cmTC_0f566.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_0f566/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0f5d6/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_0f5d6.dir/build.make CMakeFiles/cmTC_0f5d6.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_0f5d6.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_0f5d6.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_0f5d6.dir/build.make:66: CMakeFiles/cmTC_0f5d6.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_0f5d6/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_4bedb/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_4bedb.dir/build.make CMakeFiles/cmTC_4bedb.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_4bedb.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_4bedb.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_4bedb.dir/build.make:66: CMakeFiles/cmTC_4bedb.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_4bedb/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ec25f/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_ec25f.dir/build.make CMakeFiles/cmTC_ec25f.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_ec25f.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_ec25f.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_ec25f.dir/build.make:66: CMakeFiles/cmTC_ec25f.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_ec25f/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_73794/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_73794.dir/build.make CMakeFiles/cmTC_73794.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_73794.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_73794.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_73794.dir/build.make:66: CMakeFiles/cmTC_73794.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_73794/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_dc656/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_dc656.dir/build.make CMakeFiles/cmTC_dc656.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_dc656.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_dc656.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_dc656.dir/build.make:66: CMakeFiles/cmTC_dc656.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_dc656/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ccbdf/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_ccbdf.dir/build.make CMakeFiles/cmTC_ccbdf.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_ccbdf.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_ccbdf.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_ccbdf.dir/build.make:66: CMakeFiles/cmTC_ccbdf.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_ccbdf/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2daba/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_2daba.dir/build.make CMakeFiles/cmTC_2daba.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_2daba.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_2daba.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_2daba.dir/build.make:66: CMakeFiles/cmTC_2daba.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_2daba/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5bc58/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_5bc58.dir/build.make CMakeFiles/cmTC_5bc58.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_5bc58.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_5bc58.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_5bc58.dir/build.make:66: CMakeFiles/cmTC_5bc58.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_5bc58/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0822a/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_0822a.dir/build.make CMakeFiles/cmTC_0822a.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_0822a.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_0822a.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_0822a.dir/build.make:66: CMakeFiles/cmTC_0822a.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_0822a/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b77ad/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b77ad.dir/build.make CMakeFiles/cmTC_b77ad.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b77ad.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_b77ad.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_b77ad.dir/build.make:66: CMakeFiles/cmTC_b77ad.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_b77ad/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e0d3f/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_e0d3f.dir/build.make CMakeFiles/cmTC_e0d3f.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e0d3f.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_e0d3f.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_e0d3f.dir/build.make:66: CMakeFiles/cmTC_e0d3f.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_e0d3f/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e2bfd/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_e2bfd.dir/build.make CMakeFiles/cmTC_e2bfd.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e2bfd.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_e2bfd.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_e2bfd.dir/build.make:66: CMakeFiles/cmTC_e2bfd.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_e2bfd/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_838eb/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_838eb.dir/build.make CMakeFiles/cmTC_838eb.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_838eb.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_838eb.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_838eb.dir/build.make:66: CMakeFiles/cmTC_838eb.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_838eb/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ef702/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_ef702.dir/build.make CMakeFiles/cmTC_ef702.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_ef702.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_ef702.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_ef702.dir/build.make:66: CMakeFiles/cmTC_ef702.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_ef702/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5a2ea/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_5a2ea.dir/build.make CMakeFiles/cmTC_5a2ea.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_5a2ea.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_5a2ea.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_5a2ea.dir/build.make:66: CMakeFiles/cmTC_5a2ea.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_5a2ea/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_69032/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_69032.dir/build.make CMakeFiles/cmTC_69032.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_69032.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_69032.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_69032.dir/build.make:66: CMakeFiles/cmTC_69032.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_69032/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_69f49/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_69f49.dir/build.make CMakeFiles/cmTC_69f49.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_69f49.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_69f49.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_69f49.dir/build.make:66: CMakeFiles/cmTC_69f49.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_69f49/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_17e01/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_17e01.dir/build.make CMakeFiles/cmTC_17e01.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_17e01.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_17e01.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_17e01.dir/build.make:66: CMakeFiles/cmTC_17e01.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_17e01/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_39465/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_39465.dir/build.make CMakeFiles/cmTC_39465.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_39465.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_39465.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_39465.dir/build.make:66: CMakeFiles/cmTC_39465.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_39465/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b25ef/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b25ef.dir/build.make CMakeFiles/cmTC_b25ef.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b25ef.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_b25ef.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_b25ef.dir/build.make:66: CMakeFiles/cmTC_b25ef.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_b25ef/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_93b6f/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_93b6f.dir/build.make CMakeFiles/cmTC_93b6f.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_93b6f.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_93b6f.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_93b6f.dir/build.make:66: CMakeFiles/cmTC_93b6f.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_93b6f/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_85f62/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_85f62.dir/build.make CMakeFiles/cmTC_85f62.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_85f62.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_85f62.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_85f62.dir/build.make:66: CMakeFiles/cmTC_85f62.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_85f62/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_3e452/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_3e452.dir/build.make CMakeFiles/cmTC_3e452.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_3e452.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_3e452.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_3e452.dir/build.make:66: CMakeFiles/cmTC_3e452.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_3e452/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_53ced/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_53ced.dir/build.make CMakeFiles/cmTC_53ced.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_53ced.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_53ced.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_53ced.dir/build.make:66: CMakeFiles/cmTC_53ced.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_53ced/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_508c1/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_508c1.dir/build.make CMakeFiles/cmTC_508c1.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_508c1.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_508c1.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_508c1.dir/build.make:66: CMakeFiles/cmTC_508c1.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_508c1/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f22df/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_f22df.dir/build.make CMakeFiles/cmTC_f22df.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_f22df.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_f22df.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_f22df.dir/build.make:66: CMakeFiles/cmTC_f22df.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_f22df/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_36d85/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_36d85.dir/build.make CMakeFiles/cmTC_36d85.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_36d85.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_36d85.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_36d85.dir/build.make:66: CMakeFiles/cmTC_36d85.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_36d85/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a38da/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_a38da.dir/build.make CMakeFiles/cmTC_a38da.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_a38da.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_a38da.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_a38da.dir/build.make:66: CMakeFiles/cmTC_a38da.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_a38da/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_33ac2/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_33ac2.dir/build.make CMakeFiles/cmTC_33ac2.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_33ac2.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_33ac2.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_33ac2.dir/build.make:66: CMakeFiles/cmTC_33ac2.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_33ac2/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5b827/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_5b827.dir/build.make CMakeFiles/cmTC_5b827.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_5b827.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_5b827.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_5b827.dir/build.make:66: CMakeFiles/cmTC_5b827.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_5b827/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_BUILTIN failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_78dee/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_78dee.dir/build.make CMakeFiles/cmTC_78dee.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_78dee.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_BUILTIN  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_78dee.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_78dee.dir/build.make:66: CMakeFiles/cmTC_78dee.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_78dee/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD20 failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b3e5d/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b3e5d.dir/build.make CMakeFiles/cmTC_b3e5d.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b3e5d.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD20  -fopenmp -lstdc++fs -std=c++20   -std=gnu++17 -o CMakeFiles/cmTC_b3e5d.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+c++: error: unrecognized command line option ‘-std=c++20’; did you mean ‘-std=c++2a’?
+make[2]: *** [CMakeFiles/cmTC_b3e5d.dir/build.make:66: CMakeFiles/cmTC_b3e5d.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_b3e5d/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Performing C++ SOURCE FILE Test CONCEPTS_FLAG_STD2a failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_49a91/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_49a91.dir/build.make CMakeFiles/cmTC_49a91.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_49a91.dir/src.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs -DCONCEPTS_FLAG_STD2a  -fopenmp -lstdc++fs -std=c++2a   -std=gnu++17 -o CMakeFiles/cmTC_49a91.dir/src.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/src.cxx:1:16: error: ‘__cpp_concepts’ was not declared in this scope
+    1 | static_assert (__cpp_concepts >= 201507);
+      |                ^~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/cmTC_49a91.dir/build.make:66: CMakeFiles/cmTC_49a91.dir/src.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_49a91/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+static_assert (__cpp_concepts >= 201507);
+    int main() {}
+Determining if the include file lemon/config.h exists failed with the following output:
+Change Dir: /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_cf99e/fast && make[1]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_cf99e.dir/build.make CMakeFiles/cmTC_cf99e.dir/build
+make[2]: Entering directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_cf99e.dir/CheckIncludeFile.cxx.o
+/usr/bin/c++   -I/mnt/c/DataCopied/Research/tree/lib/seqan3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include -I/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include  -fopenmp -lstdc++fs  -fopenmp -lstdc++fs   -std=gnu++17 -o CMakeFiles/cmTC_cf99e.dir/CheckIncludeFile.cxx.o -c /mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx:1:10: fatal error: lemon/config.h: No such file or directory
+    1 | #include <lemon/config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/cmTC_cf99e.dir/build.make:66: CMakeFiles/cmTC_cf99e.dir/CheckIncludeFile.cxx.o] Error 1
+make[2]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+make[1]: *** [Makefile:121: cmTC_cf99e/fast] Error 2
+make[1]: Leaving directory '/mnt/c/DataCopied/Research/tree/build/CMakeFiles/CMakeTmp'
+
+
+

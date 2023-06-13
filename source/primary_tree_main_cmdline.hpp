@@ -367,6 +367,7 @@ public:
   size_t iteration_arg;
   size_t method_arg;
   unsigned seed_arg;
+  size_t tree_order_arg;
 
   bool input_given;
   bool tag_given;
@@ -380,6 +381,7 @@ public:
   bool debug_arg;
   bool print_arg;
   bool force_split_arg;
+  bool tree_order_given;
   bool iteration_given;
   bool single_arg;
 
@@ -390,7 +392,7 @@ public:
     DEBUG_OPT = 'd'
   };
 
-  primary_tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false),
+  primary_tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                                 minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
                                 input_given(false),
                                 minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
@@ -398,12 +400,12 @@ public:
                                 query_given(false), query_arg(""),
                                 split_threshold_given(false), split_threshold_arg(0),
                                 stay_threshold_given(false), stay_threshold_arg(0),
-                                debug_arg(false), print_arg(false), force_split_arg(false),
+                                debug_arg(false), print_arg(false), force_split_arg(false), tree_order_given(false),
                                 iteration_given(false), single_arg(false)
   {
   }
 
-  primary_tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false),
+  primary_tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                                                       minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
                                                       input_given(false),
                                                       minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
@@ -411,7 +413,7 @@ public:
                                                       query_given(false), query_arg(""),
                                                       split_threshold_given(false), split_threshold_arg(0),
                                                       stay_threshold_given(false), stay_threshold_arg(0),
-                                                      debug_arg(false), print_arg(false), force_split_arg(false),
+                                                      debug_arg(false), print_arg(false), force_split_arg(false), tree_order_given(false),
                                                       iteration_given(false), single_arg(false)
   {
     parse(argc, argv);
@@ -437,7 +439,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:C:R:dfI:q:S:L:m:T:px";
+    static const char *short_options = "hVi:o:c:C:R:dfI:q:S:L:m:T:pxfF:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -474,6 +476,12 @@ public:
         break;
       case 'f':
         force_split_arg = true;
+        break;
+      case 'F':
+        force_split_arg = true;
+        tree_order_given = true;
+        tree_order_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-f=size_t")
         break;
       case 'x':
         single_arg = true;
@@ -609,7 +617,8 @@ public:
            " -p, --print                              print debug msg to stderr [default = false]\n"
            " -x, --single                             input is singleBF [default = false]\n"
            " -m,                                      read method, see code for details [default = 0]\n"
-           " -f,                                      force split root [default=false]\n"
+           " -F,                                      force split root [default=false]\n"
+           " -f,                                      tree order force split root [default=5]\n"
            " -i, --input                              input file or folder\n"
            " -T, --tag                                [optional] tag for output cluster file\n"
            " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"

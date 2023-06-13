@@ -570,11 +570,17 @@ int tree_main(int argc, char *argv[])
     if (args.capacity_given)
     {
         partree_capacity = args.capacity_arg;
+        fprintf(stderr, "partree_capacity: %zu\n", partree_capacity);
     }
 
     debug_ = args.debug_arg;
     print_ = args.print_arg;
     force_split_ = args.force_split_arg;
+    if (args.tree_order_given)
+    {
+        tree_order = args.tree_order_arg;
+        fprintf(stderr, "tree_order: %zu\n", tree_order);
+    }
 
     // signatureSize = seqs[0][0].size();
     default_random_engine rng;

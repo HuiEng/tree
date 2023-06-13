@@ -1927,7 +1927,7 @@ public:
         {
             size_t dest = 0;
             double max_similarity = 0;
-            for (size_t i = 0; i < temp_centroids.size(); i++)
+            for (size_t i = 0; i < clusterCount; i++)
             {
                 // double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
                 double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
