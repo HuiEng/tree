@@ -1,6 +1,14 @@
 based on seq_min, going to build my tree
 first read fasta and convert to sigs by using pbuild
 
+
+########## Read multiple bins and build tree
+mkdir data
+tree build ../toy/toy.fasta -m -b ./data/ -k 9 -w 100
+ls ./data/*.bin >list.txt
+tree prim -M -i list.txt -L 0.18 -I 4 >tree.json
+###########
+
 tree build -f "{folder}/*.fna"
 rmb ""! 
 

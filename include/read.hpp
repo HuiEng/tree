@@ -70,6 +70,73 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
     return length;
 }
 
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+unsigned long long int readList(const string listFile, vector<cell_type> &sigs)
+{
+    // Create a text string, which is used to output the text file
+    string file;
+    size_t i = 0;
+    unsigned long long int length;
+
+    // Read from the text file
+    ifstream listStream(listFile);
+    // get length of file:
+    listStream.seekg(0, listStream.end);
+    unsigned long long int len = listStream.tellg();
+    listStream.seekg(0, listStream.beg);
+
+    // Use a while loop together with the getline() function to read the file line by line
+    while (getline(listStream, file))
+    {
+        // Output the text from the file
+        ifstream rfSize(file, ios::binary | ios::ate);
+        if (!rfSize.is_open())
+        {
+            fprintf(stderr, "Invalid input list. Please try again\n");
+            exit(0);
+        }
+        if (rfSize.tellg() > max_fileSize)
+        {
+            fprintf(stderr, "File too big, please read in batches\n");
+            return 0;
+        }
+        ifstream rf(file, ios::out | ios::binary);
+
+        // get length of file:
+        rf.seekg(0, rf.end);
+        unsigned long long int len = rf.tellg();
+        len = len - sizeof(unsigned long long int); // / sizeof(uint64_t);
+        rf.seekg(0, rf.beg);
+
+        if (rf)
+            rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+
+        try
+        {
+            sigs.resize(sigs.size() + len);
+        }
+        catch (const std::exception &e) // caught by reference to base
+        {
+            std::cout << " a standard exception was caught, with message '"
+                      << e.what() << "'\n";
+            return length;
+        }
+
+        while (rf)
+        {
+            rf.read((char *)&sigs[i], sizeof(cell_type));
+            i++;
+        }
+        rf.close();
+        i--;
+    }
+
+    // Close the file
+    listStream.close();
+    return length;
+}
+
+
 // if too large to use readSignatures, use batch, signatureSize should be outputed from the prev function
 vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, size_t &signatureSize)
 {
@@ -435,7 +502,6 @@ vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file
     return seqs_batch;
 }
 
-
 vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file_path, size_t size, size_t &signatureSize, size_t cap)
 {
     ifstream rf(file_path, ios::out | ios::binary);
@@ -495,7 +561,6 @@ vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file
     rf.close();
     return seqs_batch;
 }
-
 
 size_t estimateSeqCount(ifstream &rf)
 {

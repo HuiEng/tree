@@ -209,6 +209,7 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
     return clusters;
 }
 
+
 int primary_tree_main(int argc, char *argv[])
 {
     split_threshold = 0.5;
@@ -288,7 +289,15 @@ int primary_tree_main(int argc, char *argv[])
     default_random_engine rng;
     vector<size_t> clusters;
     vector<cell_type> seqs;
-    signatureSize = readSignatures(inputFile, seqs);
+
+    if (args.multiple_arg)
+    {
+        signatureSize = readList(inputFile, seqs);
+    }
+    else
+    {
+        signatureSize = readSignatures(inputFile, seqs);
+    }
     signatureWidth = signatureSize * sizeof(cell_type);
     size_t seqCount = seqs.size() / signatureSize;
     if (cap == 0)

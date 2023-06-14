@@ -95,14 +95,14 @@ public:
         matrices[node].insert(matrices[node].end(), signature, signature + signatureSize);
     }
 
-    double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i)
-    {
-        return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
-    }
-
     double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0)
     {
         return calcSimilarity(a, b, signatureSize);
+    }
+
+    double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i)
+    {
+        return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
     }
 
     sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s)

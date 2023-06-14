@@ -384,6 +384,7 @@ public:
   bool tree_order_given;
   bool iteration_given;
   bool single_arg;
+  bool multiple_arg;
 
   enum
   {
@@ -401,7 +402,7 @@ public:
                                 split_threshold_given(false), split_threshold_arg(0),
                                 stay_threshold_given(false), stay_threshold_arg(0),
                                 debug_arg(false), print_arg(false), force_split_arg(false), tree_order_given(false),
-                                iteration_given(false), single_arg(false)
+                                iteration_given(false), single_arg(false), multiple_arg(false)
   {
   }
 
@@ -414,7 +415,7 @@ public:
                                                       split_threshold_given(false), split_threshold_arg(0),
                                                       stay_threshold_given(false), stay_threshold_arg(0),
                                                       debug_arg(false), print_arg(false), force_split_arg(false), tree_order_given(false),
-                                                      iteration_given(false), single_arg(false)
+                                                      iteration_given(false), single_arg(false), multiple_arg(false)
   {
     parse(argc, argv);
   }
@@ -439,7 +440,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:C:R:dfI:q:S:L:m:T:pxfF:";
+    static const char *short_options = "hVi:o:c:C:R:dfI:q:S:L:m:T:pxfF:M";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -485,6 +486,9 @@ public:
         break;
       case 'x':
         single_arg = true;
+        break;
+      case 'M':
+        multiple_arg = true;
         break;
       case 'V':
         print_version();
@@ -620,6 +624,7 @@ public:
            " -F,                                      force split root [default=false]\n"
            " -f,                                      tree order force split root [default=5]\n"
            " -i, --input                              input file or folder\n"
+           " -M                                       input is a folder"
            " -T, --tag                                [optional] tag for output cluster file\n"
            " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
            " -C, --capacity                           primary_tree capacity [default=0]\n"

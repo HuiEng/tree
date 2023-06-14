@@ -88,14 +88,14 @@ public:
         matrices[node].push_back(signature);
     }
 
+     double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0)
+    {
+        return calcSimilarity(a, b);
+    }
+
     double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i)
     {
         return calcSimilarityWrap(means[node], signatures[i]);
-    }
-
-    double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0)
-    {
-        return calcSimilarity(a, b);
     }
 
     sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s)
