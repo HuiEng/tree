@@ -222,6 +222,32 @@ primary_tree_main/fast:
 .PHONY : primary_tree_main/fast
 
 #=============================================================================
+# Target rules for targets named similarity_main
+
+# Build rule for target.
+similarity_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 similarity_main
+.PHONY : similarity_main
+
+# fast build rule for target.
+similarity_main/fast:
+	$(MAKE) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/build
+.PHONY : similarity_main/fast
+
+#=============================================================================
+# Target rules for targets named merge_main
+
+# Build rule for target.
+merge_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 merge_main
+.PHONY : merge_main
+
+# fast build rule for target.
+merge_main/fast:
+	$(MAKE) -f CMakeFiles/merge_main.dir/build.make CMakeFiles/merge_main.dir/build
+.PHONY : merge_main/fast
+
+#=============================================================================
 # Target rules for targets named tree
 
 # Build rule for target.
@@ -246,32 +272,6 @@ minimiser_main: cmake_check_build_system
 minimiser_main/fast:
 	$(MAKE) -f CMakeFiles/minimiser_main.dir/build.make CMakeFiles/minimiser_main.dir/build
 .PHONY : minimiser_main/fast
-
-#=============================================================================
-# Target rules for targets named merge_main
-
-# Build rule for target.
-merge_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 merge_main
-.PHONY : merge_main
-
-# fast build rule for target.
-merge_main/fast:
-	$(MAKE) -f CMakeFiles/merge_main.dir/build.make CMakeFiles/merge_main.dir/build
-.PHONY : merge_main/fast
-
-#=============================================================================
-# Target rules for targets named similarity_main
-
-# Build rule for target.
-similarity_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 similarity_main
-.PHONY : similarity_main
-
-# fast build rule for target.
-similarity_main/fast:
-	$(MAKE) -f CMakeFiles/similarity_main.dir/build.make CMakeFiles/similarity_main.dir/build
-.PHONY : similarity_main/fast
 
 #=============================================================================
 # Target rules for targets named build_main
@@ -324,6 +324,19 @@ count_main: cmake_check_build_system
 count_main/fast:
 	$(MAKE) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/build
 .PHONY : count_main/fast
+
+#=============================================================================
+# Target rules for targets named histo_main
+
+# Build rule for target.
+histo_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 histo_main
+.PHONY : histo_main
+
+# fast build rule for target.
+histo_main/fast:
+	$(MAKE) -f CMakeFiles/histo_main.dir/build.make CMakeFiles/histo_main.dir/build
+.PHONY : histo_main/fast
 
 #=============================================================================
 # Target rules for targets named partree_multi_main
@@ -418,6 +431,33 @@ count_main.s: count_main.cpp.s
 count_main.cpp.s:
 	$(MAKE) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/count_main.cpp.s
 .PHONY : count_main.cpp.s
+
+histo_main.o: histo_main.cpp.o
+
+.PHONY : histo_main.o
+
+# target to build an object file
+histo_main.cpp.o:
+	$(MAKE) -f CMakeFiles/histo_main.dir/build.make CMakeFiles/histo_main.dir/histo_main.cpp.o
+.PHONY : histo_main.cpp.o
+
+histo_main.i: histo_main.cpp.i
+
+.PHONY : histo_main.i
+
+# target to preprocess a source file
+histo_main.cpp.i:
+	$(MAKE) -f CMakeFiles/histo_main.dir/build.make CMakeFiles/histo_main.dir/histo_main.cpp.i
+.PHONY : histo_main.cpp.i
+
+histo_main.s: histo_main.cpp.s
+
+.PHONY : histo_main.s
+
+# target to generate assembly for a file
+histo_main.cpp.s:
+	$(MAKE) -f CMakeFiles/histo_main.dir/build.make CMakeFiles/histo_main.dir/histo_main.cpp.s
+.PHONY : histo_main.cpp.s
 
 ktree_main.o: ktree_main.cpp.o
 
@@ -732,15 +772,16 @@ help:
 	@echo "... tree_main"
 	@echo "... ktree_main"
 	@echo "... primary_tree_main"
+	@echo "... similarity_main"
+	@echo "... merge_main"
 	@echo "... tree"
 	@echo "... minimiser_main"
-	@echo "... merge_main"
-	@echo "... similarity_main"
 	@echo "... build_main"
 	@echo "... partree_main"
 	@echo "... install/local"
 	@echo "... build_partition_main"
 	@echo "... count_main"
+	@echo "... histo_main"
 	@echo "... partree_multi_main"
 	@echo "... build_main.o"
 	@echo "... build_main.i"
@@ -751,6 +792,9 @@ help:
 	@echo "... count_main.o"
 	@echo "... count_main.i"
 	@echo "... count_main.s"
+	@echo "... histo_main.o"
+	@echo "... histo_main.i"
+	@echo "... histo_main.s"
 	@echo "... ktree_main.o"
 	@echo "... ktree_main.i"
 	@echo "... ktree_main.s"

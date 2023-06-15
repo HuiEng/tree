@@ -1,6 +1,7 @@
 /usr/local/lib/libbuild_main.so
 /usr/local/lib/libbuild_partition_main.so
 /usr/local/lib/libcount_main.so
+/usr/local/lib/libhisto_main.so
 /usr/local/lib/libktree_main.so
 /usr/local/lib/libmerge_main.so
 /usr/local/lib/libminimiser_main.so

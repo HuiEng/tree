@@ -28,6 +28,7 @@
 #include <vector>
 #include <fstream>
 
+
 typedef unsigned char cell_type;
 size_t BFintersect(const cell_type *a, const cell_type *b, size_t signatureSize)
 {

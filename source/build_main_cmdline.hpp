@@ -372,6 +372,7 @@ public:
   bool seed_given;
   bool debug;
   bool folder_arg;
+  bool compress_arg;
 
   enum
   {
@@ -387,7 +388,8 @@ public:
                          kmer_given(false), window_given(false),
                          element_given(false), multiple_arg(false),
                          canonical_arg(false),
-                         seed_given(false), seed_arg(0),debug(false),folder_arg(false)
+                         seed_given(false), seed_arg(0),debug(false),
+                         folder_arg(false),compress_arg(false)
   {
   }
 
@@ -398,7 +400,8 @@ public:
                                                kmer_given(false), window_given(false),
                                                element_given(false), multiple_arg(false),
                                                canonical_arg(false),
-                                               seed_given(false), seed_arg(0),debug(false),folder_arg(false)
+                                               seed_given(false), seed_arg(0),debug(false),
+                                               folder_arg(false),compress_arg(false)
   {
     parse(argc, argv);
   }
@@ -407,18 +410,18 @@ public:
   {
     static struct option long_options[] = {
         {"bf-output", 1, 0, 'b'},
-        {"capacity", 1, 0, 'c'},
+        {"compress", 1, 0, 'c'},
         {"folder", 1, 0, 'f'},
         {"element", 1, 0, 'e'},
         {"seed", 1, 0, 'S'},
         {"multiple", 0, 0, 'm'},
-        {"canonical", 0, 0, 'c'},
+        {"canonical", 0, 0, 'C'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"debug", 0, 0, DEBUG_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVb:k:w:e:mCS:f";
+    static const char *short_options = "hVb:k:w:e:mcCS:f";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -480,6 +483,9 @@ public:
         break;
       case 'C':
         canonical_arg = true;
+        break;
+      case 'c':
+        compress_arg = true;
         break;
       case 'S':
         seed_given = true;
@@ -561,6 +567,7 @@ public:
            " -f, --folder                             input is all files in folder [default=false]\n"
            " -b, --bf-output                          BF output path\n"
            " -C, --canonical                          canonical [default=FALSE]\n"
+           " -c, --compress                           compress all seqs in a fasta into single BF [default=FALSE]\n"
            " -S, --seed                               seed for random ordering minimiser [default=0x8F3F73B5CF1C9ADE], set 0 for lexical order\n"
            " -k,                                      kmer length [default=4]\n"
            " -w,                                      window length [default=8]\n"

@@ -16,6 +16,7 @@ static uint32_t windowLength = 8; // Kmer length
 size_t bf_element_cnt = 1000;
 uint64_t seed = 0; // 0x8F3F73B5CF1C9ADE; // The default seed from minimiser_hash
 bool debug = false;
+bool compressReads = false;
 
 void writeInt(std::ostream &os, unsigned long long int i)
 {
@@ -206,17 +207,34 @@ void generateSigFolder(view minimiser_view, bloom_parameters parameters, string 
     seqan3::sequence_file_input<dna4_traits> file_in{filename};
 
     bloom_filter bf(parameters);
-    // Retrieve the sequences and ids.
-    for (auto &[seq, id, qual] : file_in)
+    if (compressReads)
     {
-        // for each seq, Instantiate Bloom Filter
-        for (auto &&hash : seq | minimiser_view)
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
         {
-            bf.insert(hash);
+            // for each seq, Instantiate Bloom Filter
+            for (auto &&hash : seq | minimiser_view)
+            {
+                bf.insert(hash);
+            }
         }
-
         bf.print(wf);
         bf.clear();
+    }
+    else
+    {
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
+        {
+            // for each seq, Instantiate Bloom Filter
+            for (auto &&hash : seq | minimiser_view)
+            {
+                bf.insert(hash);
+            }
+
+            bf.print(wf);
+            bf.clear();
+        }
     }
 }
 
@@ -239,18 +257,36 @@ void generateSigFolder(bloom_parameters parameters, string filename, ofstream &w
 
     bloom_filter bf(parameters);
 
-    // Retrieve the sequences and ids.
-    for (auto &[seq, id, qual] : file_in)
+    if (compressReads)
     {
-
-        // for each seq, Instantiate Bloom Filter
-        for (auto &&hash : seq | minimiser_view)
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
         {
-            bf.insert(hash);
-        }
 
+            // for each seq, Instantiate Bloom Filter
+            for (auto &&hash : seq | minimiser_view)
+            {
+                bf.insert(hash);
+            }
+        }
         bf.print(wf);
         bf.clear();
+    }
+    else
+    {
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
+        {
+
+            // for each seq, Instantiate Bloom Filter
+            for (auto &&hash : seq | minimiser_view)
+            {
+                bf.insert(hash);
+            }
+
+            bf.print(wf);
+            bf.clear();
+        }
     }
 }
 
@@ -326,6 +362,12 @@ int build_main(int argc, char *argv[])
     parameters.compute_optimal_parameters();
 
     std::cout << "done setting bf param" << std::endl;
+
+    compressReads = args.compress_arg;
+    if (compressReads)
+    {
+        std::cout << "Compressing Reads" << std::endl;
+    }
 
     if (args.folder_arg)
     {
