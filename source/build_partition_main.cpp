@@ -123,8 +123,6 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
             bloom_filter temp(parameters);
             wBFL.push_back(temp);
         }
-        // seqan3::debug_stream << "w size" << windows.size() << '\n';
-        seqan3::debug_stream << "w " << w << '\n';
 
         for (auto &[seq, id, qual] : file_in)
         {
