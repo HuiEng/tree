@@ -410,7 +410,7 @@ public:
   {
     static struct option long_options[] = {
         {"bf-output", 1, 0, 'b'},
-        {"compress", 1, 0, 'c'},
+        {"compress", 0, 0, 'c'},
         {"folder", 1, 0, 'f'},
         {"element", 1, 0, 'e'},
         {"seed", 1, 0, 'S'},

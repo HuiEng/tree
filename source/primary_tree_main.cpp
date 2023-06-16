@@ -209,7 +209,6 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
     return clusters;
 }
 
-
 int primary_tree_main(int argc, char *argv[])
 {
     split_threshold = 0.5;
@@ -238,14 +237,14 @@ int primary_tree_main(int argc, char *argv[])
     {
         split_threshold = args.split_threshold_arg;
     }
-    else // if (args.single_arg)
+    else if (args.single_arg)
     {
         split_threshold = getSplitThresholdSingle(inputFile);
     }
-    // else
-    // {
-    //     split_threshold = getSplitThreshold(inputFile);
-    // }
+    else
+    {
+        split_threshold = getSplitThreshold(inputFile);
+    }
 
     if (args.stay_threshold_given)
     {

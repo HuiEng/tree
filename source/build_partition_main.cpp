@@ -16,6 +16,7 @@ static uint32_t step_size = windowLength; // window length
 size_t minimiser_size = 3;
 size_t bf_element_cnt = 1000;
 bool debug = false;
+bool compressReads = false;
 
 void writeInt(std::ostream &os, unsigned long long int i)
 {
@@ -202,6 +203,12 @@ int build_partition_main(int argc, char *argv[])
         return 1;
     }
     parameters.compute_optimal_parameters();
+
+    compressReads = args.compress_arg;
+    if (compressReads)
+    {
+        std::cout << "Compressing Reads" << std::endl;
+    }
 
     if (args.size_given)
     {

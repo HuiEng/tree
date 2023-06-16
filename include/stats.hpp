@@ -285,7 +285,8 @@ double getSplitThreshold(const string bfIn, size_t sample_size = 100, size_t run
 
     vector<seq_type> seqs = readPartitionBFSample(bfIn, signatureSize, sample_size * runs_);
     fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
-    max_seqCount = sample_size;
+    size_t seqCount = seqs.size();
+    max_seqCount = min(seqCount, sample_size);
     runs = runs_;
     return calcAllStatsBatch(seqs, &calcJaccardGlobal).q3 / 100;
 }
@@ -295,8 +296,9 @@ double getSplitThresholdSingle(const string bfIn, size_t sample_size = 100, size
 {
     vector<cell_type> seqs;
     signatureSize = readSignaturesSample(bfIn, seqs, sample_size * runs_);
-    fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
-    max_seqCount = sample_size;
+    size_t seqCount = seqs.size() / signatureSize;
+    fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+    max_seqCount = min(seqCount, sample_size);
     runs = runs_;
     return calcAllStatsKmersBatch(seqs).q3 / 100;
 }

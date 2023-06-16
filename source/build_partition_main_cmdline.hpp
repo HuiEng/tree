@@ -376,6 +376,7 @@ public:
   bool set_arg;
   bool toSingle_arg;
   bool folder_arg;
+  bool compress_arg;
 
   enum
   {
@@ -391,7 +392,8 @@ public:
                                    kmer_given(false), window_given(false), step_given(false),
                                    element_given(false), multiple_arg(false),
                                    canonical_arg(false), size_given(false),
-                                   size_arg(0), debug(false), set_arg(false), folder_arg(false), toSingle_arg(false)
+                                   size_arg(0), debug(false), set_arg(false), folder_arg(false),
+                                   toSingle_arg(false), compress_arg(false)
   {
   }
 
@@ -401,7 +403,9 @@ public:
                                                          kmer_given(false), window_given(false), step_given(false),
                                                          element_given(false), multiple_arg(false),
                                                          canonical_arg(false), size_given(false),
-                                                         size_arg(0), debug(false), set_arg(false), folder_arg(false), toSingle_arg(false)
+                                                         size_arg(0), debug(false), set_arg(false),
+                                                         folder_arg(false), toSingle_arg(false),
+                                                         compress_arg(false)
   {
     parse(argc, argv);
   }
@@ -414,6 +418,7 @@ public:
         {"element", 1, 0, 'e'},
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
+        {"compress", 0, 0, 'c'},
         {"toSingle", 0, 0, 'x'},
         {"partition", 0, 0, 'p'},
         {"size", 1, 0, 's'},
@@ -424,7 +429,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVo:k:w:mCs:de:fx";
+    static const char *short_options = "hVo:k:w:mCs:de:fxc";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -497,6 +502,9 @@ public:
         break;
       case 'C':
         canonical_arg = true;
+        break;
+      case 'c':
+        compress_arg = true;
         break;
       case 's':
         size_given = true;
@@ -580,6 +588,7 @@ public:
            "     --output                             print as minimiser set\n"
            " -e, --element                            expected number of element in BF [default=1000]\n"
            " -C, --canonical                          canonical [default=FALSE]\n"
+           " -c, --compress                           compress all seqs in a fasta into single BF [default=FALSE]\n"
            " -s, --size                               number of minimiser per window [default=3]\n"
            " -k,                                      kmer length [default=4]\n"
            " -w,                                      window length [default=8]\n"
