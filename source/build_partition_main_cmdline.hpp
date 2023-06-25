@@ -413,7 +413,7 @@ public:
   void parse(int argc, char *argv[])
   {
     static struct option long_options[] = {
-        {"output", 1, 0, 'o'},
+        {"output", 1, 0, 'b'},
         {"folder", 1, 0, 'f'},
         {"element", 1, 0, 'e'},
         {"multiple", 0, 0, 'm'},
@@ -429,7 +429,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVo:k:w:mCs:de:fxc";
+    static const char *short_options = "hVb:k:w:mCs:de:fxc";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -464,7 +464,7 @@ public:
       case '?':
         ::std::cerr << "Use --usage or --help for some help\n";
         exit(1);
-      case 'o':
+      case 'b':
         output_given = true;
         output_arg = optarg;
         break;

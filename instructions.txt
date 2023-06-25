@@ -1,0 +1,44 @@
+To build BFs, use: tree {command} {input file(s)} [options]
+- "build" for standard minimiser scheme 
+- "pbuild" for multiple minimisers per window
+
+options:
+- k
+- w
+- e, bf elements, "e" for pbuild should be very small
+- f, indicate there is more than one input file
+- c, indicate the input files contain short reads, compress all reads from a file into a single signature
+
+
+options for pbuild only:
+- s, number of minimiser per window
+- x, get multiple minimiser per window but store in single BF. Output filename consists term "single". The output structure is same as "build" but the signature generated may not be the same
+
+
+options for build only:
+- m, output every entry to single binary file
+
+
+#######################################################################
+To build the tree, use: tree {command} [-M] -i {input binary or list file}  [options]
+- "prim" for primary tree using single BFs
+- "tree" for secondary tree using wBFLs
+
+The signatures can be written to one binary file, or multiple binary files (one seq one file).
+If input is multiple binary files, do:
+ls {path_to_binary_files}/*.bin > {list_filename}
+tree {command} -M -i {list_filename}
+
+options:
+- S, stay threhold
+- L, split threshold. If not given, auto select q3 by random sampling the input
+- I, number of reinsertion cycle
+- f, split root if number of children > 5
+- F {tree_order}, split root if number of children > {tree_order}
+- R {seed}, insert seqs into tree by random order
+
+
+#####################################################################
+EG:
+tree pbuild -f "../contigs/all/*.fna" -m -b "{folder}/{prefix}" -w 10000
+tree pbuild -f "../contigs/all/*.fna" -b "{prefix}"

@@ -136,7 +136,6 @@ unsigned long long int readList(const string listFile, vector<cell_type> &sigs)
     return length;
 }
 
-
 // if too large to use readSignatures, use batch, signatureSize should be outputed from the prev function
 vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, size_t &signatureSize)
 {
@@ -279,7 +278,6 @@ unsigned long long int readSignaturesMultiple(const string folder, vector<cell_t
     {
         if (entry.path().extension() == ".bin")
         {
-            fprintf(pFile, "%s\n", entry.path().c_str());
             ifstream rf(entry.path(), ios::out | ios::binary);
 
             // get length of file:
@@ -444,6 +442,84 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t
     }
     rf.close();
 
+    return seqs;
+}
+
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+vector<vector<vector<cell_type>>> readListPartitionBF(const string listFile, size_t &signatureSize)
+{
+
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    // Create a text string, which is used to output the text file
+    string file_path;
+    unsigned long long int length;
+
+    // Read from the text file
+    ifstream listStream(listFile);
+
+    // Use a while loop together with the getline() function to read the file line by line
+    while (getline(listStream, file_path))
+    {
+        ifstream rfSize(file_path, ios::binary | ios::ate);
+        if (!rfSize.is_open())
+        {
+            fprintf(stderr, "Invalid File. Please try again\n");
+            exit(0);
+        }
+        if (rfSize.tellg() > max_fileSize)
+        {
+            fprintf(stderr, "File too big, please read in batches\n");
+            return seqs;
+        }
+        ifstream rf(file_path, ios::out | ios::binary);
+
+        unsigned long long int length;
+        if (rf)
+            rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+        signatureSize = length;
+
+        //? 1 window
+        // cout << "length: " << length << "\n";
+        vector<cell_type> bf(length);
+        cell_type temp = 0;
+        size_t i = 0;
+
+        try
+        {
+
+            while (rf)
+            {
+                rf.read((char *)&bf[i], sizeof(cell_type));
+                i++;
+                if (i == length)
+                {
+                    if (isEmpty(bf))
+                    {
+                        seqs.push_back(tseq);
+                        tseq.clear();
+                    }
+                    else
+                    {
+                        tseq.push_back(bf);
+                    }
+                    fill(bf.begin(), bf.end(), 0);
+                    i = 0;
+                }
+            }
+        }
+        catch (const std::exception &e) // caught by reference to base
+        {
+            std::cout << " a standard exception was caught, with message '"
+                      << e.what() << "'\n";
+            seqs.clear();
+        }
+        rf.close();
+    }
+
+    // Close the file
+    listStream.close();
     return seqs;
 }
 

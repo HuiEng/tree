@@ -10,13 +10,15 @@ using namespace std;
 namespace fs = std::filesystem;
 
 static build_partition_main_cmdline args; // Command line switches and arguments
-static uint8_t kmerLength = 4;            // Kmer length
-static uint32_t windowLength = 8;         // window length
+static uint8_t kmerLength = 9;            // Kmer length
+static uint32_t windowLength = 50;        // window length
 static uint32_t step_size = windowLength; // window length
 size_t minimiser_size = 3;
 size_t bf_element_cnt = 1000;
 bool debug = false;
 bool compressReads = false;
+bool multipleOut = false;
+string outfile = "";
 
 void writeInt(std::ostream &os, unsigned long long int i)
 {
@@ -178,6 +180,41 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
     // wf.close();
 }
 
+void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
+{
+    // ofstream wf(outfile, ios::out | ios::binary);
+    // bloom_filter bf(parameters);
+    // writeInt(wf, bf.table_size());
+
+    if (args.canonical_arg)
+    {
+        auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
+                                                                  seqan3::window_size{windowLength},
+                                                                  seqan3::minimiser_size{minimiser_size},
+                                                                  seqan3::step_size{step_size},
+                                                                  seqan3::seed{0});
+        getPartitionMinimisers(partition_view, parameters, inputFile, wf);
+    }
+    else
+    {
+        // to get minimisers with w=8,k=4
+        // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
+        size_t temp = windowLength - kmerLength + 1;
+        auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
+
+        if (args.toSingle_arg)
+        {
+            getMinimisers(partition_view, parameters, inputFile, wf);
+        }
+        else
+        {
+            getPartitionMinimisers(partition_view, parameters, inputFile, wf);
+        }
+    }
+
+    // wf.close();
+}
+
 int build_partition_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -230,6 +267,11 @@ int build_partition_main(int argc, char *argv[])
     {
         std::cout << "Compressing Reads" << std::endl;
     }
+    multipleOut = args.multiple_arg;
+    if (multipleOut)
+    {
+        std::cout << "multipleOut" << std::endl;
+    }
 
     if (args.size_given)
     {
@@ -241,7 +283,7 @@ int build_partition_main(int argc, char *argv[])
     string inputFile = args.input_arg;
     size_t firstindex = inputFile.find_last_of("/") + 1;
     size_t lastindex = inputFile.find_last_of(".");
-    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
+    outfile = inputFile.substr(firstindex, lastindex - firstindex);
     char buffer[50];
     if (args.element_given)
     {
@@ -249,12 +291,12 @@ int build_partition_main(int argc, char *argv[])
         if (args.step_given)
         {
             step_size = args.step_arg;
-            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu--step%zu.bin", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
+            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu--step%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
         }
         else
         {
             step_size = windowLength;
-            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu.bin", kmerLength, windowLength, minimiser_size, bf_element_cnt);
+            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt);
         }
     }
     else
@@ -262,121 +304,97 @@ int build_partition_main(int argc, char *argv[])
         if (args.step_given)
         {
             step_size = args.step_arg;
-            sprintf(buffer, "-k%zu-w%zu-s%zu--step%zu.bin", kmerLength, windowLength, minimiser_size, step_size);
+            sprintf(buffer, "-k%u-w%u-s%zu--step%u", kmerLength, windowLength, minimiser_size, step_size);
         }
         else
         {
             step_size = windowLength;
-            sprintf(buffer, "-k%zu-w%zu-s%zu.bin", kmerLength, windowLength, minimiser_size);
+            sprintf(buffer, "-k%u-w%u-s%zu", kmerLength, windowLength, minimiser_size);
         }
     }
 
-    string outfile = rawname + buffer;
+    if (args.toSingle_arg)
+    {
+        outfile = outfile + "-single";
+    }
 
-    if (args.output_given)
-        outfile = args.output_arg;
+    outfile = outfile + buffer;
 
     if (args.folder_arg)
     {
+        if (args.output_given)
+        {
+            outfile = args.output_arg;
+        }
+        else
+        {
+            fprintf(stderr, "Please provide output file path\n");
+            return 0;
+        }
+
         string delimiter = "/*";
         string folder = inputFile.substr(0, inputFile.find(delimiter));
         string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
         fprintf(stderr, "Reading folder %s\n", folder.c_str());
 
-        outfile = folder + buffer;
+        if (args.toSingle_arg)
+        {
+            outfile = outfile + "-single";
+        }
 
-        ofstream wf(outfile, ios::out | ios::binary);
+        outfile = outfile + buffer;
 
         bloom_filter bf(parameters);
-        writeInt(wf, bf.table_size());
 
-        if (args.canonical_arg)
+        if (multipleOut)
         {
-            auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
-                                                                      seqan3::window_size{windowLength},
-                                                                      seqan3::minimiser_size{minimiser_size},
-                                                                      seqan3::step_size{step_size},
-                                                                      seqan3::seed{0});
-
+            size_t i = 0;
             for (const auto &entry : fs::directory_iterator(folder))
             {
                 if (entry.path().extension() == ext)
                 {
-                    cout << entry.path().stem().string() << '\n';
-                    getPartitionMinimisers(partition_view, parameters, entry.path(), wf);
+                    ofstream wf(outfile + "_" + to_string(i) + ".bin", ios::out | ios::binary);
+                    writeInt(wf, bf.table_size());
+                    doWork(wf, parameters, entry.path());
+                    wf.close();
+                    i++;
                 }
             }
         }
         else
         {
-            // to get minimisers with w=8,k=4
-            // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
-            size_t temp = windowLength - kmerLength + 1;
-            auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
-
-            if (args.toSingle_arg)
+            outfile = outfile + ".bin";
+            ofstream wf(outfile, ios::out | ios::binary);
+            writeInt(wf, bf.table_size());
+            for (const auto &entry : fs::directory_iterator(folder))
             {
-                for (const auto &entry : fs::directory_iterator(folder))
+                if (entry.path().extension() == ext)
                 {
-                    if (entry.path().extension() == ext)
-                    {
-                        cout << entry.path().stem().string() << '\n';
-                        getMinimisers(partition_view, parameters, entry.path(), wf);
-                    }
+                    // cout << entry.path().stem().string() << '\n';
+                    // getMinimisers(partition_view, parameters, entry.path(), wf);
+                    doWork(wf, parameters, entry.path());
                 }
             }
-            else
-            {
-                for (const auto &entry : fs::directory_iterator(folder))
-                {
-                    if (entry.path().extension() == ext)
-                    {
-                        cout << entry.path().stem().string() << '\n';
-                        getPartitionMinimisers(partition_view, parameters, entry.path(), wf);
-                    }
-                }
-            }
+            wf.close();
+            return 0;
         }
-
-        wf.close();
-        return 0;
     }
 
-    if (args.toSingle_arg)
-    {
-        outfile = rawname + "-single" + buffer;
-    }
-    ofstream wf(outfile, ios::out | ios::binary);
-    bloom_filter bf(parameters);
-    writeInt(wf, bf.table_size());
-
-    if (args.canonical_arg)
-    {
-        auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
-                                                                  seqan3::window_size{windowLength},
-                                                                  seqan3::minimiser_size{minimiser_size},
-                                                                  seqan3::step_size{step_size},
-                                                                  seqan3::seed{0});
-        getPartitionMinimisers(partition_view, parameters, args.input_arg, wf);
-    }
     else
     {
-        // to get minimisers with w=8,k=4
-        // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
-        size_t temp = windowLength - kmerLength + 1;
-        auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
-
-        if (args.toSingle_arg)
+        if (args.output_given)
         {
-            getMinimisers(partition_view, parameters, args.input_arg, wf);
+            outfile = args.output_arg;
         }
         else
         {
-            getPartitionMinimisers(partition_view, parameters, args.input_arg, wf);
+            outfile = outfile + ".bin";
         }
+        ofstream wf(outfile, ios::out | ios::binary);
+        bloom_filter bf(parameters);
+        writeInt(wf, bf.table_size());
+        doWork(wf, parameters, inputFile);
+        wf.close();
     }
-
-    wf.close();
-
     return 0;
 }
