@@ -9,3 +9,4 @@
 *.fastq
 *.fasta
 *.o
+*.so
