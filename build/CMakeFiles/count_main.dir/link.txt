@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs -shared -Wl,-soname,libcount_main.so -o libcount_main.so CMakeFiles/count_main.dir/count_main.cpp.o  /usr/lib/x86_64-linux-gnu/libz.so -lrt 

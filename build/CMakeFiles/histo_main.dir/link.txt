@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs -shared -Wl,-soname,libhisto_main.so -o libhisto_main.so CMakeFiles/histo_main.dir/histo_main.cpp.o  /usr/lib/x86_64-linux-gnu/libz.so -lrt 
