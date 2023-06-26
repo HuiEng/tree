@@ -315,10 +315,8 @@ int build_partition_main(int argc, char *argv[])
 
     if (args.toSingle_arg)
     {
-        outfile = outfile + "-single";
+        buffer = buffer + "-single";
     }
-
-    outfile = outfile + buffer;
 
     if (args.folder_arg)
     {
@@ -336,11 +334,6 @@ int build_partition_main(int argc, char *argv[])
         string folder = inputFile.substr(0, inputFile.find(delimiter));
         string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
         fprintf(stderr, "Reading folder %s\n", folder.c_str());
-
-        if (args.toSingle_arg)
-        {
-            outfile = outfile + "-single";
-        }
 
         outfile = outfile + buffer;
 
@@ -386,10 +379,7 @@ int build_partition_main(int argc, char *argv[])
         {
             outfile = args.output_arg;
         }
-        else
-        {
-            outfile = outfile + ".bin";
-        }
+        outfile = outfile + buffer + "bin";
         ofstream wf(outfile, ios::out | ios::binary);
         bloom_filter bf(parameters);
         writeInt(wf, bf.table_size());
