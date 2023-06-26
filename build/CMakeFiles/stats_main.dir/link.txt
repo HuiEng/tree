@@ -1,1 +1,1 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libstats_main.so -o libstats_main.so CMakeFiles/stats_main.dir/stats_main.cpp.o  -lrt 
+/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs -shared -Wl,-soname,libstats_main.so -o libstats_main.so CMakeFiles/stats_main.dir/stats_main.cpp.o  /usr/lib/x86_64-linux-gnu/libz.so -lrt 

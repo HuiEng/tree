@@ -1,27 +1,14 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
-  "CXX"
-  )
-# The set of files for implicit dependencies of each language:
-set(CMAKE_DEPENDS_CHECK_CXX
-  "/mnt/c/DataCopied/Research/tree/source/partree_multi_main.cpp" "/mnt/c/DataCopied/Research/tree/build/CMakeFiles/partree_multi_main.dir/partree_multi_main.cpp.o"
-  )
-set(CMAKE_CXX_COMPILER_ID "GNU")
-
-# Preprocessor definitions for this target.
-set(CMAKE_TARGET_DEFINITIONS_CXX
-  "partree_multi_main_EXPORTS"
   )
 
-# The include file search paths:
-set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "/mnt/c/DataCopied/Research/tree/source/include"
-  "/mnt/c/DataCopied/Research/tree/source/../include"
-  "/mnt/c/DataCopied/Research/tree/source/../lib/robin-hood-hashing/src/include"
-  "/mnt/c/DataCopied/Research/tree/lib/seqan3/include"
-  "/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/sdsl-lite/include"
-  "/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/range-v3/include"
-  "/mnt/c/DataCopied/Research/tree/lib/seqan3/submodules/cereal/include"
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/mnt/c/DataCopied/Research/tree/source/partree_multi_main.cpp" "CMakeFiles/partree_multi_main.dir/partree_multi_main.cpp.o" "gcc" "CMakeFiles/partree_multi_main.dir/partree_multi_main.cpp.o.d"
   )
 
 # Targets to which this target links.

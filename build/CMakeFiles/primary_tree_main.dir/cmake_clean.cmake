@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/primary_tree_main.dir/primary_tree_main.cpp.o"
+  "CMakeFiles/primary_tree_main.dir/primary_tree_main.cpp.o.d"
   "libprimary_tree_main.pdb"
   "libprimary_tree_main.so"
 )

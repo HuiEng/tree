@@ -1,1 +1,1 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libsimilarity_main.so -o libsimilarity_main.so CMakeFiles/similarity_main.dir/similarity_main.cpp.o  -lrt 
+/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs -shared -Wl,-soname,libsimilarity_main.so -o libsimilarity_main.so CMakeFiles/similarity_main.dir/similarity_main.cpp.o  /usr/lib/x86_64-linux-gnu/libz.so -lrt 

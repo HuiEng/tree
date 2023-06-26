@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/count_main.dir/count_main.cpp.o"
+  "CMakeFiles/count_main.dir/count_main.cpp.o.d"
   "libcount_main.pdb"
   "libcount_main.so"
 )

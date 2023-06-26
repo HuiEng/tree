@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/histo_main.dir/histo_main.cpp.o"
+  "CMakeFiles/histo_main.dir/histo_main.cpp.o.d"
   "libhisto_main.pdb"
   "libhisto_main.so"
 )

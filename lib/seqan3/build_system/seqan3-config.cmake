@@ -371,7 +371,7 @@ else ()
     seqan3_config_error ("The range-v3 library is required, but wasn't found. Get it from https://github.com/ericniebler/range-v3/")
 endif ()
 
-check_include_file_cxx (sdsl/version.hpp _SEQAN3_HAVE_SDSL)
+check_include_file_cxx (sdsl/bits.hpp _SEQAN3_HAVE_SDSL)
 
 if (_SEQAN3_HAVE_SDSL)
     seqan3_config_print ("Required dependency:        SDSL found.")

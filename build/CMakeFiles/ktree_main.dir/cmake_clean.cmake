@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/ktree_main.dir/ktree_main.cpp.o"
+  "CMakeFiles/ktree_main.dir/ktree_main.cpp.o.d"
   "libktree_main.pdb"
   "libktree_main.so"
 )
