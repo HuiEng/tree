@@ -284,19 +284,20 @@ int build_partition_main(int argc, char *argv[])
     size_t firstindex = inputFile.find_last_of("/") + 1;
     size_t lastindex = inputFile.find_last_of(".");
     outfile = inputFile.substr(firstindex, lastindex - firstindex);
-    char buffer[50];
+    string buffer = "";
+    char bufferArr[50];
     if (args.element_given)
     {
         bf_element_cnt = args.element_arg;
         if (args.step_given)
         {
             step_size = args.step_arg;
-            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu--step%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
+            sprintf(bufferArr, "-k%zu-w%zu-s%zu-b%zu--step%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
         }
         else
         {
             step_size = windowLength;
-            sprintf(buffer, "-k%zu-w%zu-s%zu-b%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt);
+            sprintf(bufferArr, "-k%zu-w%zu-s%zu-b%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt);
         }
     }
     else
@@ -304,15 +305,15 @@ int build_partition_main(int argc, char *argv[])
         if (args.step_given)
         {
             step_size = args.step_arg;
-            sprintf(buffer, "-k%u-w%u-s%zu--step%u", kmerLength, windowLength, minimiser_size, step_size);
+            sprintf(bufferArr, "-k%u-w%u-s%zu--step%u", kmerLength, windowLength, minimiser_size, step_size);
         }
         else
         {
             step_size = windowLength;
-            sprintf(buffer, "-k%u-w%u-s%zu", kmerLength, windowLength, minimiser_size);
+            sprintf(bufferArr, "-k%u-w%u-s%zu", kmerLength, windowLength, minimiser_size);
         }
     }
-
+    buffer = buffer + bufferArr;
     if (args.toSingle_arg)
     {
         buffer = buffer + "-single";
