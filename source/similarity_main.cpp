@@ -5,12 +5,12 @@
 #include "similarity.hpp"
 static similarity_main_cmdline args; // Command line switches and arguments
 
-void allKmersBatch(FILE *pFile, const string bfIn)
+void allKmersBatch(FILE *pFile, const string inputFile)
 {
     // pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
     size_t idx = 0;
     vector<cell_type> seqs;
-    signatureSize = readSignatures(bfIn, seqs, batch, idx);
+    signatureSize = readSignatures(inputFile, seqs, batch, idx);
 
     fprintf(pFile, "i,j,similarity\n");
     calcAllSimilarityKmers(pFile, seqs);
@@ -24,7 +24,7 @@ void allKmersBatch(FILE *pFile, const string bfIn)
 
     do
     {
-        readSignatures(bfIn, temp, batch, idx);
+        readSignatures(inputFile, temp, batch, idx);
         size_t offset = (idx - temp.size()) / signatureSize;
         calcAllSimilarityKmers(pFile, temp, offset);
         calcAllSimilarityKmersBatch(pFile, seqs, temp, idxA / signatureSize, offset);
@@ -51,7 +51,7 @@ void allKmersBatch(FILE *pFile, const string bfIn)
 
         do
         {
-            readSignatures(bfIn, temp, batch, idx);
+            readSignatures(inputFile, temp, batch, idx);
             size_t offset = (idx - temp.size()) / signatureSize;
             calcAllSimilarityKmersBatch(pFile, seqs, temp, idxA / signatureSize, offset);
 
@@ -75,11 +75,8 @@ int similarity_main(int argc, char *argv[])
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
 
-    string bfIn = "data.bin";
-    size_t bf_element_cnt = 1000;
+    string inputFile = args.bf_input_arg;
 
-    if (args.bf_input_given)
-        bfIn = args.bf_input_arg;
 
     if (args.threshold_given)
         minimiser_match_threshold = args.threshold_arg;
@@ -100,9 +97,9 @@ int similarity_main(int argc, char *argv[])
         fprintf(stderr, "Only printing entries > %.1f %%\n", min_print_sim * 100);
     }
 
-    size_t firstindex = bfIn.find_last_of("/") + 1;
-    size_t lastindex = bfIn.find_last_of(".");
-    string rawname = bfIn.substr(firstindex, lastindex - firstindex);
+    size_t firstindex = inputFile.find_last_of("/") + 1;
+    size_t lastindex = inputFile.find_last_of(".");
+    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
 
     if (args.output_given)
     {
@@ -117,8 +114,8 @@ int similarity_main(int argc, char *argv[])
         if (args.all_kmer_arg)
         {
             pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
-            allKmersBatch(pFile, bfIn);
-            // vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch, signatureSize);
+            allKmersBatch(pFile, inputFile);
+            // vector<vector<cell_type>> seqs_batch = readSignaturesBatch(inputFile, batch, signatureSize);
             // size_t temp = seqs_batch.size() - 1;
             // size_t seqCount = temp * batch + seqs_batch[temp].size() / signatureSize;
             // fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
@@ -126,7 +123,7 @@ int similarity_main(int argc, char *argv[])
         }
         else
         {
-            // vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(bfIn, batch, signatureSize);
+            // vector<vector<vector<vector<cell_type>>>> seqs_batch = readPartitionBFBatch(inputFile, batch, signatureSize);
             // size_t temp = seqs_batch.size() - 1;
             // size_t seqCount = temp * batch + seqs_batch[temp].size();
             // fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
@@ -136,19 +133,19 @@ int similarity_main(int argc, char *argv[])
                 char buffer[50];
                 sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
                 pFile = fopen((rawname + buffer).c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarityWindow, &calcAllSimilarityLocalBatch);
+                batching(inputFile, pFile, &calcAllSimilarityWindow, &calcAllSimilarityLocalBatch);
                 // batchSimFunction(pFile, seqs_batch, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
             }
             else if (args.global_arg)
             {
                 pFile = fopen((rawname + "-global_sim.txt").c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
+                batching(inputFile, pFile, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
                 // batchSimFunction(pFile, seqs_batch, &calcAllSimilarityGlobal, &calcAllSimilarityGlobalBatch);
             }
             else
             {
                 pFile = fopen((rawname + "_sim.txt").c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarityLocal, &calcAllSimilarityBatch);
+                batching(inputFile, pFile, &calcAllSimilarityLocal, &calcAllSimilarityBatch);
                 // batchSimFunction(pFile, seqs_batch, &calcAllSimilarity, &calcAllSimilarityBatch);
             }
         }
@@ -159,7 +156,14 @@ int similarity_main(int argc, char *argv[])
         {
             pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
             vector<cell_type> seqs;
-            signatureSize = readSignatures(bfIn, seqs);
+            if (args.multiple_arg)
+            {
+                signatureSize = readList(inputFile, seqs);
+            }
+            else
+            {
+                signatureSize = readSignatures(inputFile, seqs);
+            }
 
             fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
             fprintf(pFile, "i,j,similarity\n");
@@ -168,8 +172,15 @@ int similarity_main(int argc, char *argv[])
         }
         else
         {
-            size_t idx = 0;
-            vector<seq_type> seqs = readPartitionBF(bfIn, signatureSize);
+            vector<seq_type> seqs;
+            if (args.multiple_arg)
+            {
+                seqs = readListPartitionBF(inputFile, signatureSize);
+            }
+            else
+            {
+                seqs = readPartitionBF(inputFile, signatureSize);
+            }
 
             if (signatureSize == 0)
             {
