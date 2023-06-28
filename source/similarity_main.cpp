@@ -5,7 +5,7 @@
 #include "similarity.hpp"
 static similarity_main_cmdline args; // Command line switches and arguments
 
-void allKmersBatch(FILE* pFile,const string bfIn)
+void allKmersBatch(FILE *pFile, const string bfIn)
 {
     // pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
     size_t idx = 0;
@@ -89,6 +89,17 @@ int similarity_main(int argc, char *argv[])
         skip = true;
     }
 
+    if (args.min_sim_given)
+    {
+        min_print_sim = args.min_sim_arg;
+        skip = true;
+    }
+
+    if (skip)
+    {
+        fprintf(stderr, "Only printing entries > %.1f %%\n", min_print_sim * 100);
+    }
+
     size_t firstindex = bfIn.find_last_of("/") + 1;
     size_t lastindex = bfIn.find_last_of(".");
     string rawname = bfIn.substr(firstindex, lastindex - firstindex);
@@ -106,7 +117,7 @@ int similarity_main(int argc, char *argv[])
         if (args.all_kmer_arg)
         {
             pFile = fopen((rawname + "-all_sim.txt").c_str(), "w");
-            allKmersBatch(pFile,bfIn);
+            allKmersBatch(pFile, bfIn);
             // vector<vector<cell_type>> seqs_batch = readSignaturesBatch(bfIn, batch, signatureSize);
             // size_t temp = seqs_batch.size() - 1;
             // size_t seqCount = temp * batch + seqs_batch[temp].size() / signatureSize;
@@ -125,7 +136,7 @@ int similarity_main(int argc, char *argv[])
                 char buffer[50];
                 sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
                 pFile = fopen((rawname + buffer).c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
+                batching(bfIn, pFile, &calcAllSimilarityWindow, &calcAllSimilarityLocalBatch);
                 // batchSimFunction(pFile, seqs_batch, &calcAllSimilarityLocal, &calcAllSimilarityLocalBatch);
             }
             else if (args.global_arg)
@@ -137,7 +148,7 @@ int similarity_main(int argc, char *argv[])
             else
             {
                 pFile = fopen((rawname + "_sim.txt").c_str(), "w");
-                batching(bfIn, pFile, &calcAllSimilarity, &calcAllSimilarityBatch);
+                batching(bfIn, pFile, &calcAllSimilarityLocal, &calcAllSimilarityBatch);
                 // batchSimFunction(pFile, seqs_batch, &calcAllSimilarity, &calcAllSimilarityBatch);
             }
         }
@@ -173,11 +184,11 @@ int similarity_main(int argc, char *argv[])
             if (args.local_arg)
             {
                 char buffer[50];
-                sprintf(buffer, "-t%zu-local_sim.txt", minimiser_match_threshold);
+                sprintf(buffer, "-t%zu-window_sim.txt", minimiser_match_threshold);
                 pFile = fopen((rawname + buffer).c_str(), "w");
                 fprintf(pFile, "i,j,similarity\n");
 
-                calcAllSimilarityLocal(pFile, seqs);
+                calcAllSimilarityWindow(pFile, seqs);
             }
             else if (args.global_arg)
             {
@@ -188,10 +199,10 @@ int similarity_main(int argc, char *argv[])
             }
             else
             {
-                pFile = fopen((rawname + "_sim.txt").c_str(), "w");
+                pFile = fopen((rawname + "-local_sim.txt").c_str(), "w");
                 fprintf(pFile, "i,j,similarity\n");
 
-                calcAllSimilarity(pFile, seqs);
+                calcAllSimilarityLocal(pFile, seqs);
             }
         }
     }

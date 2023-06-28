@@ -3,13 +3,14 @@
 
 #include "bloom_filter.hpp"
 #include "read.hpp"
-#include "self_tree.hpp"
+#include "distance.hpp"
 #include <functional>
 using namespace std;
 
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 bool skip = false;
 size_t batch = 300;
+double min_print_sim = 0.5;
 
 // void toBinary(cell_type letter)
 // {
@@ -30,7 +31,7 @@ size_t batch = 300;
 //     fprintf(stdout, "\n");
 // }
 
-void calcAllSimilarity(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
+void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
 {
     size_t seqCount = seqs.size();
     if (skip)
@@ -52,8 +53,11 @@ void calcAllSimilarity(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
-                double dist = calcJaccardLocal(seqs[i], seqs[j]) * 100.0;
-                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, dist);
+                double similarity = calcJaccardLocal(seqs[i], seqs[j]);
+                if (similarity > min_print_sim)
+                {
+                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
+                }
             }
         }
     }
@@ -72,7 +76,7 @@ void calcAllSimilarity(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
     }
 }
 
-void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
+void calcAllSimilarityWindow(FILE *pFile, vector<seq_type> seqs, size_t offset = 0)
 {
     size_t seqCount = seqs.size();
     if (skip)
@@ -83,8 +87,11 @@ void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs, size_t offset = 
             fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
             for (size_t j = i + 1; j < seqCount; j++)
             {
-                double dist = calcMatchingWindows(seqs[i], seqs[j]) * 100.0;
-                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, dist);
+                double similarity = calcMatchingWindows(seqs[i], seqs[j]);
+                if (similarity > min_print_sim)
+                {
+                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
+                }
             }
         }
     }
@@ -113,8 +120,11 @@ void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs, size_t offset =
             fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, i + offset, 100.0);
             for (size_t j = i + 1; j < seqCount; j++)
             {
-                double dist = calcJaccardGlobal(seqs[i], seqs[j]) * 100.0;
-                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, dist);
+                double similarity = calcJaccardGlobal(seqs[i], seqs[j]);
+                if (similarity > min_print_sim)
+                {
+                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
+                }
             }
         }
     }
@@ -147,7 +157,10 @@ void calcAllSimilarityKmers(FILE *pFile, vector<cell_type> seqs, size_t offset =
                 // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
                 // fprintf(stdout, "%zu,%zu,%zu\n", i, j, bits);
                 double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
-                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, sim * 100);
+                if (sim > min_print_sim)
+                {
+                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, sim * 100);
+                }
             }
         }
     }

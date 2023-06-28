@@ -362,6 +362,7 @@ public:
   size_t window_arg;
   size_t element_arg;
   size_t batch_arg;
+  double min_sim_arg;
 
   bool bf_input_given;
   bool output_given;
@@ -373,6 +374,7 @@ public:
   bool global_arg;
   bool local_arg;
   bool skip_arg;
+  bool min_sim_given;
   bool batch_given;
 
   enum
@@ -383,23 +385,23 @@ public:
 
   similarity_main_cmdline() : bf_input_arg(""), output_arg(""),
                               threshold_arg(0), window_arg(0),
-                              element_arg(0),batch_arg(0),
-                              bf_input_given(false), output_given(false),
+                              element_arg(0), batch_arg(0), min_sim_arg(0),
+                              bf_input_given(false), output_given(false), min_sim_given(false),
                               threshold_given(false), window_given(false),
                               element_given(false), multiple_arg(false),
                               all_kmer_arg(false), global_arg(false),
-                              skip_arg(false), local_arg(false),batch_given(false)
+                              skip_arg(false), local_arg(false), batch_given(false)
   {
   }
 
   similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""),
                                                     threshold_arg(0), window_arg(0),
-                                                    element_arg(0),batch_arg(0),
-                                                    bf_input_given(false), output_given(false),
+                                                    element_arg(0), batch_arg(0), min_sim_arg(0),
+                                                    bf_input_given(false), output_given(false), min_sim_given(false),
                                                     threshold_given(false), window_given(false),
                                                     element_given(false), multiple_arg(false),
                                                     all_kmer_arg(false), global_arg(false),
-                                                    skip_arg(false), local_arg(false),batch_given(false)
+                                                    skip_arg(false), local_arg(false), batch_given(false)
   {
     parse(argc, argv);
   }
@@ -412,7 +414,7 @@ public:
         {"output", 1, 0, 'o'},
         {"capacity", 1, 0, 'c'},
         {"threshold", 1, 0, 't'},
-        {"element", 1, 0, 's'},
+        {"min", 1, 0, 'M'},
         {"multiple", 0, 0, 'm'},
         {"all", 0, 0, 'A'},
         {"skip", 0, 0, 'S'},
@@ -422,7 +424,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:t:w:s:mAGLSb:";
+    static const char *short_options = "hVi:o:t:w:M:mAGLSb:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -480,10 +482,10 @@ public:
         window_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-w, --windowLength=size_t")
         break;
-      case 's':
-        element_given = true;
-        element_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-s, --BF-elementCount=size_t")
+      case 'M':
+        min_sim_given = true;
+        min_sim_arg = conv_double((const char *)optarg, err, false);
+        CHECK_ERR(double, optarg, "-s, --BF-elementCount=double")
         break;
       case 'm':
         multiple_arg = true;
@@ -572,7 +574,7 @@ public:
            " -b, --batch                              recommended for processing large input, do in batch size [default=false]\n"
            " -o, --output                             output path is {input}{-output}_sim.txt\n"
            " -t, --threshold                          matching threshold per window  [default=4]\n"
-           " -s, --element                            expected number of element in BF [default=1000]\n"
+           " -M, --min                                only print entry greater than this value, and do skip [default=0.5]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            " -A, --all                                input is all kmers\n"
            " -G, --global                             count with global minimiserset\n"
