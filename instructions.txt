@@ -1,6 +1,7 @@
 To build BFs, use: tree {command} {input file(s)} [options]
 - "build" for standard minimiser scheme 
 - "pbuild" for multiple minimisers per window
+	- "est" for estimating bf_element_cnt
 
 options:
 - k

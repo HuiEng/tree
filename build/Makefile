@@ -183,6 +183,19 @@ stats_main/fast:
 .PHONY : stats_main/fast
 
 #=============================================================================
+# Target rules for targets named primary_tree_main
+
+# Build rule for target.
+primary_tree_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 primary_tree_main
+.PHONY : primary_tree_main
+
+# fast build rule for target.
+primary_tree_main/fast:
+	$(MAKE) -f CMakeFiles/primary_tree_main.dir/build.make CMakeFiles/primary_tree_main.dir/build
+.PHONY : primary_tree_main/fast
+
+#=============================================================================
 # Target rules for targets named tree_main
 
 # Build rule for target.
@@ -207,19 +220,6 @@ ktree_main: cmake_check_build_system
 ktree_main/fast:
 	$(MAKE) -f CMakeFiles/ktree_main.dir/build.make CMakeFiles/ktree_main.dir/build
 .PHONY : ktree_main/fast
-
-#=============================================================================
-# Target rules for targets named primary_tree_main
-
-# Build rule for target.
-primary_tree_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 primary_tree_main
-.PHONY : primary_tree_main
-
-# fast build rule for target.
-primary_tree_main/fast:
-	$(MAKE) -f CMakeFiles/primary_tree_main.dir/build.make CMakeFiles/primary_tree_main.dir/build
-.PHONY : primary_tree_main/fast
 
 #=============================================================================
 # Target rules for targets named similarity_main
@@ -311,6 +311,19 @@ build_partition_main: cmake_check_build_system
 build_partition_main/fast:
 	$(MAKE) -f CMakeFiles/build_partition_main.dir/build.make CMakeFiles/build_partition_main.dir/build
 .PHONY : build_partition_main/fast
+
+#=============================================================================
+# Target rules for targets named estimate_bf_main
+
+# Build rule for target.
+estimate_bf_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 estimate_bf_main
+.PHONY : estimate_bf_main
+
+# fast build rule for target.
+estimate_bf_main/fast:
+	$(MAKE) -f CMakeFiles/estimate_bf_main.dir/build.make CMakeFiles/estimate_bf_main.dir/build
+.PHONY : estimate_bf_main/fast
 
 #=============================================================================
 # Target rules for targets named count_main
@@ -431,6 +444,33 @@ count_main.s: count_main.cpp.s
 count_main.cpp.s:
 	$(MAKE) -f CMakeFiles/count_main.dir/build.make CMakeFiles/count_main.dir/count_main.cpp.s
 .PHONY : count_main.cpp.s
+
+estimate_bf_main.o: estimate_bf_main.cpp.o
+
+.PHONY : estimate_bf_main.o
+
+# target to build an object file
+estimate_bf_main.cpp.o:
+	$(MAKE) -f CMakeFiles/estimate_bf_main.dir/build.make CMakeFiles/estimate_bf_main.dir/estimate_bf_main.cpp.o
+.PHONY : estimate_bf_main.cpp.o
+
+estimate_bf_main.i: estimate_bf_main.cpp.i
+
+.PHONY : estimate_bf_main.i
+
+# target to preprocess a source file
+estimate_bf_main.cpp.i:
+	$(MAKE) -f CMakeFiles/estimate_bf_main.dir/build.make CMakeFiles/estimate_bf_main.dir/estimate_bf_main.cpp.i
+.PHONY : estimate_bf_main.cpp.i
+
+estimate_bf_main.s: estimate_bf_main.cpp.s
+
+.PHONY : estimate_bf_main.s
+
+# target to generate assembly for a file
+estimate_bf_main.cpp.s:
+	$(MAKE) -f CMakeFiles/estimate_bf_main.dir/build.make CMakeFiles/estimate_bf_main.dir/estimate_bf_main.cpp.s
+.PHONY : estimate_bf_main.cpp.s
 
 histo_main.o: histo_main.cpp.o
 
@@ -769,9 +809,9 @@ help:
 	@echo "... test_main"
 	@echo "... install"
 	@echo "... stats_main"
+	@echo "... primary_tree_main"
 	@echo "... tree_main"
 	@echo "... ktree_main"
-	@echo "... primary_tree_main"
 	@echo "... similarity_main"
 	@echo "... merge_main"
 	@echo "... tree"
@@ -780,6 +820,7 @@ help:
 	@echo "... partree_main"
 	@echo "... install/local"
 	@echo "... build_partition_main"
+	@echo "... estimate_bf_main"
 	@echo "... count_main"
 	@echo "... histo_main"
 	@echo "... partree_multi_main"
@@ -792,6 +833,9 @@ help:
 	@echo "... count_main.o"
 	@echo "... count_main.i"
 	@echo "... count_main.s"
+	@echo "... estimate_bf_main.o"
+	@echo "... estimate_bf_main.i"
+	@echo "... estimate_bf_main.s"
 	@echo "... histo_main.o"
 	@echo "... histo_main.i"
 	@echo "... histo_main.s"

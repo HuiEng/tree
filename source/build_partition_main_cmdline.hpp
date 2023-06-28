@@ -369,6 +369,7 @@ public:
   bool window_given;
   bool step_given;
   bool element_given;
+  bool get_element;
   bool multiple_arg;
   bool canonical_arg;
   bool size_given;
@@ -390,7 +391,7 @@ public:
                                    kmer_arg(0), window_arg(0), step_arg(0), element_arg(0),
                                    output_given(false),
                                    kmer_given(false), window_given(false), step_given(false),
-                                   element_given(false), multiple_arg(false),
+                                   element_given(false), multiple_arg(false), get_element(false),
                                    canonical_arg(false), size_given(false),
                                    size_arg(0), debug(false), set_arg(false), folder_arg(false),
                                    toSingle_arg(false), compress_arg(false)
@@ -401,7 +402,7 @@ public:
                                                          kmer_arg(0), window_arg(0), step_arg(0), element_arg(0),
                                                          output_given(false),
                                                          kmer_given(false), window_given(false), step_given(false),
-                                                         element_given(false), multiple_arg(false),
+                                                         element_given(false), multiple_arg(false), get_element(false),
                                                          canonical_arg(false), size_given(false),
                                                          size_arg(0), debug(false), set_arg(false),
                                                          folder_arg(false), toSingle_arg(false),
@@ -416,6 +417,7 @@ public:
         {"output", 1, 0, 'b'},
         {"folder", 1, 0, 'f'},
         {"element", 1, 0, 'e'},
+        {"get_element", 0, 0, 'E'},
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
         {"compress", 0, 0, 'c'},
@@ -429,7 +431,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVb:k:w:mCs:de:fxc";
+    static const char *short_options = "hVb:k:w:mCs:de:fxcE";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -472,6 +474,9 @@ public:
         element_given = true;
         element_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-e, --element=size_t")
+        break;
+      case 'E':
+        get_element = true;
         break;
       case SET_OPT:
         set_arg = true;
@@ -587,6 +592,7 @@ public:
            " -o, --output                             output path\n"
            "     --output                             print as minimiser set\n"
            " -e, --element                            expected number of element in BF [default=1000]\n"
+           " -E, --get_element                        estimate number of element in BF \n"
            " -C, --canonical                          canonical [default=FALSE]\n"
            " -c, --compress                           compress all seqs in a fasta into single BF [default=FALSE]\n"
            " -s, --size                               number of minimiser per window [default=3]\n"

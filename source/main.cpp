@@ -27,6 +27,7 @@ main_func_t tree_main;
 main_func_t primary_tree_main;
 main_func_t test_main;
 main_func_t histo_main;
+main_func_t estimate_bf_main;
 main_func_t sos;
 
 struct cmd_func
@@ -50,6 +51,7 @@ cmd_func cmd_list[] = {
     {"prim", &primary_tree_main},
     {"test", &test_main},
     {"histo", &histo_main},
+    {"est", &estimate_bf_main},
 
 
     /* help in all its form. Must be first non-command */

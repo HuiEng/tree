@@ -116,7 +116,6 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
     }
     else if (compressReads)
     {
-        size_t i = 0;
         auto first_seq = (*file_in.begin()).sequence();
         auto windows = first_seq | minimiser_view;
         vector<bloom_filter> wBFL;
@@ -215,6 +214,7 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
     // wf.close();
 }
 
+
 int build_partition_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -278,7 +278,7 @@ int build_partition_main(int argc, char *argv[])
         minimiser_size = args.size_arg;
     }
     fprintf(stderr, "Partition - Generating %zu minimisers per window...\n", minimiser_size);
-    fprintf(stderr, "kmerLength = %zu, windowLength = %zu\n", kmerLength, windowLength);
+    fprintf(stderr, "kmerLength= %u, windowLength = %u\n", kmerLength, windowLength);
 
     string inputFile = args.input_arg;
     size_t firstindex = inputFile.find_last_of("/") + 1;
@@ -289,29 +289,17 @@ int build_partition_main(int argc, char *argv[])
     if (args.element_given)
     {
         bf_element_cnt = args.element_arg;
-        if (args.step_given)
-        {
-            step_size = args.step_arg;
-            sprintf(bufferArr, "-k%zu-w%zu-s%zu-b%zu--step%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
-        }
-        else
-        {
-            step_size = windowLength;
-            sprintf(bufferArr, "-k%zu-w%zu-s%zu-b%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt);
-        }
+    }
+    
+    if (args.step_given)
+    {
+        step_size = args.step_arg;
+        sprintf(bufferArr, "-k%u-w%u-s%zu-b%zu--step%u", kmerLength, windowLength, minimiser_size, bf_element_cnt, step_size);
     }
     else
     {
-        if (args.step_given)
-        {
-            step_size = args.step_arg;
-            sprintf(bufferArr, "-k%u-w%u-s%zu--step%u", kmerLength, windowLength, minimiser_size, step_size);
-        }
-        else
-        {
-            step_size = windowLength;
-            sprintf(bufferArr, "-k%u-w%u-s%zu", kmerLength, windowLength, minimiser_size);
-        }
+        step_size = windowLength;
+        sprintf(bufferArr, "-k%u-w%u-s%zu-b%zu", kmerLength, windowLength, minimiser_size, bf_element_cnt);
     }
     buffer = buffer + bufferArr;
     if (args.toSingle_arg)
@@ -365,7 +353,6 @@ int build_partition_main(int argc, char *argv[])
                 if (entry.path().extension() == ext)
                 {
                     // cout << entry.path().stem().string() << '\n';
-                    // getMinimisers(partition_view, parameters, entry.path(), wf);
                     doWork(wf, parameters, entry.path());
                 }
             }
