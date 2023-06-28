@@ -104,7 +104,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         for (size_t i = 1; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
-            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]) + 1;
+            size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]);
             // clusters[foo[i]] = tree.findAncestor(clus);
             // clusters[foo[i]] = clus;
         }
