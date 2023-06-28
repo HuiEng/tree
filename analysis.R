@@ -181,7 +181,14 @@ cluQ_ktree<-cluQuality(ktree)
 ggplot(cluQ_ktree)+
   geom_point(aes(x=clu,y=ent,size=size))
 
+histo<-read.csv(paste(path,"silva/histo.txt",sep=""),header = FALSE)
+ggplot(histo)+geom_bar(aes(x=V1,y=V2),stat="identity")
 
+
+temp<-(ktree%>%filter(cluster==64))$speciesID
+write.table(temp, 
+            file=paste(path,"silva/interest_group.txt",sep=""), 
+            row.names=FALSE, col.names=FALSE, quote = FALSE)
 ###############################################################
 
 
