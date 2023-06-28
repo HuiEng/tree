@@ -380,7 +380,7 @@ int build_partition_main(int argc, char *argv[])
         {
             outfile = args.output_arg;
         }
-        outfile = outfile + buffer + "bin";
+        outfile = outfile + buffer + ".bin";
         ofstream wf(outfile, ios::out | ios::binary);
         bloom_filter bf(parameters);
         writeInt(wf, bf.table_size());

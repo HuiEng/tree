@@ -241,6 +241,10 @@ int primary_tree_main(int argc, char *argv[])
     {
         split_threshold = getSplitThresholdSingle(inputFile);
     }
+    else if (args.multiple_arg)
+    {
+        split_threshold = getSplitThresholdList(inputFile);
+    }
     else
     {
         split_threshold = getSplitThreshold(inputFile);
@@ -316,7 +320,7 @@ int primary_tree_main(int argc, char *argv[])
     auto fileName = rawname + "-s" + to_string((int)(stay_threshold * 100)) + "-l" + to_string((int)(split_threshold * 100));
     if (args.tag_given)
     {
-        fileName = fileName + "-" + args.tag_arg;
+        fileName = args.tag_arg + fileName;
     }
     FILE *pFile = fopen((fileName + ".txt").c_str(), "w");
     outputClusters(pFile, clusters);

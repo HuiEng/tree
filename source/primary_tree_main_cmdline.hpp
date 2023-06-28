@@ -520,10 +520,10 @@ public:
         stay_threshold_arg = conv_double((const char *)optarg, err, false);
         CHECK_ERR(double, optarg, "-t, --stay=double")
         break;
-      case 'o':
+      case 'm':
         minimiser_match_given = true;
         minimiser_match_arg = conv_uint<size_t>((const char *)optarg, err, false);
-        CHECK_ERR(size_t, optarg, "-o, --minimiser_match=size_t")
+        CHECK_ERR(size_t, optarg, "-m, --minimiser_match=size_t")
         break;
       case 'C':
         capacity_given = true;
@@ -535,7 +535,7 @@ public:
         sizeCap_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-c, --size_cap=size_t")
         break;
-      case 'm':
+      case 'o':
         method_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-m=size_t")
         break;
@@ -620,13 +620,13 @@ public:
            " -d, --debug                              print debug files\n"
            " -p, --print                              print debug msg to stderr [default = false]\n"
            " -x, --single                             input is singleBF [default = false]\n"
-           " -m,                                      read method, see code for details [default = 0]\n"
+           " -o,                                      output path\n"
            " -F,                                      force split root [default=false]\n"
            " -f,                                      tree order force split root [default=5]\n"
            " -i, --input                              input file or folder\n"
            " -M                                       input is a folder"
-           " -T, --tag                                [optional] tag for output cluster file\n"
-           " -o,                                      minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
+           " -T, --tag                                [optional] tag for output cluster file =>${tag}${computeFilename}\n"
+           " -m, --minimiser_match                    minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
            " -C, --capacity                           primary_tree capacity [default=0]\n"
            " -c, --size_cap                           Only cluster the first c seqs [default=10000]\n"
            " -q, --query                              query file\n"

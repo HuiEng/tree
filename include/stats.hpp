@@ -303,4 +303,16 @@ double getSplitThresholdSingle(const string bfIn, size_t sample_size = 100, size
     return calcAllStatsKmersBatch(seqs).q3 / 100;
 }
 
+// stats return in percentage, coverts to decimal
+double getSplitThresholdList(const string bfIn, size_t sample_size = 100, size_t runs_ = 10)
+{
+    vector<cell_type> seqs;
+    signatureSize = readListSample(bfIn, seqs, sample_size * runs_);
+    size_t seqCount = seqs.size() / signatureSize;
+    fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
+    max_seqCount = min(seqCount, sample_size);
+    runs = runs_;
+    return calcAllStatsKmersBatch(seqs).q3 / 100;
+}
+
 #endif

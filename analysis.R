@@ -162,6 +162,29 @@ cluQ_sigClust<-cluQualityGT(sigClust)
 ###############################################################
 
 
+######################## silva ##################################
+source("C://DataCopied/Research/R/silvaFunctions.R")
+path<-"C://DataCopied/Research/tree/data/test/"
+meta<-getMeta(paste(path,"list.txt",sep=""),
+            paste(path,"SILVA_132_SSURef_Nr99_tax_silva-controlled-metadata.txt",sep=""))
+dt<-plotEnt(paste(path,"list-s80-l18-I4.txt",sep=""),meta)
+
+ktree<-read.csv(paste(path,"cluster.txt",sep=""),header=FALSE)
+colnames(ktree)<-c("seqID","cluster")
+ktree<-merge(meta,ktree)
+
+cluQ_prim<-cluQuality(dt)
+ggplot(cluQ_prim)+
+  geom_point(aes(x=clu,y=ent,size=size))
+
+cluQ_ktree<-cluQuality(ktree)
+ggplot(cluQ_ktree)+
+  geom_point(aes(x=clu,y=ent,size=size))
+
+
+###############################################################
+
+
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
 sigClust<-plotEnt(paste(path,"/sigClust-k9-c47.txt",sep=""))
