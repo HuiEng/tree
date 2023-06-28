@@ -29,7 +29,7 @@ unsigned long long int readSignatures(const string file, vector<cell_type> &sigs
     ifstream rfSize(file, ios::binary | ios::ate);
     if (!rfSize.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file.c_str());
         exit(0);
     }
     if (rfSize.tellg() > max_fileSize)
