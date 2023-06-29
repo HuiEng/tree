@@ -23,6 +23,33 @@ namespace fs = std::filesystem;
 typedef size_t sig_type;
 size_t max_fileSize = 1000000000;
 
+double getListLength(ifstream &rf)
+{
+    size_t count = 0;
+    string file;
+    while (rf.peek() != EOF)
+    {
+        getline(rf, file);
+        count++;
+    }
+    rf.seekg(0, rf.beg);
+
+    return count;
+}
+
+vector<size_t> getIndices(size_t seqCount, size_t sampleSize)
+{
+    vector<size_t> indices(seqCount);
+    iota(indices.begin(), indices.end(), 0);
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(indices.begin(), indices.end(), default_random_engine(seed));
+    indices.resize(sampleSize);
+    sort(indices.begin(), indices.end(), std::greater<>());
+    fprintf(stderr, "Random sampling %zu seqs...\n", sampleSize);
+
+    return indices;
+}
+
 // output signature size, if file too big => return empty "sigs", use readSignaturesBatch
 unsigned long long int readSignatures(const string file, vector<cell_type> &sigs)
 {
@@ -137,38 +164,14 @@ unsigned long long int readList(const string listFile, vector<cell_type> &sigs)
 }
 
 // output signature size, if file too big => return empty "sigs", use readSignaturesBatch
-unsigned long long int readListSample(const string listFile, vector<cell_type> &sigs, size_t sampleSize)
+unsigned long long int readList(vector<string> inputFiles, vector<cell_type> &sigs)
 {
-    // Create a text string, which is used to output the text file
-    string file;
-    size_t i = 0;
     unsigned long long int length;
-
-    // Read from the text file
-    ifstream listStream(listFile);
-    // get length of file:
-    listStream.seekg(0, listStream.end);
-    unsigned long long int len = listStream.tellg();
-    listStream.seekg(0, listStream.beg);
-
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    default_random_engine rng(seed);
-    size_t range = 100;
-    uniform_int_distribution<size_t> dist(0, range * 2);
-    size_t seqCount = 0;
+    size_t i =0;
 
     // Use a while loop together with the getline() function to read the file line by line
-    while (getline(listStream, file) && seqCount < sampleSize)
+    for (string file: inputFiles)
     {
-        size_t r = dist(rng);
-        if (r > range)
-        {
-            continue;
-        }
-        else
-        {
-            seqCount++;
-        }
         // Output the text from the file
         ifstream rfSize(file, ios::binary | ios::ate);
         if (!rfSize.is_open())
@@ -212,10 +215,59 @@ unsigned long long int readListSample(const string listFile, vector<cell_type> &
         i--;
     }
 
-    // Close the file
+    return length;
+}
+
+
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+unsigned long long int readListSample(const string listFile, vector<cell_type> &sigs, size_t sampleSize)
+{
+    // Create a text string, which is used to output the text file
+    string file;
+    size_t i = 0;
+    unsigned long long int length;
+
+    // Read from the text file
+    ifstream listStream(listFile);
+    // get length of file:
+    listStream.seekg(0, listStream.end);
+    unsigned long long int len = listStream.tellg();
+    listStream.seekg(0, listStream.beg);
+
+    size_t seqCount = getListLength(listStream);
+    fprintf(stderr, "Sampling from %zu seqs\n", seqCount);
+
+    if (sampleSize > seqCount)
+    {
+        length = readList(listFile, sigs);
+    }
+    else
+    {
+        vector<size_t> indices = getIndices(seqCount, sampleSize);
+        vector<string> inputFiles;
+
+        size_t i = 0;
+        size_t idx = indices.back();
+        indices.pop_back();
+
+        while (getline(listStream, file))
+        {
+            if (i == idx)
+            {
+                inputFiles.push_back(file);
+                fprintf(stderr, "%zu\n", idx);
+                idx = indices.back();
+                indices.pop_back();
+            }
+            i++;
+        }
+        length = readList(inputFiles, sigs);
+    }
+
     listStream.close();
     return length;
 }
+
 
 // if too large to use readSignatures, use batch, signatureSize should be outputed from the prev function
 vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, size_t &signatureSize)
@@ -254,19 +306,6 @@ vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, si
     rf.close();
 
     return sigs;
-}
-
-vector<size_t> getIndices(size_t seqCount, size_t sampleSize)
-{
-    vector<size_t> indices(seqCount);
-    iota(indices.begin(), indices.end(), 0);
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(indices.begin(), indices.end(), default_random_engine(seed));
-    indices.resize(sampleSize);
-    sort(indices.begin(), indices.end(), std::greater<>());
-    fprintf(stderr, "Random sampling %zu seqs...\n", sampleSize);
-
-    return indices;
 }
 
 unsigned long long int readSignaturesSample(const string file, vector<cell_type> &sigs, size_t sampleSize)
@@ -601,6 +640,177 @@ vector<vector<vector<cell_type>>> readListPartitionBF(const string listFile, siz
 
     // Close the file
     listStream.close();
+    return seqs;
+}
+
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+vector<vector<vector<cell_type>>> readListPartitionBFSample(const string listFile, size_t &signatureSize, size_t sampleSize)
+{
+
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    // // Create a text string, which is used to output the text file
+    // string file_path;
+    // unsigned long long int length;
+
+    // // Read from the text file
+    // ifstream listStream(listFile);
+
+    // // Use a while loop together with the getline() function to read the file line by line
+    // while (getline(listStream, file_path))
+    // {
+    //     ifstream rfSize(file_path, ios::binary | ios::ate);
+    //     if (!rfSize.is_open())
+    //     {
+    //         fprintf(stderr, "Invalid File. Please try again\n");
+    //         exit(0);
+    //     }
+    //     if (rfSize.tellg() > max_fileSize)
+    //     {
+    //         fprintf(stderr, "File too big, please read in batches\n");
+    //         return seqs;
+    //     }
+    //     ifstream rf(file_path, ios::out | ios::binary);
+    //     if (!rf.is_open())
+    //     {
+    //         fprintf(stderr, "Invalid File. Please try again\n");
+    //         exit(0);
+    //     }
+
+    //     unsigned long long int length;
+    //     if (rf)
+    //         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+    //     signatureSize = length;
+
+    //     //? 1 window
+    //     // cout << "length: " << length << "\n";
+    //     vector<cell_type> bf(length);
+    //     cell_type temp = 0;
+    //     size_t i = 0;
+
+    //     vector<vector<vector<cell_type>>> seqs;
+    //     vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    //     if (sampleSize > seqCount)
+    //     {
+    //         while (rf)
+    //         {
+    //             rf.read((char *)&bf[i], sizeof(cell_type));
+    //             i++;
+    //             if (i == length)
+    //             {
+    //                 if (isEmpty(bf))
+    //                 {
+    //                     seqs.push_back(tseq);
+    //                     tseq.clear();
+    //                 }
+    //                 else
+    //                 {
+    //                     tseq.push_back(bf);
+    //                 }
+    //                 fill(bf.begin(), bf.end(), 0);
+    //                 i = 0;
+    //             }
+    //         }
+    //     }
+    //     else
+    //     {
+    //         // actual sample size might be smaller due to the estimated seqCount
+    //         // just ignore for now
+    //         vector<size_t> indices = getIndices(seqCount, sampleSize);
+    //         // for (size_t i : indices)
+    //         // {
+    //         //     fprintf(stderr, "%zu,", i);
+    //         // }
+    //         // fprintf(stderr, "\n");
+
+    //         size_t idx = indices.back();
+    //         indices.pop_back();
+    //         size_t c = 0;
+    //         size_t last_seen = 0;
+    //         size_t n = sizeof(unsigned long long int);
+
+    //         while (rf)
+    //         {
+    //             rf.read((char *)&bf[i], sizeof(cell_type));
+    //             i++;
+    //             n++;
+    //             if (i == length)
+    //             {
+    //                 if (isEmpty(bf))
+    //                 {
+    //                     if (c == idx)
+    //                     {
+    //                         // fprintf(stderr, "%zu,", idx);
+    //                         seqs.push_back(tseq);
+    //                         idx = indices.back();
+    //                         indices.pop_back();
+    //                         last_seen = n;
+
+    //                         if (seqs.size() == sampleSize)
+    //                         {
+    //                             break;
+    //                         }
+    //                     }
+    //                     c++;
+    //                     tseq.clear();
+    //                 }
+    //                 else
+    //                 {
+    //                     tseq.push_back(bf);
+    //                 }
+    //                 fill(bf.begin(), bf.end(), 0);
+    //                 i = 0;
+    //             }
+    //         }
+
+    //         if (seqs.size() < sampleSize)
+    //         {
+    //             fprintf(stderr, "Read all %zu seqs...\n", c);
+    //             fill(bf.begin(), bf.end(), 0);
+    //             tseq.clear();
+    //             i = 0;
+
+    //             rf.clear();
+    //             rf.seekg(last_seen, rf.beg);
+    //             while (rf)
+    //             {
+    //                 rf.read((char *)&bf[i], sizeof(cell_type));
+    //                 i++;
+    //                 if (i == length)
+    //                 {
+    //                     if (isEmpty(bf))
+    //                     {
+    //                         seqs.push_back(tseq);
+    //                         tseq.clear();
+
+    //                         if (seqs.size() == sampleSize)
+    //                         {
+    //                             break;
+    //                         }
+    //                     }
+    //                     else
+    //                     {
+    //                         tseq.push_back(bf);
+    //                     }
+    //                     fill(bf.begin(), bf.end(), 0);
+    //                     i = 0;
+    //                 }
+    //             }
+    //         }
+    //         else
+    //         {
+    //             fprintf(stderr, "Read up to %zu seqs...\n", c);
+    //         }
+    //     }
+    //     rf.close();
+
+    //     return seqs;
+    // }
+
+    // // Close the file
+    // listStream.close();
     return seqs;
 }
 

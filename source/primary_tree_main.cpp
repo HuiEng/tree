@@ -214,10 +214,14 @@ vector<size_t> clusterSignaturesList(const string listFile)
 {
 
     string file;
-    size_t seqCount = 1;
 
     // Read from the text file
     ifstream listStream(listFile);
+    size_t seqCount = getListLength(listStream);
+    if (cap == 0)
+    {
+        cap = seqCount;
+    }
 
     // read first file and set tree params;
     getline(listStream, file);
@@ -225,7 +229,7 @@ vector<size_t> clusterSignaturesList(const string listFile)
     signatureSize = readSignatures(file, seq);
     signatureWidth = signatureSize * sizeof(cell_type);
 
-    vector<size_t> clusters;
+    vector<size_t> clusters(seqCount);
     primary_tree_type primary_tree(partree_capacity);
     primary_tree.means.resize(partree_capacity * signatureSize);
 
@@ -241,26 +245,26 @@ vector<size_t> clusterSignaturesList(const string listFile)
         insertionList.push_back(partree_capacity - i);
     }
 
-    clusters.push_back(primary_tree.first_insert(&seq[0], insertionList, 0));
+    clusters[0] = primary_tree.first_insert(&seq[0], insertionList, 0);
 
     // Use a while loop together with the getline() function to read the file line by line
-    while (getline(listStream, file) && seqCount < cap)
+    for (size_t i = 1; i < cap; i++)
     {
+        getline(listStream, file);
         readSignatures(file, seq);
-        printMsg("inserting %zu\n", seqCount);
+        printMsg("inserting %zu\n", i);
         size_t clus = 0;
         if (force_split_)
         {
-            clus = primary_tree.insertSplitRoot(&seq[0], insertionList, seqCount);
+            clus = primary_tree.insertSplitRoot(&seq[0], insertionList, i);
         }
         else
         {
-            clus = primary_tree.insert(&seq[0], insertionList, seqCount);
+            clus = primary_tree.insert(&seq[0], insertionList, i);
         }
 
-        clusters.push_back(clus);
-
-        seqCount++;
+        // clusters.push_back(clus);
+        clusters[i] = clus;
     }
 
     fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
@@ -347,17 +351,13 @@ int primary_tree_main(int argc, char *argv[])
     {
         split_threshold = args.split_threshold_arg;
     }
-    else if (args.single_arg)
-    {
-        split_threshold = getSplitThresholdSingle(inputFile);
-    }
     else if (args.multiple_arg)
     {
-        split_threshold = getSplitThresholdList(inputFile);
+        split_threshold = getSplitThresholdListSingle(inputFile);
     }
     else
     {
-        split_threshold = getSplitThreshold(inputFile);
+        split_threshold = getSplitThresholdSingle(inputFile);
     }
 
     if (args.stay_threshold_given)
