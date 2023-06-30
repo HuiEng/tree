@@ -167,10 +167,10 @@ unsigned long long int readList(const string listFile, vector<cell_type> &sigs)
 unsigned long long int readList(vector<string> inputFiles, vector<cell_type> &sigs)
 {
     unsigned long long int length;
-    size_t i =0;
+    size_t i = 0;
 
     // Use a while loop together with the getline() function to read the file line by line
-    for (string file: inputFiles)
+    for (string file : inputFiles)
     {
         // Output the text from the file
         ifstream rfSize(file, ios::binary | ios::ate);
@@ -218,7 +218,6 @@ unsigned long long int readList(vector<string> inputFiles, vector<cell_type> &si
     return length;
 }
 
-
 // output signature size, if file too big => return empty "sigs", use readSignaturesBatch
 unsigned long long int readListSample(const string listFile, vector<cell_type> &sigs, size_t sampleSize)
 {
@@ -229,10 +228,6 @@ unsigned long long int readListSample(const string listFile, vector<cell_type> &
 
     // Read from the text file
     ifstream listStream(listFile);
-    // get length of file:
-    listStream.seekg(0, listStream.end);
-    unsigned long long int len = listStream.tellg();
-    listStream.seekg(0, listStream.beg);
 
     size_t seqCount = getListLength(listStream);
     fprintf(stderr, "Sampling from %zu seqs\n", seqCount);
@@ -268,7 +263,6 @@ unsigned long long int readListSample(const string listFile, vector<cell_type> &
     return length;
 }
 
-
 // if too large to use readSignatures, use batch, signatureSize should be outputed from the prev function
 vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, size_t &signatureSize)
 {
@@ -276,7 +270,7 @@ vector<vector<cell_type>> readSignaturesBatch(const string file, size_t size, si
     ifstream rf(file, ios::out | ios::binary);
     if (!rf.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file.c_str());
         exit(0);
     }
 
@@ -313,7 +307,7 @@ unsigned long long int readSignaturesSample(const string file, vector<cell_type>
     ifstream rf(file, ios::out | ios::binary);
     if (!rf.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file.c_str());
         exit(0);
     }
 
@@ -510,7 +504,7 @@ vector<vector<vector<cell_type>>> readPartitionBF(const string file_path, size_t
     ifstream rfSize(file_path, ios::binary | ios::ate);
     if (!rfSize.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file_path.c_str());
         exit(0);
     }
     if (rfSize.tellg() > max_fileSize)
@@ -585,7 +579,7 @@ vector<vector<vector<cell_type>>> readListPartitionBF(const string listFile, siz
         ifstream rfSize(file_path, ios::binary | ios::ate);
         if (!rfSize.is_open())
         {
-            fprintf(stderr, "Invalid File. Please try again\n");
+            fprintf(stderr, "Invalid File %s. Please try again\n", file_path.c_str());
             exit(0);
         }
         if (rfSize.tellg() > max_fileSize)
@@ -644,173 +638,118 @@ vector<vector<vector<cell_type>>> readListPartitionBF(const string listFile, siz
 }
 
 // output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+vector<vector<vector<cell_type>>> readListPartitionBF(vector<string> inputFiles, size_t &signatureSize)
+{
+
+    vector<vector<vector<cell_type>>> seqs;
+    vector<vector<cell_type>> tseq; // list of BFs for a seq
+
+    // Use a while loop together with the getline() function to read the file line by line
+    for (string file_path : inputFiles)
+    {
+        ifstream rfSize(file_path, ios::binary | ios::ate);
+        if (!rfSize.is_open())
+        {
+            fprintf(stderr, "Invalid File %s. Please try again\n", file_path.c_str());
+            exit(0);
+        }
+        if (rfSize.tellg() > max_fileSize)
+        {
+            fprintf(stderr, "File too big, please read in batches\n");
+            return seqs;
+        }
+        ifstream rf(file_path, ios::out | ios::binary);
+
+        unsigned long long int length;
+        if (rf)
+            rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
+        signatureSize = length;
+
+        //? 1 window
+        // cout << "length: " << length << "\n";
+        vector<cell_type> bf(length);
+        cell_type temp = 0;
+        size_t i = 0;
+
+        try
+        {
+
+            while (rf)
+            {
+                rf.read((char *)&bf[i], sizeof(cell_type));
+                i++;
+                if (i == length)
+                {
+                    if (isEmpty(bf))
+                    {
+                        seqs.push_back(tseq);
+                        tseq.clear();
+                    }
+                    else
+                    {
+                        tseq.push_back(bf);
+                    }
+                    fill(bf.begin(), bf.end(), 0);
+                    i = 0;
+                }
+            }
+        }
+        catch (const std::exception &e) // caught by reference to base
+        {
+            std::cout << " a standard exception was caught, with message '"
+                      << e.what() << "'\n";
+            seqs.clear();
+        }
+        rf.close();
+    }
+
+    return seqs;
+}
+
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
 vector<vector<vector<cell_type>>> readListPartitionBFSample(const string listFile, size_t &signatureSize, size_t sampleSize)
 {
 
     vector<vector<vector<cell_type>>> seqs;
     vector<vector<cell_type>> tseq; // list of BFs for a seq
 
-    // // Create a text string, which is used to output the text file
-    // string file_path;
-    // unsigned long long int length;
+    string file;
+    size_t i = 0;
 
-    // // Read from the text file
-    // ifstream listStream(listFile);
+    // Read from the text file
+    ifstream listStream(listFile);
 
-    // // Use a while loop together with the getline() function to read the file line by line
-    // while (getline(listStream, file_path))
-    // {
-    //     ifstream rfSize(file_path, ios::binary | ios::ate);
-    //     if (!rfSize.is_open())
-    //     {
-    //         fprintf(stderr, "Invalid File. Please try again\n");
-    //         exit(0);
-    //     }
-    //     if (rfSize.tellg() > max_fileSize)
-    //     {
-    //         fprintf(stderr, "File too big, please read in batches\n");
-    //         return seqs;
-    //     }
-    //     ifstream rf(file_path, ios::out | ios::binary);
-    //     if (!rf.is_open())
-    //     {
-    //         fprintf(stderr, "Invalid File. Please try again\n");
-    //         exit(0);
-    //     }
+    size_t seqCount = getListLength(listStream);
+    fprintf(stderr, "Sampling from %zu seqs\n", seqCount);
 
-    //     unsigned long long int length;
-    //     if (rf)
-    //         rf.read(reinterpret_cast<char *>(&length), sizeof(unsigned long long int));
-    //     signatureSize = length;
+    if (sampleSize > seqCount)
+    {
+        seqs = readListPartitionBF(listFile, signatureSize);
+    }
+    else
+    {
+        vector<size_t> indices = getIndices(seqCount, sampleSize);
+        vector<string> inputFiles;
 
-    //     //? 1 window
-    //     // cout << "length: " << length << "\n";
-    //     vector<cell_type> bf(length);
-    //     cell_type temp = 0;
-    //     size_t i = 0;
+        size_t i = 0;
+        size_t idx = indices.back();
+        indices.pop_back();
 
-    //     vector<vector<vector<cell_type>>> seqs;
-    //     vector<vector<cell_type>> tseq; // list of BFs for a seq
+        while (getline(listStream, file))
+        {
+            if (i == idx)
+            {
+                inputFiles.push_back(file);
+                fprintf(stderr, "%zu\n", idx);
+                idx = indices.back();
+                indices.pop_back();
+            }
+            i++;
+        }
+        seqs = readListPartitionBF(inputFiles, signatureSize);
+    }
 
-    //     if (sampleSize > seqCount)
-    //     {
-    //         while (rf)
-    //         {
-    //             rf.read((char *)&bf[i], sizeof(cell_type));
-    //             i++;
-    //             if (i == length)
-    //             {
-    //                 if (isEmpty(bf))
-    //                 {
-    //                     seqs.push_back(tseq);
-    //                     tseq.clear();
-    //                 }
-    //                 else
-    //                 {
-    //                     tseq.push_back(bf);
-    //                 }
-    //                 fill(bf.begin(), bf.end(), 0);
-    //                 i = 0;
-    //             }
-    //         }
-    //     }
-    //     else
-    //     {
-    //         // actual sample size might be smaller due to the estimated seqCount
-    //         // just ignore for now
-    //         vector<size_t> indices = getIndices(seqCount, sampleSize);
-    //         // for (size_t i : indices)
-    //         // {
-    //         //     fprintf(stderr, "%zu,", i);
-    //         // }
-    //         // fprintf(stderr, "\n");
-
-    //         size_t idx = indices.back();
-    //         indices.pop_back();
-    //         size_t c = 0;
-    //         size_t last_seen = 0;
-    //         size_t n = sizeof(unsigned long long int);
-
-    //         while (rf)
-    //         {
-    //             rf.read((char *)&bf[i], sizeof(cell_type));
-    //             i++;
-    //             n++;
-    //             if (i == length)
-    //             {
-    //                 if (isEmpty(bf))
-    //                 {
-    //                     if (c == idx)
-    //                     {
-    //                         // fprintf(stderr, "%zu,", idx);
-    //                         seqs.push_back(tseq);
-    //                         idx = indices.back();
-    //                         indices.pop_back();
-    //                         last_seen = n;
-
-    //                         if (seqs.size() == sampleSize)
-    //                         {
-    //                             break;
-    //                         }
-    //                     }
-    //                     c++;
-    //                     tseq.clear();
-    //                 }
-    //                 else
-    //                 {
-    //                     tseq.push_back(bf);
-    //                 }
-    //                 fill(bf.begin(), bf.end(), 0);
-    //                 i = 0;
-    //             }
-    //         }
-
-    //         if (seqs.size() < sampleSize)
-    //         {
-    //             fprintf(stderr, "Read all %zu seqs...\n", c);
-    //             fill(bf.begin(), bf.end(), 0);
-    //             tseq.clear();
-    //             i = 0;
-
-    //             rf.clear();
-    //             rf.seekg(last_seen, rf.beg);
-    //             while (rf)
-    //             {
-    //                 rf.read((char *)&bf[i], sizeof(cell_type));
-    //                 i++;
-    //                 if (i == length)
-    //                 {
-    //                     if (isEmpty(bf))
-    //                     {
-    //                         seqs.push_back(tseq);
-    //                         tseq.clear();
-
-    //                         if (seqs.size() == sampleSize)
-    //                         {
-    //                             break;
-    //                         }
-    //                     }
-    //                     else
-    //                     {
-    //                         tseq.push_back(bf);
-    //                     }
-    //                     fill(bf.begin(), bf.end(), 0);
-    //                     i = 0;
-    //                 }
-    //             }
-    //         }
-    //         else
-    //         {
-    //             fprintf(stderr, "Read up to %zu seqs...\n", c);
-    //         }
-    //     }
-    //     rf.close();
-
-    //     return seqs;
-    // }
-
-    // // Close the file
-    // listStream.close();
+    listStream.close();
     return seqs;
 }
 
@@ -819,7 +758,7 @@ vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file
     ifstream rf(file_path, ios::out | ios::binary);
     if (!rf.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file_path.c_str());
         exit(0);
     }
 
@@ -874,7 +813,7 @@ vector<vector<vector<vector<cell_type>>>> readPartitionBFBatch(const string file
     ifstream rf(file_path, ios::out | ios::binary);
     if (!rf.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file_path.c_str());
         exit(0);
     }
 
@@ -971,7 +910,7 @@ vector<vector<vector<cell_type>>> readPartitionBFSample(const string file_path, 
     ifstream rf(file_path, ios::out | ios::binary);
     if (!rf.is_open())
     {
-        fprintf(stderr, "Invalid File. Please try again\n");
+        fprintf(stderr, "Invalid File %s. Please try again\n", file_path.c_str());
         exit(0);
     }
 

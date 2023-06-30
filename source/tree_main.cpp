@@ -511,19 +511,6 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 //     return clusters;
 // }
 
-double getSplitThresholdListT(const string bfIn, size_t sample_size = 100, size_t runs_ = 10)
-{
-    vector<cell_type> seqs;
-    signatureSize = readListSample(bfIn, seqs, 10);
-    size_t seqCount = seqs.size() / signatureSize;
-    fprintf(stderr, "Loaded %zu seqs...\n", seqCount);
-    max_seqCount = min(seqCount, sample_size);
-    runs = runs_;
-     calcAllStatsKmersBatch(seqs).q3 / 100;
-
-    exit(0);
-    return 0;
-}
 
 int tree_main(int argc, char *argv[])
 {
@@ -555,7 +542,7 @@ int tree_main(int argc, char *argv[])
     }
     else if (args.multiple_arg)
     {
-        split_threshold = getSplitThresholdListT(inputFile);
+        split_threshold = getSplitThresholdList(inputFile);
     }
     else
     {
