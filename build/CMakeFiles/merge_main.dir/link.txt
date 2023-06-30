@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libmerge_main.so -o libmerge_main.so CMakeFiles/merge_main.dir/merge_main.cpp.o  -lrt 
