@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libpartree_main.so -o libpartree_main.so CMakeFiles/partree_main.dir/partree_main.cpp.o  -lrt 

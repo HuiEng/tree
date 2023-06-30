@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libbuild_main.so -o libbuild_main.so CMakeFiles/build_main.dir/build_main.cpp.o  -lrt 
