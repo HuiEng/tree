@@ -99,12 +99,12 @@ string readTreeLine(string s, string folder, primary_tree_type &primary_tree)
 }
 
 // output signature size, if file too big => return empty "sigs", use readSignaturesBatch
-primary_tree_type readTree(const string topologyFile, const string folder, size_t &firstNodes)
+primary_tree_type readTree(const string topology_outFile, const string folder, size_t &firstNodes)
 {
     string line;
 
     // Read from the text file
-    ifstream listStream(topologyFile);
+    ifstream listStream(topology_outFile);
 
     // use first line to set tree params
     primary_tree_type primary_tree(partree_capacity);
@@ -126,7 +126,7 @@ primary_tree_type readTree(const string topologyFile, const string folder, size_
     // Close the file
     listStream.close();
     // primary_tree.updateTree();
-    primary_tree.printTreeJson(stdout);
+    // primary_tree.printTreeJson(stdout);
     return primary_tree;
 }
 
@@ -248,11 +248,11 @@ vector<size_t> clusterSignaturesTest(const vector<cell_type> &seqs)
     fprintf(hFile, "parent,child,rank\n");
     primary_tree.outputHierarchy(hFile);
 
-    if (args.topology_given)
+    if (args.topology_out_given)
     {
-        string outFile = args.topology_arg;
+        string outFile = args.topology_out_arg;
         FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
-        primary_tree.printTree(tFile, insertionList, args.topology_arg);
+        primary_tree.printTree(tFile, insertionList, args.topology_out_arg);
     }
 
     return clusters;

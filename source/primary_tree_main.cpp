@@ -206,11 +206,11 @@ vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
     fprintf(hFile, "parent,child,rank\n");
     primary_tree.outputHierarchy(hFile);
 
-    if (args.topology_given)
+    if (args.topology_out_given)
     {
-        string outFile = args.topology_arg;
+        string outFile = args.topology_out_arg;
         FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
-        primary_tree.printTree(tFile, insertionList, args.topology_arg);
+        primary_tree.printTree(tFile, insertionList, args.topology_out_arg);
     }
 
     return clusters;
@@ -327,11 +327,11 @@ vector<size_t> clusterSignaturesList(const string listFile)
     }
     primary_tree.updateTree();
     primary_tree.printTreeJson(stdout);
-    if (args.topology_given)
+    if (args.topology_out_given)
     {
-        string outFile = args.topology_arg;
+        string outFile = args.topology_out_arg;
         FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
-        primary_tree.printTree(tFile, insertionList, args.topology_arg);
+        primary_tree.printTree(tFile, insertionList, args.topology_out_arg);
     }
     return clusters;
 }
