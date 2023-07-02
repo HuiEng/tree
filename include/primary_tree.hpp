@@ -75,7 +75,6 @@ sVec_type createMeanSig(const vector<cell_type> &clusterSigs)
     return meanSig;
 }
 
-
 // Derived class
 class primary_tree : public tidy_tree<s_type, const_s_type, sVec_type>
 {
@@ -83,6 +82,15 @@ public:
     using tidy_tree::tidy_tree;
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
+
+    void printSignature(ostream &wf, size_t node)
+    {
+        s_type mean = getMeanSig(node);
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            wf.write(reinterpret_cast<const char *>(mean+i), sizeof(cell_type));
+        }
+    }
 
     void updateMeanSig(size_t node, const_s_type signature)
     {
@@ -269,7 +277,6 @@ public:
 
         return calcAvgSim(temp_matrix);
     }
-
 };
 
 #endif

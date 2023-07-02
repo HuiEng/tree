@@ -18,10 +18,10 @@ uint64_t seed = 0; // 0x8F3F73B5CF1C9ADE; // The default seed from minimiser_has
 bool debug = false;
 bool compressReads = false;
 
-void writeInt(std::ostream &os, unsigned long long int i)
-{
-    os.write(reinterpret_cast<const char *>(&i), sizeof(i));
-}
+// void writeInt(std::ostream &os, unsigned long long int i)
+// {
+//     os.write(reinterpret_cast<const char *>(&i), sizeof(i));
+// }
 
 template <typename view>
 void generateSig(view minimiser_view, bloom_parameters parameters, string filename, string outname, bool multiple)

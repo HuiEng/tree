@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libtree_main.so -o libtree_main.so CMakeFiles/tree_main.dir/tree_main.cpp.o  -lrt 

@@ -1,0 +1,16 @@
+/usr/local/lib/libbuild_main.so
+/usr/local/lib/libbuild_partition_main.so
+/usr/local/lib/libcount_main.so
+/usr/local/lib/libestimate_bf_main.so
+/usr/local/lib/libhisto_main.so
+/usr/local/lib/libktree_main.so
+/usr/local/lib/libmerge_main.so
+/usr/local/lib/libminimiser_main.so
+/usr/local/lib/libpartree_main.so
+/usr/local/lib/libpartree_multi_main.so
+/usr/local/lib/libprimary_tree_main.so
+/usr/local/lib/libsimilarity_main.so
+/usr/local/lib/libstats_main.so
+/usr/local/lib/libtest_main.so
+/usr/local/lib/libtree_main.so
+/usr/local/bin/tree

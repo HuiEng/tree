@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libtest_main.so -o libtest_main.so CMakeFiles/test_main.dir/test_main.cpp.o  -lrt 

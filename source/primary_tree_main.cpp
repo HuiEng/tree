@@ -320,6 +320,7 @@ vector<size_t> clusterSignaturesList(const string listFile)
     }
     primary_tree.updateTree();
     primary_tree.printTreeJson(stdout);
+    primary_tree.printTree(stderr,"test/");
     return clusters;
 }
 

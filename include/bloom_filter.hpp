@@ -30,6 +30,12 @@
 
 
 typedef unsigned char cell_type;
+
+void writeInt(std::ostream &os, unsigned long long int i)
+{
+    os.write(reinterpret_cast<const char *>(&i), sizeof(i));
+}
+
 size_t BFintersect(const cell_type *a, const cell_type *b, size_t signatureSize)
 {
    size_t c = 0;

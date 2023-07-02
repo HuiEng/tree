@@ -322,6 +322,39 @@ public:
         fprintf(stream, ";\n");
     }
 
+    virtual void printSignature(ostream &wf, size_t node) {}
+
+    void printNodeMean(string outfolder, size_t node)
+    {
+        ofstream wf(outfolder + to_string(node) + ".bin", ios::out | ios::binary);
+        writeInt(wf, signatureSize);
+        // wf.write(reinterpret_cast<const char *>(&i), sizeof(cell_type));
+        printSignature(wf, node);
+        wf.close();
+    }
+
+    void printTree(FILE *stream, string outfolder = "", size_t node = 0)
+    {
+        fprintf(stream, "%zu>", node);
+        printNodeMean(outfolder, node);
+        for (size_t child : childLinks[node])
+        {
+            fprintf(stream, "%zu,", child);
+        }
+        fprintf(stream, "\n");
+        for (size_t child : childLinks[node])
+        {
+            if (childCounts[child] > 0)
+            {
+                printTree(stream, outfolder, child);
+            }
+            else
+            {
+                printNodeMean(outfolder, child);
+            }
+        }
+    }
+
     int getNodeIdx(size_t node)
     {
         size_t parent = parentLinks[node];
@@ -530,7 +563,8 @@ public:
         addSigToMatrix(t_parent, getMeanSig(new_node));
 
         if (isBranchNode[t_parent])
-        {printMsg("--------------b %zu, %.2f\n", new_node, t_parent);
+        {
+            printMsg("--------------b %zu, %.2f\n", new_node, t_parent);
             updatePriority(t_parent);
         }
 
@@ -754,7 +788,7 @@ public:
                 dest = child;
             }
         }
-        
+
         if (dest != 0)
         {
             dest = stayNode(signature, insertionList, idx, dest);

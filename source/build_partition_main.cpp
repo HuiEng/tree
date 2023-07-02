@@ -20,10 +20,10 @@ bool compressReads = false;
 bool multipleOut = false;
 string outfile = "";
 
-void writeInt(std::ostream &os, unsigned long long int i)
-{
-    os.write(reinterpret_cast<const char *>(&i), sizeof(i));
-}
+// void writeInt(std::ostream &os, unsigned long long int i)
+// {
+//     os.write(reinterpret_cast<const char *>(&i), sizeof(i));
+// }
 
 template <typename view>
 void getMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
