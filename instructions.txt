@@ -37,6 +37,8 @@ options:
 - f, split root if number of children > 5
 - F {tree_order}, split root if number of children > {tree_order}
 - R {seed}, insert seqs into tree by random order
+- q, start from a template tree, provide the folder ends with '/'
+- w, output the tree topology for into a folder ends with '/'
 
 
 #####################################################################

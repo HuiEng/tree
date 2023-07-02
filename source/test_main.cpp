@@ -451,7 +451,6 @@ int test_main(int argc, char *argv[])
     default_random_engine rng;
     vector<size_t> clusters;
     vector<cell_type> seqs;
-    // readTree("test/tree.txt", "test/");
 
     if (args.multiple_arg)
     {
