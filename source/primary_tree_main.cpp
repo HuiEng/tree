@@ -191,10 +191,10 @@ vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
     }
     foo.resize(cap);
 
-    clusters[foo[0]] = primary_tree.first_insert(&seqs[foo[0] * signatureSize], insertionList, foo[0]);
+    // clusters[foo[0]] = primary_tree.first_insert(&seqs[foo[0] * signatureSize], insertionList, foo[0]);
     if (force_split_)
     {
-        for (size_t i = 1; i < cap; i++)
+        for (size_t i = 0; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
             size_t clus = primary_tree.insertSplitRoot(&seqs[foo[i] * signatureSize], insertionList, foo[i]);
@@ -202,7 +202,7 @@ vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
     }
     else
     {
-        for (size_t i = 1; i < cap; i++)
+        for (size_t i = 0; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
             size_t clus = primary_tree.insert(&seqs[foo[i] * signatureSize], insertionList, foo[i]);
