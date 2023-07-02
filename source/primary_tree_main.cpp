@@ -84,7 +84,7 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
+vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
     vector<size_t> clusters(cap);
@@ -206,6 +206,13 @@ vector<size_t> clusterSignatures2(const vector<cell_type> &seqs)
     fprintf(hFile, "parent,child,rank\n");
     primary_tree.outputHierarchy(hFile);
 
+    if (args.topology_given)
+    {
+        string outFile = args.topology_arg;
+        FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+        primary_tree.printTree(tFile, insertionList, args.topology_arg);
+    }
+
     return clusters;
 }
 
@@ -320,7 +327,12 @@ vector<size_t> clusterSignaturesList(const string listFile)
     }
     primary_tree.updateTree();
     primary_tree.printTreeJson(stdout);
-    primary_tree.printTree(stderr,"test/");
+    if (args.topology_given)
+    {
+        string outFile = args.topology_arg;
+        FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+        primary_tree.printTree(tFile, insertionList, args.topology_arg);
+    }
     return clusters;
 }
 
@@ -337,7 +349,7 @@ int primary_tree_main(int argc, char *argv[])
     //?
     if (!args.input_given)
     {
-        cout << "No input and/or query given! Exiting...\n";
+        cout << "No input given! Exiting...\n";
         return 0;
     }
 
@@ -406,22 +418,33 @@ int primary_tree_main(int argc, char *argv[])
 
     if (args.multiple_arg)
     {
-        clusters = clusterSignaturesList(inputFile);
+        // clusters = clusterSignaturesList(inputFile);
+        signatureSize = readList(inputFile, seqs);
     }
     else
     {
         signatureSize = readSignatures(inputFile, seqs);
 
-        signatureWidth = signatureSize * sizeof(cell_type);
-        size_t seqCount = seqs.size() / signatureSize;
-        if (cap == 0)
-        {
-            cap = seqCount;
-        }
+        // signatureWidth = signatureSize * sizeof(cell_type);
+        // size_t seqCount = seqs.size() / signatureSize;
+        // if (cap == 0)
+        // {
+        //     cap = seqCount;
+        // }
 
-        fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
-        clusters = clusterSignatures2(seqs);
+        // fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
+        // clusters = clusterSignaturesPrim(seqs);
     }
+
+    signatureWidth = signatureSize * sizeof(cell_type);
+    size_t seqCount = seqs.size() / signatureSize;
+    if (cap == 0)
+    {
+        cap = seqCount;
+    }
+
+    fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
+    clusters = clusterSignaturesPrim(seqs);
     fprintf(stderr, "writing output...\n");
 
     size_t firstindex = inputFile.find_last_of("/") + 1;

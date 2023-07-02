@@ -86,6 +86,8 @@ public:
     void printSignature(ostream &wf, size_t node)
     {
         s_type mean = getMeanSig(node);
+        // fprintf(stderr, ">>%zu\n", node);
+        // toBinaryIdx(stderr, mean);
         for (size_t i = 0; i < signatureSize; i++)
         {
             wf.write(reinterpret_cast<const char *>(mean+i), sizeof(cell_type));

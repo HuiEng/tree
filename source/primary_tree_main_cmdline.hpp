@@ -361,7 +361,7 @@ public:
   size_t minimiser_match_arg;
   size_t capacity_arg;
   size_t sizeCap_arg;
-  const char *query_arg;
+  const char *topology_arg;
   double split_threshold_arg;
   double stay_threshold_arg;
   size_t iteration_arg;
@@ -375,7 +375,7 @@ public:
   bool capacity_given;
   bool sizeCap_given;
   bool random_arg;
-  bool query_given;
+  bool topology_given;
   bool split_threshold_given;
   bool stay_threshold_given;
   bool debug_arg;
@@ -398,7 +398,7 @@ public:
                                 input_given(false),
                                 minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                 random_arg(false), iteration_arg(0), seed_arg(0),
-                                query_given(false), query_arg(""),
+                                topology_given(false), topology_arg(""),
                                 split_threshold_given(false), split_threshold_arg(0),
                                 stay_threshold_given(false), stay_threshold_arg(0),
                                 debug_arg(false), print_arg(false), force_split_arg(false), tree_order_given(false),
@@ -411,7 +411,7 @@ public:
                                                       input_given(false),
                                                       minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                                       random_arg(false), iteration_arg(0), seed_arg(0),
-                                                      query_given(false), query_arg(""),
+                                                      topology_given(false), topology_arg(""),
                                                       split_threshold_given(false), split_threshold_arg(0),
                                                       stay_threshold_given(false), stay_threshold_arg(0),
                                                       debug_arg(false), print_arg(false), force_split_arg(false), tree_order_given(false),
@@ -435,7 +435,7 @@ public:
         {"stay", 1, 0, 'S'},
         {"random", 1, 0, 'R'},
         {"iteration", 0, 0, 'I'},
-        {"query", 1, 0, 'q'},
+        {"topology", 1, 0, 'q'},
         {"help", 0, 0, 'h'},
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
@@ -505,8 +505,8 @@ public:
         tag_arg = optarg;
         break;
       case 'q':
-        query_given = true;
-        query_arg = optarg;
+        topology_given = true;
+        topology_arg = optarg;
         break;
       case 'L':
         split_threshold_given = true;
@@ -629,7 +629,7 @@ public:
            " -m, --minimiser_match                    minimiser_match_threshold [default=4], you need to know the number of minimiser per window\n"
            " -C, --capacity                           primary_tree capacity [default=0]\n"
            " -c, --size_cap                           Only cluster the first c seqs [default=10000]\n"
-           " -q, --query                              query file\n"
+           " -q, --topology                           Print tree topology into this folder [must end with '/']\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
            " -R,                                      inserting seqs in random order [defalut seed=0]\n"
@@ -657,8 +657,8 @@ public:
     os << " random_arg:" << random_arg << "\n"
        << " seed_arg:" << seed_arg << "\n";
     os << " iteration_arg:" << iteration_arg << "\n";
-    os << " query_given:" << query_given << "\t"
-       << " query_arg:" << query_arg << "\n";
+    os << " topology_given:" << topology_given << "\t"
+       << " topology_arg:" << topology_arg << "\n";
     os << " split_threshold_given:" << split_threshold_given << "\t"
        << " split_threshold_arg:" << split_threshold_arg << "\n";
     os << " stay_threshold_given:" << stay_threshold_given << "\t"

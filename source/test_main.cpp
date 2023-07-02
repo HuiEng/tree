@@ -67,26 +67,86 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
+string readTreeLine(string s, string folder, primary_tree_type &primary_tree)
+{
+    size_t parent = 0;
+    size_t child = 0;
+    string delimiter = ">";
+
+    size_t pos = s.find(delimiter);
+    string node = s.substr(0, pos);
+    sscanf(node.c_str(), "%zu", &parent);
+    s.erase(0, pos + 1);
+    // cout << "Node: " << node << endl;
+
+    delimiter = ",";
+    string childStr = "";
+    while ((pos = s.find(delimiter)) != string::npos)
+    {
+        childStr = s.substr(0, pos);
+        sscanf(childStr.c_str(), "%zu", &child);
+        // cout << "Child: " << childStr << endl;
+        s.erase(0, pos + 1);
+
+        vector<cell_type> signature;
+        readSignatures((folder + childStr + ".bin"), signature);
+        primary_tree.readNode(parent, child, &signature[0]);
+    }
+    primary_tree.updatePriority(parent);
+
+    // return parent;
+    return node;
+}
+
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+primary_tree_type readTree(const string topologyFile, const string folder, size_t &firstNodes)
+{
+    string line;
+
+    // Read from the text file
+    ifstream listStream(topologyFile);
+
+    // use first line to set tree params
+    primary_tree_type primary_tree(partree_capacity);
+    getline(listStream, line);
+    sscanf(line.c_str(), "%zu", &signatureSize);
+    signatureWidth = signatureSize * sizeof(cell_type);
+    primary_tree.means.resize(partree_capacity * signatureSize);
+
+    getline(listStream, line);
+    size_t temp = 0;
+    sscanf(line.c_str(), "%zu", &temp);
+    firstNodes = temp;
+
+    while (getline(listStream, line))
+    {
+        readTreeLine(line, folder, primary_tree);
+    }
+
+    // Close the file
+    listStream.close();
+    // primary_tree.updateTree();
+    primary_tree.printTreeJson(stdout);
+    return primary_tree;
+}
+
 vector<size_t> clusterSignaturesTest(const vector<cell_type> &seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
     vector<size_t> clusters(cap);
-    primary_tree_type primary_tree(partree_capacity);
-    primary_tree.means.resize(partree_capacity * signatureSize);
-
-    size_t firstNodes = 1;
-    if (firstNodes > seqCount)
-        firstNodes = seqCount;
+    size_t offset = 0;
+    primary_tree_type primary_tree = readTree("test/tree.txt", "test/", offset);
 
     vector<size_t> insertionList; // potential nodes idx except root; root is always 0
 
     default_random_engine rng;
 
     // node 0 reserved for root, node 1 reserved for leaves idx
-    for (size_t i = firstNodes; i < partree_capacity; i++)
+    for (size_t i = 1; i < partree_capacity - offset; i++)
     {
         insertionList.push_back(partree_capacity - i);
     }
+
     vector<size_t> foo;
     for (int i = 0; i < seqCount; i++)
     {
@@ -100,10 +160,9 @@ vector<size_t> clusterSignaturesTest(const vector<cell_type> &seqs)
     }
     foo.resize(cap);
 
-    clusters[foo[0]] = primary_tree.first_insert(&seqs[foo[0] * signatureSize], insertionList, foo[0]);
     if (force_split_)
     {
-        for (size_t i = 1; i < cap; i++)
+        for (size_t i = 0; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
             size_t clus = primary_tree.insertSplitRoot(&seqs[foo[i] * signatureSize], insertionList, foo[i]);
@@ -111,7 +170,7 @@ vector<size_t> clusterSignaturesTest(const vector<cell_type> &seqs)
     }
     else
     {
-        for (size_t i = 1; i < cap; i++)
+        for (size_t i = 0; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
             size_t clus = primary_tree.insert(&seqs[foo[i] * signatureSize], insertionList, foo[i]);
@@ -189,11 +248,15 @@ vector<size_t> clusterSignaturesTest(const vector<cell_type> &seqs)
     fprintf(hFile, "parent,child,rank\n");
     primary_tree.outputHierarchy(hFile);
 
-    primary_tree.printTree(stdout,"test/");
+    if (args.topology_given)
+    {
+        string outFile = args.topology_arg;
+        FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+        primary_tree.printTree(tFile, insertionList, args.topology_arg);
+    }
 
     return clusters;
 }
-
 // assume 1 file 1 seq
 vector<size_t> clusterSignaturesListTest(const string listFile)
 {
@@ -305,7 +368,7 @@ vector<size_t> clusterSignaturesListTest(const string listFile)
     }
     primary_tree.updateTree();
     // primary_tree.printTreeJson(stdout);
-    primary_tree.printTree(stdout);
+    primary_tree.printTree(stdout, insertionList);
 
     return clusters;
 }
@@ -388,6 +451,7 @@ int test_main(int argc, char *argv[])
     default_random_engine rng;
     vector<size_t> clusters;
     vector<cell_type> seqs;
+    // readTree("test/tree.txt", "test/");
 
     if (args.multiple_arg)
     {

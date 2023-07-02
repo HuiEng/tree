@@ -333,7 +333,7 @@ public:
         wf.close();
     }
 
-    void printTree(FILE *stream, string outfolder = "", size_t node = 0)
+    void printTree(FILE *stream, string outfolder, size_t node)
     {
         fprintf(stream, "%zu>", node);
         for (size_t child : childLinks[node])
@@ -349,6 +349,22 @@ public:
                 printTree(stream, outfolder, child);
             }
         }
+    }
+
+    void printTree(FILE *stream, vector<size_t> &insertionList, string outfolder = "")
+    {
+        fprintf(stream, "%zu\n%zu\n", signatureSize, getNewNodeIdx(insertionList));
+        printTree(stream, outfolder, 0);
+    }
+
+    void readNode(size_t parent, size_t child, const_s_type signature)
+    {
+        isBranchNode[parent] = 1;
+        parentLinks[child] = parent;
+        childLinks[parent].push_back(child);
+        childCounts[parent]++;
+        updateMeanSig(child, signature);
+        addSigToMatrix(parent, signature);
     }
 
     int getNodeIdx(size_t node)
