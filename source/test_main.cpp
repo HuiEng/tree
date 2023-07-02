@@ -27,7 +27,6 @@ static primary_tree_main_cmdline args; // Command line switches and arguments
 
 // static test_main_cmdline args; // Command line switches and arguments
 
-
 void outputClusters(FILE *pFile, const vector<size_t> &clusters)
 {
     for (size_t sig = 0; sig < clusters.size(); sig++)
@@ -190,6 +189,8 @@ vector<size_t> clusterSignaturesTest(const vector<cell_type> &seqs)
     fprintf(hFile, "parent,child,rank\n");
     primary_tree.outputHierarchy(hFile);
 
+    primary_tree.printTree(stdout,"test/");
+
     return clusters;
 }
 
@@ -309,8 +310,6 @@ vector<size_t> clusterSignaturesListTest(const string listFile)
     return clusters;
 }
 
-
-
 int test_main(int argc, char *argv[])
 {
     split_threshold = 0.5;
@@ -392,22 +391,32 @@ int test_main(int argc, char *argv[])
 
     if (args.multiple_arg)
     {
-        clusters = clusterSignaturesListTest(inputFile);
+        // clusters = clusterSignaturesListTest(inputFile);
+        signatureSize = readList(inputFile, seqs);
     }
     else
     {
         signatureSize = readSignatures(inputFile, seqs);
 
-        signatureWidth = signatureSize * sizeof(cell_type);
-        size_t seqCount = seqs.size() / signatureSize;
-        if (cap == 0)
-        {
-            cap = seqCount;
-        }
+        // signatureWidth = signatureSize * sizeof(cell_type);
+        // size_t seqCount = seqs.size() / signatureSize;
+        // if (cap == 0)
+        // {
+        //     cap = seqCount;
+        // }
 
-        fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
-        clusters = clusterSignaturesTest(seqs);
+        // fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
+        // clusters = clusterSignaturesTest(seqs);
     }
+    signatureWidth = signatureSize * sizeof(cell_type);
+    size_t seqCount = seqs.size() / signatureSize;
+    if (cap == 0)
+    {
+        cap = seqCount;
+    }
+
+    fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
+    clusters = clusterSignaturesTest(seqs);
     fprintf(stderr, "writing output...\n");
 
     size_t firstindex = inputFile.find_last_of("/") + 1;

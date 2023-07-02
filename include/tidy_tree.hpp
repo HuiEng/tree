@@ -336,10 +336,10 @@ public:
     void printTree(FILE *stream, string outfolder = "", size_t node = 0)
     {
         fprintf(stream, "%zu>", node);
-        printNodeMean(outfolder, node);
         for (size_t child : childLinks[node])
         {
             fprintf(stream, "%zu,", child);
+            printNodeMean(outfolder, child);
         }
         fprintf(stream, "\n");
         for (size_t child : childLinks[node])
@@ -347,10 +347,6 @@ public:
             if (childCounts[child] > 0)
             {
                 printTree(stream, outfolder, child);
-            }
-            else
-            {
-                printNodeMean(outfolder, child);
             }
         }
     }
