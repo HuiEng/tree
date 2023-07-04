@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libktree_main.so -o libktree_main.so CMakeFiles/ktree_main.dir/ktree_main.cpp.o  -lrt 

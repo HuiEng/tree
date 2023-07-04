@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -lstdc++fs  -shared -Wl,-soname,libestimate_bf_main.so -o libestimate_bf_main.so CMakeFiles/estimate_bf_main.dir/estimate_bf_main.cpp.o  -lrt 

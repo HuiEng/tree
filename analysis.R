@@ -173,6 +173,10 @@ ktree<-read.csv(paste(path,"cluster.txt",sep=""),header=FALSE)
 colnames(ktree)<-c("seqID","cluster")
 ktree<-merge(meta,ktree)
 
+sigClust<-read.csv(paste(path,"silva/sigClust.txt",sep=""),header=FALSE)
+colnames(sigClust)<-c("seqID","cluster")
+sigClust<-merge(meta,sigClust)
+
 cluQ_prim<-cluQuality(dt)
 ggplot(cluQ_prim)+
   geom_point(aes(x=clu,y=ent,size=size))
@@ -180,6 +184,12 @@ ggplot(cluQ_prim)+
 cluQ_ktree<-cluQuality(ktree)
 ggplot(cluQ_ktree)+
   geom_point(aes(x=clu,y=ent,size=size))
+
+cluQ_sigClust<-cluQuality(sigClust)
+ggplot(cluQ_sigClust)+
+  geom_point(aes(x=clu,y=ent,size=size))
+
+plotTwo(cluQ_prim,cluQ_ktree,2)
 
 histo<-read.csv(paste(path,"silva/histo.txt",sep=""),header = FALSE)
 ggplot(histo)+geom_bar(aes(x=V1,y=V2),stat="identity")
