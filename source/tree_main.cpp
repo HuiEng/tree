@@ -1,9 +1,9 @@
 #include <random>
 #include "tree_main_cmdline.hpp"
-#include "temp_tree.hpp"
+#include "sec_tree.hpp"
 #include "stats.hpp"
 
-typedef temp_tree tree_type;
+typedef sec_tree tree_type;
 typedef vector<tuple<size_t, tuple<size_t, size_t>>> output_type;
 bool random_ = false;
 size_t cap = 0;
@@ -69,14 +69,20 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
         firstNodes = seqCount;
 
     vector<size_t> insertionList; // potential nodes idx except root; root is always 0
-
+    size_t offset = 0;
     default_random_engine rng;
 
+    if (args.topology_in_given)
+    {
+        offset = readTree(args.topology_in_arg, tree);
+    }
+
     // node 0 reserved for root, node 1 reserved for leaves idx
-    for (size_t i = firstNodes; i < partree_capacity; i++)
+    for (size_t i = firstNodes; i < partree_capacity - offset; i++)
     {
         insertionList.push_back(partree_capacity - i);
     }
+
     vector<size_t> foo;
     for (int i = 0; i < seqCount; i++)
     {
@@ -98,10 +104,10 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     }
     foo.resize(cap);
 
-    clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
+    // clusters[foo[0]] = tree.first_insert(seqs[foo[0]], insertionList, foo[0]);
     if (force_split_)
     {
-        for (size_t i = 1; i < cap; i++)
+        for (size_t i = 0; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
             size_t clus = tree.insertSplitRoot(seqs[foo[i]], insertionList, foo[i]);
@@ -112,7 +118,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     else
     {
         // split_threshold = 1;
-        for (size_t i = 1; i < cap; i++)
+        for (size_t i = 0; i < cap; i++)
         {
             printMsg("inserting %zu\n", foo[i]);
             size_t clus = tree.insert(seqs[foo[i]], insertionList, foo[i]);
@@ -155,6 +161,11 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
         tree.printTreeJson(stderr);
     }
+    else if (args.topology_in_given)
+    {
+        singleton = 0;
+        tree.removeAmbi();
+    }
 
     for (size_t run = 0; run < iteration; run++)
     {
@@ -188,6 +199,7 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
             outputClusters(cFile, clusters);
         }
     }
+
     tree.updateTree();
 
     FILE *pFile = fopen("nodeDistance.txt", "w");
@@ -254,6 +266,13 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
     FILE *hFile = fopen("hierarchy.txt", "w");
     fprintf(hFile, "parent,child,rank\n");
     tree.outputHierarchy(hFile);
+
+    if (args.topology_out_given)
+    {
+        string outFile = args.topology_out_arg;
+        FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+        tree.printTree(tFile, insertionList, args.topology_out_arg);
+    }
 
     return clusters;
 }
@@ -510,7 +529,6 @@ vector<size_t> clusterSignatures(const vector<seq_type> &seqs)
 
 //     return clusters;
 // }
-
 
 int tree_main(int argc, char *argv[])
 {

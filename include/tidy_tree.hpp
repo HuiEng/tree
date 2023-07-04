@@ -86,6 +86,78 @@ T returnEmpy()
     return empty;
 }
 
+template <typename tree_type>
+string readTreeLine(string s, string folder, tree_type &tree)
+{
+    size_t parent = 0;
+    size_t child = 0;
+    string delimiter = ">";
+
+    size_t pos = s.find(delimiter);
+    string node = s.substr(0, pos);
+    sscanf(node.c_str(), "%zu", &parent);
+    s.erase(0, pos + 1);
+    // cout << "Node: " << node << endl;
+
+    delimiter = ",";
+    string childStr = "";
+    while ((pos = s.find(delimiter)) != string::npos)
+    {
+        childStr = s.substr(0, pos);
+        sscanf(childStr.c_str(), "%zu", &child);
+        // cout << "Child: " << childStr << endl;
+        s.erase(0, pos + 1);
+
+        // vector<cell_type> signature;
+        // readSignatures((folder + childStr + ".bin"), signature);
+        // tree.readNode(parent, child, &signature[0]);
+        auto signature = tree.readInput((folder + childStr + ".bin").c_str());
+        tree.readNode(parent, child, signature);
+    }
+    tree.updatePriority(parent);
+
+    // return parent;
+    return node;
+}
+
+// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
+template <typename tree_type>
+size_t readTree(const string folder, tree_type &tree)
+{
+    string line;
+
+    // Read from the text file
+    ifstream listStream((folder + "tree.txt").c_str());
+
+    // read signatureSize
+    getline(listStream, line);
+
+    // // use first line to set tree params
+    // tree_type tree(partree_capacity);
+    // getline(listStream, line);
+    // sscanf(line.c_str(), "%zu", &signatureSize);
+    // signatureWidth = signatureSize * sizeof(cell_type);
+    // tree.means.resize(partree_capacity * signatureSize);
+
+    // read last nodeIdx
+    getline(listStream, line);
+    size_t offset = 0;
+    sscanf(line.c_str(), "%zu", &offset);
+
+    while (getline(listStream, line))
+    {
+        readTreeLine(line, folder, tree);
+    }
+
+    // Close the file
+    listStream.close();
+    // tree.updateTree();
+    // tree.printTreeJson(stdout);
+    // return tree;
+
+    return offset;
+}
+
 // Derived class
 template <typename s_type, typename const_s_type, typename sVec_type>
 class tidy_tree
@@ -109,6 +181,8 @@ public:
     size_t capacity = 0;        // Set during construction, currently can't change
 
     virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
+
+    virtual const_s_type readInput(const char *inputFile) { return returnEmpy<s_type>(); }
 
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 

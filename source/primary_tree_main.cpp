@@ -84,74 +84,6 @@ void compressClusterList(vector<size_t> &clusters)
     fprintf(stderr, "Output %zu clusters\n", remap.size());
 }
 
-string readTreeLine(string s, string folder, primary_tree_type &primary_tree)
-{
-    size_t parent = 0;
-    size_t child = 0;
-    string delimiter = ">";
-
-    size_t pos = s.find(delimiter);
-    string node = s.substr(0, pos);
-    sscanf(node.c_str(), "%zu", &parent);
-    s.erase(0, pos + 1);
-    // cout << "Node: " << node << endl;
-
-    delimiter = ",";
-    string childStr = "";
-    while ((pos = s.find(delimiter)) != string::npos)
-    {
-        childStr = s.substr(0, pos);
-        sscanf(childStr.c_str(), "%zu", &child);
-        // cout << "Child: " << childStr << endl;
-        s.erase(0, pos + 1);
-
-        vector<cell_type> signature;
-        readSignatures((folder + childStr + ".bin"), signature);
-        primary_tree.readNode(parent, child, &signature[0]);
-    }
-    primary_tree.updatePriority(parent);
-
-    // return parent;
-    return node;
-}
-
-// output signature size, if file too big => return empty "sigs", use readSignaturesBatch
-size_t readTree(const string folder, primary_tree_type &primary_tree)
-{
-    string line;
-
-    // Read from the text file
-    ifstream listStream((folder + "tree.txt").c_str());
-
-    // read signatureSize
-    getline(listStream, line);
-
-    // // use first line to set tree params
-    // primary_tree_type primary_tree(partree_capacity);
-    // getline(listStream, line);
-    // sscanf(line.c_str(), "%zu", &signatureSize);
-    // signatureWidth = signatureSize * sizeof(cell_type);
-    // primary_tree.means.resize(partree_capacity * signatureSize);
-
-    // read last nodeIdx
-    getline(listStream, line);
-    size_t offset = 0;
-    sscanf(line.c_str(), "%zu", &offset);
-
-    while (getline(listStream, line))
-    {
-        readTreeLine(line, folder, primary_tree);
-    }
-
-    // Close the file
-    listStream.close();
-    // primary_tree.updateTree();
-    // primary_tree.printTreeJson(stdout);
-    // return primary_tree;
-
-    return offset;
-}
-
 vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
 {
     size_t seqCount = seqs.size() / signatureSize;
@@ -210,7 +142,7 @@ vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
         }
     }
 
-    primary_tree.printTreeJson(stderr);
+    // primary_tree.printTreeJson(stderr);
 
     // for debugging
     if (iteration_given)
@@ -234,6 +166,11 @@ vector<size_t> clusterSignaturesPrim(const vector<cell_type> &seqs)
         }
 
         primary_tree.printTreeJson(stderr);
+    }
+    else if (args.topology_in_given)
+    {
+        singleton = 0;
+        primary_tree.removeAmbi();
     }
 
     for (size_t run = 0; run < iteration; run++)

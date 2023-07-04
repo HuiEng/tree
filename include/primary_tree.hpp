@@ -83,6 +83,13 @@ public:
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
 
+    const_s_type readInput(const char *inputFile)
+    {
+        vector<cell_type> signature;
+        readSignatures(inputFile, signature);
+        return &signature[0];
+    }
+
     void printSignature(ostream &wf, size_t node)
     {
         s_type mean = getMeanSig(node);
@@ -90,7 +97,7 @@ public:
         // toBinaryIdx(stderr, mean);
         for (size_t i = 0; i < signatureSize; i++)
         {
-            wf.write(reinterpret_cast<const char *>(mean+i), sizeof(cell_type));
+            wf.write(reinterpret_cast<const char *>(mean + i), sizeof(cell_type));
         }
     }
 

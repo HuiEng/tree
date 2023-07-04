@@ -46,6 +46,10 @@ fstream
 bloom_filter.hpp
 /mnt/c/DataCopied/Research/tree/include/bloom_filter.hpp
 
+/mnt/c/DataCopied/Research/tree/include/sec_tree.hpp
+tidy_tree.hpp
+/mnt/c/DataCopied/Research/tree/include/tidy_tree.hpp
+
 /mnt/c/DataCopied/Research/tree/include/stats.hpp
 vector
 -
@@ -55,10 +59,6 @@ read.hpp
 /mnt/c/DataCopied/Research/tree/include/read.hpp
 distance.hpp
 /mnt/c/DataCopied/Research/tree/include/distance.hpp
-
-/mnt/c/DataCopied/Research/tree/include/temp_tree.hpp
-tidy_tree.hpp
-/mnt/c/DataCopied/Research/tree/include/tidy_tree.hpp
 
 /mnt/c/DataCopied/Research/tree/include/tidy_tree.hpp
 omp.h
@@ -85,8 +85,8 @@ random
 -
 tree_main_cmdline.hpp
 /mnt/c/DataCopied/Research/tree/source/tree_main_cmdline.hpp
-temp_tree.hpp
-/mnt/c/DataCopied/Research/tree/source/temp_tree.hpp
+sec_tree.hpp
+/mnt/c/DataCopied/Research/tree/source/sec_tree.hpp
 stats.hpp
 /mnt/c/DataCopied/Research/tree/source/stats.hpp
 

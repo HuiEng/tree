@@ -9,8 +9,8 @@
 // As the space to be used is determined at runtime, we use
 // parallel arrays, not structs
 
-#ifndef INCLUDE_temp_tree_HPP
-#define INCLUDE_temp_tree_HPP
+#ifndef INCLUDE_SEC_TREE_HPP
+#define INCLUDE_SEC_TREE_HPP
 #include "tidy_tree.hpp"
 
 typedef seq_type s_type;
@@ -71,12 +71,38 @@ s_type createMeanSig(sVec_type clusterSigs)
 }
 
 // Derived class
-class temp_tree : public tidy_tree<s_type, const_s_type, sVec_type>
+class sec_tree : public tidy_tree<s_type, const_s_type, sVec_type>
 {
 public:
     using tidy_tree::tidy_tree;
 
     s_type getMeanSig(size_t node) { return means[node]; }
+
+    const_s_type readInput(const char *inputFile)
+    {
+        return readPartitionBF(inputFile, signatureSize)[0];
+    }
+
+    void printSignature(ostream &wf, size_t node)
+    {
+        s_type mean = getMeanSig(node);
+        // fprintf(stderr, ">>%zu\n", node);
+        // toBinaryIdx(stderr, mean);
+        for (auto window : mean)
+        {
+            for (size_t i = 0; i < signatureSize; i++)
+            {
+                wf.write(reinterpret_cast<const char *>(&window[0] + i), sizeof(cell_type));
+            }
+        }
+
+        // print end flag
+        cell_type temp = 0;
+        for (size_t i = 0; i < signatureSize; i++)
+        {
+            wf.write(reinterpret_cast<const char *>(&temp), sizeof(cell_type));
+        }
+    }
 
     void updateMeanSig(size_t node, const_s_type signature)
     {
@@ -88,7 +114,7 @@ public:
         matrices[node].push_back(signature);
     }
 
-     double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0)
+    double calcSimilarityWrap(s_type a, s_type b, size_t signatureSize_ = 0)
     {
         return calcSimilarity(a, b);
     }
@@ -211,7 +237,7 @@ public:
         {
             temp_matrix = getNonAmbiMatrix(node);
         }
-        
+
         return calcAvgSim(temp_matrix);
     }
 
