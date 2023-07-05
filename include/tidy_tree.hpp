@@ -42,8 +42,8 @@ struct tree_meta_st
 {
     bool readTree_ = false;
     bool writeTree_ = false;
-    const char* inputTreePath;
-    const char* outputTreePath;
+    const char *inputTreePath;
+    const char *outputTreePath;
 };
 
 tree_meta_st tree_meta;
@@ -70,7 +70,7 @@ struct tt_data
 };
 
 template <typename cmdline_type>
-void setArgs(cmdline_type args)
+string setArgs(cmdline_type args)
 {
     split_threshold = 0.5;
     stay_threshold = 0.8;
@@ -83,6 +83,8 @@ void setArgs(cmdline_type args)
         exit(1);
     }
 
+    string inputFile = args.input_arg;
+
     if (args.random_arg)
     {
         random_ = true;
@@ -93,6 +95,40 @@ void setArgs(cmdline_type args)
     {
         stay_threshold = args.stay_threshold_arg;
     }
+
+    if (args.split_threshold_given)
+    {
+        split_threshold = args.split_threshold_arg;
+    }
+    else if (args.single_arg)
+    {
+        cerr << "here\n";
+        if (args.multiple_arg)
+        {
+            split_threshold = getSplitThresholdListSingle(inputFile);
+        }
+        else
+        {
+            split_threshold = getSplitThresholdSingle(inputFile);
+        }
+    }
+    else
+    {
+        if (args.multiple_arg)
+        {
+            split_threshold = getSplitThresholdList(inputFile);
+        }
+        else
+        {
+            split_threshold = getSplitThreshold(inputFile);
+        }
+    }
+
+    split_node_threshold = split_threshold / 2;
+
+    fprintf(stderr, "split threshold: %.2f\n", split_threshold);
+    fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
+    fprintf(stderr, "split_node_threshold threshold: %.2f\n", split_node_threshold);
 
     if (args.minimiser_match_given)
     {
@@ -122,11 +158,22 @@ void setArgs(cmdline_type args)
         fprintf(stderr, "tree_order: %zu\n", tree_order);
     }
 
-
     tree_meta.readTree_ = args.topology_in_given;
     tree_meta.writeTree_ = args.topology_out_given;
     tree_meta.inputTreePath = args.topology_in_arg;
     tree_meta.outputTreePath = args.topology_out_arg;
+
+    size_t firstindex = inputFile.find_last_of("/") + 1;
+    size_t lastindex = inputFile.find_last_of(".");
+    string rawname = inputFile.substr(firstindex, lastindex - firstindex);
+
+    auto fileName = rawname + "-s" + to_string((int)(stay_threshold * 100)) + "-l" + to_string((int)(split_threshold * 100));
+    if (args.tag_given)
+    {
+        fileName = args.tag_arg + fileName;
+    }
+    
+    return (fileName + ".txt");
 }
 
 template <typename T>

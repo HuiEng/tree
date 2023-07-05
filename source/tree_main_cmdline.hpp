@@ -386,6 +386,7 @@ public:
   bool tree_order_given;
   bool iteration_given;
   bool multiple_arg;
+  bool single_arg;
 
   enum
   {
@@ -396,7 +397,7 @@ public:
 
   tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                         minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
-                        input_given(false),
+                        input_given(false), single_arg(false),
                         minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                         random_arg(false), iteration_arg(0), seed_arg(0),
                         topology_in_given(false), topology_in_arg(""),
@@ -410,7 +411,7 @@ public:
 
   tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                                               minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
-                                              input_given(false),
+                                              input_given(false), single_arg(false),
                                               minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                               random_arg(false), iteration_arg(0), seed_arg(0),
                                               topology_in_given(false), topology_in_arg(""),
