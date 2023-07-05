@@ -10,27 +10,11 @@ static primary_tree_main_cmdline args; // Command line switches and arguments
 
 int primary_tree_main(int argc, char *argv[])
 {
-    split_threshold = 0.5;
-    stay_threshold = 0.8;
-    minimiser_match_threshold = 4;
-    // partree_capacity = 10000;
-
     args.parse(argc, argv);
     ios::sync_with_stdio(false); // No sync with stdio -> faster
 
-    //?
-    if (!args.input_given)
-    {
-        cout << "No input given! Exiting...\n";
-        return 0;
-    }
-
     string inputFile = args.input_arg;
-    if (args.random_arg)
-    {
-        random_ = true;
-        seed = args.seed_arg;
-    }
+    setArgs(args);
 
     if (args.split_threshold_given)
     {
@@ -45,43 +29,11 @@ int primary_tree_main(int argc, char *argv[])
         split_threshold = getSplitThresholdSingle(inputFile);
     }
 
-    if (args.stay_threshold_given)
-    {
-        stay_threshold = args.stay_threshold_arg;
-    }
     split_node_threshold = split_threshold / 2;
 
     fprintf(stderr, "split threshold: %.2f\n", split_threshold);
     fprintf(stderr, "stay threshold: %.2f\n", stay_threshold);
     fprintf(stderr, "split_node_threshold threshold: %.2f\n", split_node_threshold);
-
-    if (args.minimiser_match_given)
-    {
-        minimiser_match_threshold = args.minimiser_match_arg;
-        fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
-    }
-
-    cap = args.sizeCap_arg;
-    if (args.iteration_given)
-    {
-        iteration_given = true;
-        iteration = args.iteration_arg;
-    }
-
-    if (args.capacity_given)
-    {
-        partree_capacity = args.capacity_arg;
-        fprintf(stderr, "partree_capacity: %zu\n", partree_capacity);
-    }
-
-    debug_ = args.debug_arg;
-    print_ = args.print_arg;
-    force_split_ = args.force_split_arg;
-    if (args.tree_order_given)
-    {
-        tree_order = args.tree_order_arg;
-        fprintf(stderr, "tree_order: %zu\n", tree_order);
-    }
 
     // signatureSize = seqs[0][0].size();
     default_random_engine rng;
@@ -114,7 +66,6 @@ int primary_tree_main(int argc, char *argv[])
     {
         cap = seqCount;
     }
-    setTreeMeta(args);
 
     fprintf(stderr, "Loaded %zu seqs...signatureSize %zu\n", seqCount, signatureSize);
     clusters = clusterSignatures<primary_tree_type, cell_type>(seqs, seqCount, signatureSize);

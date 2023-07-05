@@ -70,7 +70,7 @@ struct tt_data
 };
 
 template <typename cmdline_type>
-void setTreeMeta(cmdline_type args)
+void setArgs(cmdline_type args)
 {
     tree_meta.readTree_ = args.topology_in_given;
     tree_meta.writeTree_ = args.topology_out_given;
