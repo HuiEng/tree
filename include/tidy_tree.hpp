@@ -30,8 +30,6 @@ size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
 bool print_ = false;
 
-
-
 struct tt_data
 {
     std::bitset<8> statuses;
@@ -2049,14 +2047,17 @@ public:
         return node;
     }
 
+    // return tighest cluster if similarity around the same for all childre (within 5%)
     inline size_t searchBest(const_s_type signature, size_t node = 0)
     {
         size_t dest = 0;
         double max_similarity = 0;
+        double avg_similarity = 0;
 
         for (size_t child : childLinks[node])
         {
             double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            avg_similarity += similarity;
             printMsg(" (%zu, %.2f) ", child, similarity);
 
             if (similarity > max_similarity)
@@ -2066,6 +2067,21 @@ public:
             }
         }
         printMsg("\n>>>%zu\n", dest);
+
+        if (max_similarity - (avg_similarity / childCounts[node]) < 0.05)
+        {
+            double max_priority = 0;
+            for (size_t child : childLinks[node])
+            {
+                double p = priority[child];
+                if (p > max_priority)
+                {
+                    max_priority = p;
+                    dest = child;
+                }
+            }
+            printMsg("--- Updated dest %zu\n", dest);
+        }
 
         if (isBranchNode[dest])
         {
@@ -2309,9 +2325,10 @@ public:
 
     size_t reinsert(const_s_type signature, size_t idx)
     {
-        // size_t node = search(signature);
-        size_t node = searchBestSubtree(signature);
-        // size_t node = search2(signature);
+        // // size_t node = search(signature);
+        // size_t node = searchBestSubtree(signature);
+        // // size_t node = search2(signature);
+        size_t node = searchBest(signature);
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
         return node;
