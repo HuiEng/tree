@@ -1,6 +1,7 @@
 #include <random>
 #include "tree_main_cmdline.hpp"
 #include "sec_tree.hpp"
+#include "cluster.hpp"
 // #include "stats.hpp"
 
 typedef sec_tree tree_type;

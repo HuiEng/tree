@@ -387,6 +387,7 @@ public:
   bool iteration_given;
   bool multiple_arg;
   bool single_arg;
+  bool skip_arg;
 
   enum
   {
@@ -397,7 +398,7 @@ public:
 
   tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                         minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
-                        input_given(false), single_arg(false),
+                        input_given(false), single_arg(false), skip_arg(false),
                         minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                         random_arg(false), iteration_arg(0), seed_arg(0),
                         topology_in_given(false), topology_in_arg(""),
@@ -411,7 +412,7 @@ public:
 
   tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                                               minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
-                                              input_given(false), single_arg(false),
+                                              input_given(false), single_arg(false), skip_arg(false),
                                               minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                               random_arg(false), iteration_arg(0), seed_arg(0),
                                               topology_in_given(false), topology_in_arg(""),
@@ -430,6 +431,7 @@ public:
         {"input", 1, 0, 'i'},
         {"debug", 0, 0, DEBUG_OPT},
         {"print", 0, 0, 'p'},
+        {"skip", 0, 0, 's'},
         {"tag", 1, 0, 'T'},
         {"capacity", 1, 0, 'C'},
         {"size_cap", 1, 0, 'c'},
@@ -444,7 +446,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:C:R:dfI:q:w:S:L:m:T:pfF:M";
+    static const char *short_options = "hVi:o:c:C:R:dfI:q:w:sS:L:m:T:pfF:M";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -509,6 +511,9 @@ public:
       case 'w':
         topology_out_given = true;
         topology_out_arg = optarg;
+        break;
+      case 's':
+        skip_arg = true;
         break;
       case 'L':
         split_threshold_given = true;
@@ -635,6 +640,7 @@ public:
            " -c, --size_cap                           Only cluster the first c seqs [default=10000]\n"
            " -q, --topology_in                        Read tree topology from this folder [must end with '/']\n"
            " -w, --topology_out                       Print tree topology into this folder [must end with '/']\n"
+           " -s, --skip                               skip to reinsertion step, must use with -q\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
            " -R,                                      inserting seqs in random order [defalut seed=0]\n"

@@ -1,12 +1,13 @@
 // int primary_tree_main(int argc, char *argv[]) { return 0; }
 #include <random>
-#include "primary_tree_main_cmdline.hpp"
+#include "tree_main_cmdline.hpp"
 #include "primary_tree.hpp"
+#include "cluster.hpp"
 // #include "stats.hpp"
 
 typedef primary_tree primary_tree_type;
 using namespace std;
-static primary_tree_main_cmdline args; // Command line switches and arguments
+static tree_main_cmdline args; // Command line switches and arguments
 
 int primary_tree_main(int argc, char *argv[])
 {
