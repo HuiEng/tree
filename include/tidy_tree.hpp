@@ -119,7 +119,21 @@ public:
 
     virtual double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i) { return 0; }
 
-    virtual double calcSimilarityWrap(const_s_type a, const_s_type b, bool isRoot) { return 0; }
+    virtual double calcSimilarityWrap(const_s_type a, const_s_type b) { return 0; }
+
+    virtual double calcOverlapWrap(const_s_type a, const_s_type b) { return 0; }
+
+    double calcScore(const_s_type a, const_s_type b, bool isRoot)
+    {
+        if (isRoot)
+        {
+            return calcOverlapWrap(a, b);
+        }
+        else
+        {
+            return calcSimilarityWrap(a, b);
+        }
+    }
 
     virtual sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s = 0) { return returnEmpy<sVec_type>(); }
 
@@ -1063,27 +1077,6 @@ public:
         return children;
     }
 
-    inline tt_data getStatusRoot(const_s_type signature, vector<size_t> roots)
-    {
-        tt_data dt;
-        for (size_t child : roots)
-        {
-            ///???
-            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
-            printMsg("(root %zu, %.2f, %.2f)", child, priority[child], similarity);
-            if (similarity > priority[child])
-            {
-                if (similarity > dt.max_root_similarity)
-                {
-                    dt.max_root_similarity = similarity;
-                    dt.dest_root = child;
-                }
-                dt.statuses.set(6);
-            }
-        }
-        return dt;
-    }
-
     inline tt_data getStatus(const_s_type signature, size_t node)
     {
         tt_data dt;
@@ -1102,7 +1095,7 @@ public:
 
             if (isRootNode[child])
             { ///???
-                similarity = calcSimilarityWrap(getMeanSig(child), signature);
+                similarity = calcOverlapWrap(getMeanSig(child), signature);
                 printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
                 if (similarity > priority[child])
                 {
@@ -1863,7 +1856,7 @@ public:
         size_t best_root = 0;
         for (size_t child : childLinks[node])
         {
-            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            double similarity = calcOverlapWrap(getMeanSig(child), signature);
 
             if (similarity + split_node_threshold >= priority[child])
             {
@@ -1920,8 +1913,7 @@ public:
             double max_similarity = 0;
             for (size_t i = 0; i < clusterCount; i++)
             {
-                // double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
-                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);//?
+                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
                 printMsg("%zu, %f\n", i, similarity);
                 if (similarity > max_similarity)
                 {
@@ -1978,7 +1970,6 @@ public:
             double max_similarity = 0;
             for (size_t i = 0; i < clusterCount; i++)
             {
-                // double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
                 double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
                 printMsg("%zu, %f\n", i, similarity);
                 if (similarity > max_similarity)
@@ -2057,7 +2048,7 @@ public:
 
         for (size_t child : childLinks[node])
         {
-            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            double similarity = calcScore(getMeanSig(child), signature, isRootNode[child]);
             printMsg(" (%zu, %.2f) ", child, similarity);
 
             if (similarity > max_similarity)
@@ -2068,35 +2059,6 @@ public:
         }
         printMsg("\n>>>%zu\n", dest);
 
-        // for (size_t child : childLinks[node])
-        // {
-        //     double similarity = calcSimilarityWrap(getMeanSig(child), signature);
-        //     avg_similarity += similarity;
-        //     printMsg(" (%zu, %.2f) ", child, similarity);
-
-        //     if (similarity > max_similarity)
-        //     {
-        //         max_similarity = similarity;
-        //         dest = child;
-        //     }
-        // }
-        // printMsg("\n>>>%zu\n", dest);
-
-        // if (max_similarity - (avg_similarity / childCounts[node]) < 0.05)
-        // {
-        //     double max_priority = 0;
-        //     for (size_t child : childLinks[node])
-        //     {
-        //         double p = priority[child];
-        //         if (p > max_priority)
-        //         {
-        //             max_priority = p;
-        //             dest = child;
-        //         }
-        //     }
-        //     printMsg("--- Updated dest %zu\n", dest);
-        // }
-
         if (isBranchNode[dest])
         {
             return searchBest(signature, dest);
@@ -2105,32 +2067,6 @@ public:
         {
             return dest;
         }
-    }
-
-    inline size_t deepFirstSearch(const_s_type signature, size_t node = 0)
-    {
-        if (isBranchNode[node])
-        {
-            return searchBest(signature, node);
-        }
-        size_t dest = 0;
-        double max_similarity = 0;
-        printMsg("\n------------- %zu\n", node);
-
-        for (size_t subtree : childLinks[node])
-        {
-            size_t candidate = searchBestSubtree(signature, subtree);
-            double similarity = calcSimilarityWrap(getMeanSig(candidate), signature);
-            printMsg(" (%zu, %.2f) ", candidate, similarity);
-
-            if (similarity > max_similarity)
-            {
-                max_similarity = similarity;
-                dest = candidate;
-            }
-        }
-
-        return dest;
     }
 
     inline size_t searchBestSubtree(const_s_type signature, size_t node = 0)
@@ -2148,7 +2084,7 @@ public:
         for (size_t subtree : children[0])
         {
             size_t candidate = searchBestSubtree(signature, subtree);
-            double similarity = calcSimilarityWrap(getMeanSig(candidate), signature);
+            double similarity = calcOverlapWrap(getMeanSig(candidate), signature);
 
             if (similarity > max_similarity)
             {
@@ -2180,7 +2116,7 @@ public:
 
         for (size_t child : childLinks[node])
         {
-            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            double similarity = calcScore(getMeanSig(child), signature, isRootNode[child]);
             printMsg(" <%zu,%.2f> ", child, similarity);
 
             if (similarity > best_similarity)
@@ -2222,7 +2158,7 @@ public:
                 if (isBranchNode[child])
                 {
                     leaf = search(signature, child);
-                    similarity = calcSimilarityWrap(getMeanSig(child), signature);
+                    similarity = calcScore(getMeanSig(child), signature, isRootNode[child]);
                     // similarity += calcOverlap(signature, getMeanSig(leaf));
                     printMsg("> leaf %zu\n", leaf);
                 }
@@ -2247,7 +2183,7 @@ public:
 
         for (size_t child : children)
         {
-            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            double similarity = calcScore(getMeanSig(child), signature, isRootNode[child]);
             if (similarity > best_similarity)
             {
                 best_similarity = similarity;
@@ -2287,7 +2223,7 @@ public:
                 if (isBranchNode[child])
                 {
                     leaf = search(signature, child);
-                    similarity = calcSimilarityWrap(getMeanSig(child), signature);
+                    similarity = calcScore(getMeanSig(child), signature, isRootNode[child]);
                     // similarity += calcOverlap(signature, getMeanSig(leaf));
                     printMsg("> leaf %zu\n", leaf);
                 }
