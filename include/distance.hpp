@@ -345,11 +345,18 @@ distance_type calcSimilarity(seq_type a, seq_type b)
     // return calcInter(a, b) * 1.0 / countSetBits(b);
 }
 
-double calcOverlap(seq_type query, seq_type refer)
+// find the number of overlapping bits divide by the number of bits inthe refer_sig
+double calcOverlap(seq_type query_sig, seq_type refer_sig)
 {
-    seq_type x = getMinimiseSet(query);
-    seq_type y = getMinimiseSet(refer);
-    return calcInter(x, y) * 1.0 / countSetBits(x);
+    seq_type x = getMinimiseSet(query_sig);
+    seq_type y = getMinimiseSet(refer_sig);
+    return calcInter(x, y) * 1.0 / countSetBits(y);
+}
+
+// find the number of overlapping bits divide by the number of bits inthe refer_sig
+double calcOverlapSingle(vector<cell_type> query_sig, vector<cell_type> refer_sig)
+{
+    return calcSingleInter(query_sig, refer_sig) * 1.0 / countSingleSetBits(refer_sig);
 }
 
 vector<cell_type> doSingleUnion(vector<cell_type> a, vector<cell_type> b)

@@ -28,12 +28,11 @@
 #include <vector>
 #include <fstream>
 
-
 typedef unsigned char cell_type;
 
 void writeInt(std::ostream &os, unsigned long long int i)
 {
-    os.write(reinterpret_cast<const char *>(&i), sizeof(i));
+   os.write(reinterpret_cast<const char *>(&i), sizeof(i));
 }
 
 size_t BFintersect(const cell_type *a, const cell_type *b, size_t signatureSize)
@@ -86,6 +85,16 @@ size_t countSetBits(const cell_type *a, size_t signatureSize)
    }
    return c;
 }
+
+
+// find the number of overlapping bits divide by the number of bits inthe refer_sig
+double calcOverlap(const cell_type *query_sig, const cell_type *refer_sig, size_t signatureSize)
+{
+   double i = BFintersect(query_sig, refer_sig, signatureSize);
+   double n = countSetBits(refer_sig, signatureSize);
+   return i / n;
+}
+
 
 static const std::size_t bits_per_char = 0x08; // 8 bits in 1 char(unsigned)
 

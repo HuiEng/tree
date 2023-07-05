@@ -112,14 +112,22 @@ public:
         matrices[node].insert(matrices[node].end(), signature, signature + signatureSize);
     }
 
-    double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0)
+    double calcSimilarityWrap(const_s_type a, const_s_type b, bool isRoot)
     {
-        return calcSimilarity(a, b, signatureSize);
+        if (isRoot)
+        {
+            return calcOverlap(a, b, signatureSize);
+        }
+        else
+        {
+            return calcSimilarity(a, b, signatureSize);
+        }
     }
 
+    //?
     double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i)
     {
-        return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize]);
+        return calcSimilarityWrap(&means[node * signatureSize], &signatures[i * signatureSize], false);
     }
 
     sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s)
@@ -244,7 +252,7 @@ public:
 
         for (size_t i = 0; i < temp_matrix.size(); i += signatureSize)
         {
-            double distance = calcSimilarityWrap(meanSig, &temp_matrix[i]);
+            double distance = calcSimilarityWrap(meanSig, &temp_matrix[i], false); //?
             sumDistance += distance;
         }
         return sumDistance / seqCount;

@@ -119,7 +119,7 @@ public:
 
     virtual double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i) { return 0; }
 
-    virtual double calcSimilarityWrap(const_s_type a, const_s_type b, size_t signatureSize_ = 0) { return 0; }
+    virtual double calcSimilarityWrap(const_s_type a, const_s_type b, bool isRoot) { return 0; }
 
     virtual sVec_type createRandomSigs(size_t node, size_t clusterCount, size_t s = 0) { return returnEmpy<sVec_type>(); }
 
@@ -1921,7 +1921,7 @@ public:
             for (size_t i = 0; i < clusterCount; i++)
             {
                 // double similarity = calcSimilarityWrap(temp_centroids[i], getMeanSig(child));
-                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
+                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);//?
                 printMsg("%zu, %f\n", i, similarity);
                 if (similarity > max_similarity)
                 {
@@ -2052,12 +2052,12 @@ public:
     {
         size_t dest = 0;
         double max_similarity = 0;
-        double avg_similarity = 0;
+        // double avg_similarity = 0;
+        vector<size_t> candidates;
 
         for (size_t child : childLinks[node])
         {
             double similarity = calcSimilarityWrap(getMeanSig(child), signature);
-            avg_similarity += similarity;
             printMsg(" (%zu, %.2f) ", child, similarity);
 
             if (similarity > max_similarity)
@@ -2068,20 +2068,34 @@ public:
         }
         printMsg("\n>>>%zu\n", dest);
 
-        if (max_similarity - (avg_similarity / childCounts[node]) < 0.05)
-        {
-            double max_priority = 0;
-            for (size_t child : childLinks[node])
-            {
-                double p = priority[child];
-                if (p > max_priority)
-                {
-                    max_priority = p;
-                    dest = child;
-                }
-            }
-            printMsg("--- Updated dest %zu\n", dest);
-        }
+        // for (size_t child : childLinks[node])
+        // {
+        //     double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+        //     avg_similarity += similarity;
+        //     printMsg(" (%zu, %.2f) ", child, similarity);
+
+        //     if (similarity > max_similarity)
+        //     {
+        //         max_similarity = similarity;
+        //         dest = child;
+        //     }
+        // }
+        // printMsg("\n>>>%zu\n", dest);
+
+        // if (max_similarity - (avg_similarity / childCounts[node]) < 0.05)
+        // {
+        //     double max_priority = 0;
+        //     for (size_t child : childLinks[node])
+        //     {
+        //         double p = priority[child];
+        //         if (p > max_priority)
+        //         {
+        //             max_priority = p;
+        //             dest = child;
+        //         }
+        //     }
+        //     printMsg("--- Updated dest %zu\n", dest);
+        // }
 
         if (isBranchNode[dest])
         {
