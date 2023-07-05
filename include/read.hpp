@@ -250,7 +250,7 @@ unsigned long long int readListSample(const string listFile, vector<cell_type> &
             if (i == idx)
             {
                 inputFiles.push_back(file);
-                fprintf(stderr, "%zu\n", idx);
+                // fprintf(stderr, "%zu\n", idx);
                 idx = indices.back();
                 indices.pop_back();
             }

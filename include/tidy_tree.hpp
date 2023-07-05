@@ -102,7 +102,6 @@ string setArgs(cmdline_type args)
     }
     else if (args.single_arg)
     {
-        cerr << "here\n";
         if (args.multiple_arg)
         {
             split_threshold = getSplitThresholdListSingle(inputFile);
@@ -172,7 +171,7 @@ string setArgs(cmdline_type args)
     {
         fileName = args.tag_arg + fileName;
     }
-    
+
     return (fileName + ".txt");
 }
 
