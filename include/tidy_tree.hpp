@@ -72,6 +72,57 @@ struct tt_data
 template <typename cmdline_type>
 void setArgs(cmdline_type args)
 {
+    split_threshold = 0.5;
+    stay_threshold = 0.8;
+    minimiser_match_threshold = 4;
+
+    //?
+    if (!args.input_given)
+    {
+        cout << "No input and/or query given! Exiting...\n";
+        exit(1);
+    }
+
+    if (args.random_arg)
+    {
+        random_ = true;
+        seed = args.seed_arg;
+    }
+
+    if (args.stay_threshold_given)
+    {
+        stay_threshold = args.stay_threshold_arg;
+    }
+
+    if (args.minimiser_match_given)
+    {
+        minimiser_match_threshold = args.minimiser_match_arg;
+        fprintf(stderr, "minimiser_match threshold: %zu\n", minimiser_match_threshold);
+    }
+
+    cap = args.sizeCap_arg;
+    if (args.iteration_given)
+    {
+        iteration_given = true;
+        iteration = args.iteration_arg;
+    }
+
+    if (args.capacity_given)
+    {
+        partree_capacity = args.capacity_arg;
+        fprintf(stderr, "partree_capacity: %zu\n", partree_capacity);
+    }
+
+    debug_ = args.debug_arg;
+    print_ = args.print_arg;
+    force_split_ = args.force_split_arg;
+    if (args.tree_order_given)
+    {
+        tree_order = args.tree_order_arg;
+        fprintf(stderr, "tree_order: %zu\n", tree_order);
+    }
+
+
     tree_meta.readTree_ = args.topology_in_given;
     tree_meta.writeTree_ = args.topology_out_given;
     tree_meta.inputTreePath = args.topology_in_arg;
