@@ -209,6 +209,9 @@ meta<-getMeta(paste(path,"list.txt",sep=""),
 plotTwo(cluQ_prim,cluQ_ktree,2)
 plotTwo(cluQ_prim_f,cluQ_sigClust,2)
 
+plotTwo(cluQ_prim,cluQ_prim_f,2)
+plotTwo(cluQ_prim_f,cluQ_ktree,2)
+
 histo<-read.csv(paste(path,"silva/histo.txt",sep=""),header = FALSE)
 ggplot(histo)+geom_bar(aes(x=V1,y=V2),stat="identity")
 

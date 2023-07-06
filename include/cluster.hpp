@@ -145,13 +145,14 @@ string readTreeLine(string s, string folder, tree_type &tree)
 {
     int parent_temp = 0;
     size_t parent = 0;
+    double priority = 0;
     size_t child = 0;
     string delimiter = ">";
 
     size_t pos = s.find(delimiter);
     string node = s.substr(0, pos);
     // sscanf(node.c_str(), "%zu", &parent);
-    sscanf(node.c_str(), "%d", &parent_temp);
+    sscanf(node.c_str(), "%d(%lf)", &parent_temp, &priority);
     parent = parent_temp;
     if (parent_temp < 0)
     {
@@ -174,7 +175,7 @@ string readTreeLine(string s, string folder, tree_type &tree)
         // readSignatures((folder + childStr + ".bin"), signature);
         // tree.readNode(parent, child, &signature[0]);
         auto signature = tree.readInput((folder + childStr + ".bin").c_str());
-        tree.readNode(parent, child, signature);
+        tree.readNode(parent, child, signature, priority);
     }
     tree.updatePriority(parent);
 
@@ -307,7 +308,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
         }
-        tree.removeAmbi();
+        // tree.removeAmbi();
         // tree.printTreeJson(stderr);
     }
     else
@@ -330,13 +331,6 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             }
         }
 
-        if (tree_meta.writeTree_)
-        {
-            string outFile = tree_meta.outputTreePath;
-            FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
-            tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
-        }
-
         // for debugging
         if (iteration_given)
         {
@@ -347,9 +341,17 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             singleton = 0;
             // tree.trim();
             tree.removeAmbi();
-            singleton = 2;
+            singleton = 1;
             printMsg("\n\nReinserting ambi (all)\n");
             tree.prepReinsert();
+
+            if (tree_meta.writeTree_)
+            {
+                // string outFile = tree_meta.outputTreePath;
+                // FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+                tree.printTree(tree_meta.outputTreePath, insertionList);
+            }
+            
             for (size_t i = 0; i < cap; i++)
             {
                 size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
@@ -360,11 +362,11 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
 
             // tree.printTreeJson(stderr);
         }
-        else if (tree_meta.readTree_)
-        {
-            singleton = 0;
-            tree.removeAmbi();
-        }
+        // else if (tree_meta.readTree_)
+        // {
+        //     singleton = 0;
+        //     tree.removeAmbi();
+        // }
     }
 
     for (size_t run = 0; run < iteration; run++)

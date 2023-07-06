@@ -356,7 +356,7 @@ public:
         {
             fprintf(stream, "-");
         }
-        fprintf(stream, "%zu>", node);
+        fprintf(stream, "%zu(%.2f)>", node, priority[node]);
         for (size_t child : childLinks[node])
         {
             fprintf(stream, "%zu,", child);
@@ -372,15 +372,17 @@ public:
         }
     }
 
-    void printTree(FILE *stream, vector<size_t> &insertionList, string outfolder = "")
+    void printTree(string outfolder, vector<size_t> &insertionList)
     {
-        fprintf(stream, "%zu\n%zu\n", signatureSize, getNewNodeIdx(insertionList));
-        printTree(stream, outfolder, 0);
+        FILE *tFile = fopen((outfolder + "tree.txt").c_str(), "w");
+        fprintf(tFile, "%zu\n%zu\n", signatureSize, getNewNodeIdx(insertionList));
+        printTree(tFile, outfolder, 0);
     }
 
-    void readNode(size_t parent, size_t child, const_s_type signature)
+    void readNode(size_t parent, size_t child, const_s_type signature, double priority_)
     {
         isBranchNode[parent] = 1;
+        priority[parent] = priority_;
         parentLinks[child] = parent;
         childLinks[parent].push_back(child);
         childCounts[parent]++;
