@@ -143,13 +143,21 @@ string setArgs(cmdline_type args)
 template <typename tree_type>
 string readTreeLine(string s, string folder, tree_type &tree)
 {
+    int parent_temp = 0;
     size_t parent = 0;
     size_t child = 0;
     string delimiter = ">";
 
     size_t pos = s.find(delimiter);
     string node = s.substr(0, pos);
-    sscanf(node.c_str(), "%zu", &parent);
+    // sscanf(node.c_str(), "%zu", &parent);
+    sscanf(node.c_str(), "%d", &parent_temp);
+    parent = parent_temp;
+    if (parent_temp < 0)
+    {
+        parent = parent_temp * -1;
+        tree.isRootNode[parent] = 1;
+    }
     s.erase(0, pos + 1);
     // cout << "Node: " << node << endl;
 
@@ -269,6 +277,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     if (tree_meta.readTree_)
     {
         offset = readTree(tree_meta.inputTreePath, tree);
+        tree.printTreeJson(stderr);
     }
 
     // node 0 reserved for root, node 1 reserved for leaves idx
@@ -299,8 +308,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             clusters[foo[i]] = clus;
         }
         tree.removeAmbi();
-        tree.printTreeJson(stderr);
-
+        // tree.printTreeJson(stderr);
     }
     else
     {
@@ -385,16 +393,16 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     }
     tree.updateTree();
 
-    FILE *pFile = fopen("nodeDistance.txt", "w");
-    tree.printNodeDistance(pFile, seqs, clusters);
+    // FILE *pFile = fopen("nodeDistance.txt", "w");
+    // tree.printNodeDistance(pFile, seqs, clusters);
 
-    // Recursively destroy all locks
-    tree.destroyLocks();
+    // // Recursively destroy all locks
+    // tree.destroyLocks();
 
-    tree.printTreeJson(stdout);
-    FILE *hFile = fopen("hierarchy.txt", "w");
-    fprintf(hFile, "parent,child,rank\n");
-    tree.outputHierarchy(hFile);
+    // tree.printTreeJson(stdout);
+    // FILE *hFile = fopen("hierarchy.txt", "w");
+    // fprintf(hFile, "parent,child,rank\n");
+    // tree.outputHierarchy(hFile);
 
     if (tree_meta.writeTree_)
     {
@@ -402,6 +410,8 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
         tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
     }
+
+    tree.printTreeJson(stdout);
 
     return clusters;
 }

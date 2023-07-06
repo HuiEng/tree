@@ -170,28 +170,44 @@ meta<-getMeta(paste(path,"list.txt",sep=""),
 # dt<-plotEnt(paste(path,"list-s80-l18-I4.txt",sep=""),meta)
 
 
-sigClust<-read.csv(paste(path,"silva/sigClust.txt",sep=""),header=FALSE)
-colnames(sigClust)<-c("seqID","cluster")
-sigClust<-merge(meta,sigClust)
-
-dt<-plotEnt(paste(path,"silva/mbt.txt",sep=""),meta)
-cluQ_prim<-cluQuality(dt)
-ggplot(cluQ_prim)+
-  geom_point(aes(x=clu,y=ent,size=size))
 
 
-ktree<-read.csv(paste(path,"cluster.txt",sep=""),header=FALSE)
-colnames(ktree)<-c("seqID","cluster")
-ktree<-merge(meta,ktree)
-cluQ_ktree<-cluQuality(ktree)
-ggplot(cluQ_ktree)+
-  geom_point(aes(x=clu,y=ent,size=size))
+{
+  dt<-plotEnt(paste(path,"mbt.txt",sep=""),meta)
+  cluQ_prim<-cluQuality(dt)
+  ggplot(cluQ_prim)+
+    geom_point(aes(x=clu,y=ent,size=size))
+}
 
-cluQ_sigClust<-cluQuality(sigClust)
-ggplot(cluQ_sigClust)+
-  geom_point(aes(x=clu,y=ent,size=size))
+{
+  dt_f<-plotEnt(paste(path,"mbt-f.txt",sep=""),meta)
+  cluQ_prim_f<-cluQuality(dt_f)
+  ggplot(cluQ_prim_f)+
+    geom_point(aes(x=clu,y=ent,size=size))
+}
+
+
+{
+  ktree<-read.csv(paste(path,"cluster.txt",sep=""),header=FALSE)
+  colnames(ktree)<-c("seqID","cluster")
+  ktree<-merge(meta,ktree)
+  cluQ_ktree<-cluQuality(ktree)
+  ggplot(cluQ_ktree)+
+    geom_point(aes(x=clu,y=ent,size=size))
+  
+}
+
+{
+  sigClust<-read.csv(paste(path,"sigClust.txt",sep=""),header=FALSE)
+  colnames(sigClust)<-c("seqID","cluster")
+  sigClust<-merge(meta,sigClust)
+  cluQ_sigClust<-cluQuality(sigClust)
+  ggplot(cluQ_sigClust)+
+    geom_point(aes(x=clu,y=ent,size=size))
+}
 
 plotTwo(cluQ_prim,cluQ_ktree,2)
+plotTwo(cluQ_prim_f,cluQ_sigClust,2)
 
 histo<-read.csv(paste(path,"silva/histo.txt",sep=""),header = FALSE)
 ggplot(histo)+geom_bar(aes(x=V1,y=V2),stat="identity")
@@ -221,7 +237,7 @@ cluQ_ktree<-cluQuality(ktree,water,4,FALSE)
 }
 
 {
-  prim<-plotEnt(paste("C://DataCopied/Research/tree/data/test/list-s80-l18.txt",sep=""))
+  prim<-plotEnt(paste("C://DataCopied/Research/tree/data/test/toy-k9-w50-s3-s80-l9.txt",sep=""))
   
   # prim<-plotEnt(paste(path,"-new/toy-single-k9-w100-s5-s80-l9.txt",sep=""))
   cluQ_prim<-cluQuality(prim,water,4,FALSE)

@@ -352,6 +352,10 @@ public:
 
     void printTree(FILE *stream, string outfolder, size_t node)
     {
+        if (isRootNode[node])
+        {
+            fprintf(stream, "-");
+        }
         fprintf(stream, "%zu>", node);
         for (size_t child : childLinks[node])
         {
