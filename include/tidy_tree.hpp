@@ -2044,6 +2044,7 @@ public:
 
     inline size_t searchBestNonRoot(const_s_type signature, size_t node = 0)
     {
+        printMsg("\nSearch Best Non Root %zu\n ", node);
         size_t dest = 0;
         double max_similarity = 0;
         // double avg_similarity = 0;
@@ -2054,7 +2055,7 @@ public:
             double similarity = calcSimilarityWrap(getMeanSig(child), signature);
             printMsg(" (%zu, %.2f) ", child, similarity);
 
-            if (similarity > max_similarity)
+            if (similarity >= max_similarity)
             {
                 max_similarity = similarity;
                 dest = child;
@@ -2075,6 +2076,7 @@ public:
     // grandchildren may be mix, use searchBest() to check
     inline size_t searchBestRoot(const_s_type signature, size_t node = 0)
     {
+        printMsg("\nSearch Best Root %zu\n ", node);
         size_t dest = 0;
         double max_similarity = 0;
         // double avg_similarity = 0;
@@ -2085,7 +2087,7 @@ public:
             double similarity = calcOverlapWrap(getMeanSig(child), signature);
             printMsg(" (%zu, %.2f) ", child, similarity);
 
-            if (similarity > max_similarity)
+            if (similarity >= max_similarity)
             {
                 max_similarity = similarity;
                 dest = child;
@@ -2118,6 +2120,7 @@ public:
         {
             return searchBestRoot(signature, node);
         }
+        printMsg("\nSearch Best Mix %zu\n ", node);
 
         double dest_similarity = 0;
 
@@ -2129,7 +2132,7 @@ public:
             double similarity = calcSimilarityWrap(getMeanSig(child), signature);
             printMsg(" (%zu, %.2f) ", child, similarity);
 
-            if (similarity > max_similarity)
+            if (similarity >= max_similarity)
             {
                 max_similarity = similarity;
                 dest = child;
@@ -2158,7 +2161,7 @@ public:
             double similarity = calcOverlapWrap(getMeanSig(root_), signature);
             printMsg(" (%zu, %.2f) ", root_, similarity);
 
-            if (similarity > max_similarity_root)
+            if (similarity >= max_similarity_root)
             {
                 max_similarity_root = similarity;
                 best_root = root_;

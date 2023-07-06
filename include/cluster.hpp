@@ -330,6 +330,13 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             }
         }
 
+        if (tree_meta.writeTree_)
+        {
+            string outFile = tree_meta.outputTreePath;
+            FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+            tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
+        }
+
         // for debugging
         if (iteration_given)
         {
@@ -404,12 +411,12 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     // fprintf(hFile, "parent,child,rank\n");
     // tree.outputHierarchy(hFile);
 
-    if (tree_meta.writeTree_)
-    {
-        string outFile = tree_meta.outputTreePath;
-        FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
-        tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
-    }
+    // if (tree_meta.writeTree_)
+    // {
+    //     string outFile = tree_meta.outputTreePath;
+    //     FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+    //     tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
+    // }
 
     tree.printTreeJson(stdout);
 
