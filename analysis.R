@@ -164,23 +164,25 @@ cluQ_sigClust<-cluQualityGT(sigClust)
 
 ######################## silva ##################################
 source("C://DataCopied/Research/R/silvaFunctions.R")
-path<-"C://DataCopied/Research/tree/data/test/"
+path<-"C://DataCopied/Research/tree/data/test/silva/"
 meta<-getMeta(paste(path,"list.txt",sep=""),
             paste(path,"SILVA_132_SSURef_Nr99_tax_silva-controlled-metadata.txt",sep=""))
-dt<-plotEnt(paste(path,"list-s80-l18-I4.txt",sep=""),meta)
+# dt<-plotEnt(paste(path,"list-s80-l18-I4.txt",sep=""),meta)
 
-ktree<-read.csv(paste(path,"cluster.txt",sep=""),header=FALSE)
-colnames(ktree)<-c("seqID","cluster")
-ktree<-merge(meta,ktree)
 
 sigClust<-read.csv(paste(path,"silva/sigClust.txt",sep=""),header=FALSE)
 colnames(sigClust)<-c("seqID","cluster")
 sigClust<-merge(meta,sigClust)
 
+dt<-plotEnt(paste(path,"silva/mbt.txt",sep=""),meta)
 cluQ_prim<-cluQuality(dt)
 ggplot(cluQ_prim)+
   geom_point(aes(x=clu,y=ent,size=size))
 
+
+ktree<-read.csv(paste(path,"cluster.txt",sep=""),header=FALSE)
+colnames(ktree)<-c("seqID","cluster")
+ktree<-merge(meta,ktree)
 cluQ_ktree<-cluQuality(ktree)
 ggplot(cluQ_ktree)+
   geom_point(aes(x=clu,y=ent,size=size))

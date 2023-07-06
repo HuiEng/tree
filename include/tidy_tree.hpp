@@ -2038,8 +2038,7 @@ public:
         return node;
     }
 
-    // return tighest cluster if similarity around the same for all childre (within 5%)
-    inline size_t searchBest(const_s_type signature, size_t node = 0)
+    inline size_t searchBestNonRoot(const_s_type signature, size_t node = 0)
     {
         size_t dest = 0;
         double max_similarity = 0;
@@ -2048,7 +2047,38 @@ public:
 
         for (size_t child : childLinks[node])
         {
-            double similarity = calcScore(getMeanSig(child), signature, isRootNode[child]);
+            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            printMsg(" (%zu, %.2f) ", child, similarity);
+
+            if (similarity > max_similarity)
+            {
+                max_similarity = similarity;
+                dest = child;
+            }
+        }
+        printMsg("\n>>>%zu\n", dest);
+
+        if (isBranchNode[dest])
+        {
+            return searchBestNonRoot(signature, dest);
+        }
+        else
+        {
+            return dest;
+        }
+    }
+
+    // grandchildren may be mix, use searchBest() to check
+    inline size_t searchBestRoot(const_s_type signature, size_t node = 0)
+    {
+        size_t dest = 0;
+        double max_similarity = 0;
+        // double avg_similarity = 0;
+        vector<size_t> candidates;
+
+        for (size_t child : childLinks[node])
+        {
+            double similarity = calcOverlapWrap(getMeanSig(child), signature);
             printMsg(" (%zu, %.2f) ", child, similarity);
 
             if (similarity > max_similarity)
@@ -2062,6 +2092,85 @@ public:
         if (isBranchNode[dest])
         {
             return searchBest(signature, dest);
+        }
+        else
+        {
+            return dest;
+        }
+    }
+
+    // decide if children contains roots only, non-roots only or mix
+    // for mix, solve non roots first then solve roots
+    // compare result for both and return best
+    inline size_t searchBest(const_s_type signature, size_t node = 0)
+    {
+        vector<vector<size_t>> children = separateRootChildren(node);
+        // if no root
+        if (children[0].size() == 0)
+        {
+            return searchBestNonRoot(signature, node);
+        }
+        else if (children[1].size() == 0)
+        {
+            return searchBestRoot(signature, node);
+        }
+
+        double dest_similarity = 0;
+
+        // do non root, include super, branch and leaf
+        size_t dest = 0;
+        double max_similarity = 0;
+        for (size_t child : children[1])
+        {
+            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            printMsg(" (%zu, %.2f) ", child, similarity);
+
+            if (similarity > max_similarity)
+            {
+                max_similarity = similarity;
+                dest = child;
+            }
+        }
+
+        if (isBranchNode[dest])
+        {
+            dest = searchBestNonRoot(signature, dest);
+        }
+
+        dest_similarity = calcSimilarityWrap(getMeanSig(dest), signature);
+
+        // early pruning
+        if (dest_similarity >= stay_threshold)
+        {
+            return dest;
+        }
+
+        // do root
+        size_t best_root = 0;
+        double max_similarity_root = 0;
+
+        for (size_t root_ : children[0])
+        {
+            double similarity = calcOverlapWrap(getMeanSig(root_), signature);
+            printMsg(" (%zu, %.2f) ", root_, similarity);
+
+            if (similarity > max_similarity_root)
+            {
+                max_similarity_root = similarity;
+                best_root = root_;
+            }
+        }
+
+        if (isBranchNode[best_root])
+        {
+            best_root = searchBest(signature, best_root);
+        }
+
+        printMsg("\n>>>best_root: %zu, dest: %zu\n", best_root, dest);
+        max_similarity_root = calcOverlapWrap(getMeanSig(best_root), signature);
+        if (max_similarity_root > dest_similarity)
+        {
+            return best_root;
         }
         else
         {
