@@ -1482,7 +1482,7 @@ public:
             return tt(signature, insertionList, idx, dt.dest_super);
             break;
         default:
-            fprintf(stderr, "ERROR 1 bit %zu!!", idx);
+            fprintf(stderr, "ERROR 1 bit idx %zu, pos %zu!!\n", idx, pos);
             return 0;
             break;
         }
