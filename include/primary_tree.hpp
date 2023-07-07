@@ -83,22 +83,28 @@ public:
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
 
-    const_s_type readInput(const char *inputFile)
+    void readNodeSig(size_t parent, size_t child, const char *binFile)
     {
         vector<cell_type> signature;
-        readSignatures(inputFile, signature);
-        return &signature[0];
+        readSignatures(binFile, signature);
+
+        updateMeanSig(child, &signature[0]);
+        addSigToMatrix(parent, &signature[0]);
     }
 
     void printSignature(ostream &wf, size_t node)
     {
-        s_type mean = getMeanSig(node);
-        // fprintf(stderr, ">>%zu\n", node);
-        // toBinaryIdx(stderr, mean);
-        for (size_t i = 0; i < signatureSize; i++)
-        {
-            wf.write(reinterpret_cast<const char *>(mean + i), sizeof(cell_type));
-        }
+        s_type mean_ = getMeanSig(node);
+        wf.write((char *)mean_, signatureSize);
+        // printMsg("node %zu\n", node);
+        // toBinaryIdx(stderr, mean_);
+
+        // // fprintf(stderr, ">>%zu\n", node);
+        // // toBinaryIdx(stderr, mean_);
+        // for (size_t i = 0; i < signatureSize; i++)
+        // {
+        //     wf.write(reinterpret_cast<const char *>(mean_ + i), sizeof(cell_type));
+        // }
     }
 
     void updateMeanSig(size_t node, const_s_type signature)

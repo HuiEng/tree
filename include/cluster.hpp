@@ -174,10 +174,12 @@ string readTreeLine(string s, string folder, tree_type &tree)
         // vector<cell_type> signature;
         // readSignatures((folder + childStr + ".bin"), signature);
         // tree.readNode(parent, child, &signature[0]);
-        auto signature = tree.readInput((folder + childStr + ".bin").c_str());
-        tree.readNode(parent, child, signature, priority);
+        // auto signature = tree.readInput((folder + childStr + ".bin").c_str());
+        // tree.readNode(parent, child, signature, priority);
+        tree.readNode(parent, child, (folder + childStr + ".bin").c_str(), priority);
+        
     }
-    tree.updatePriority(parent);
+    // tree.updatePriority(parent);
 
     // return parent;
     return node;

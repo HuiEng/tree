@@ -111,8 +111,6 @@ public:
 
     virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
 
-    virtual const_s_type readInput(const char *inputFile) { return returnEmpy<s_type>(); }
-
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
     virtual void addSigToMatrix(size_t node, const_s_type signature) {}
@@ -388,6 +386,23 @@ public:
         childCounts[parent]++;
         updateMeanSig(child, signature);
         addSigToMatrix(parent, signature);
+    }
+
+    virtual void readNodeSig(size_t parent, size_t child, const char *binFile) {}
+
+    void readNode(size_t parent, size_t child, const char *binFile, double priority_)
+    {
+        isBranchNode[parent] = 1;
+        priority[parent] = priority_;
+        parentLinks[child] = parent;
+        childLinks[parent].push_back(child);
+        childCounts[parent]++;
+
+        readNodeSig(parent, child, binFile);
+
+        // const_s_type signature = readInput(binFile);
+        // updateMeanSig(child, signature);
+        // addSigToMatrix(parent, signature);
     }
 
     int getNodeIdx(size_t node)

@@ -83,6 +83,14 @@ public:
         return readPartitionBF(inputFile, signatureSize)[0];
     }
 
+    void readNodeSig(size_t parent, size_t child, const char *binFile)
+    {
+        const_s_type signature = readPartitionBF(binFile, signatureSize)[0];
+
+        updateMeanSig(child, signature);
+        addSigToMatrix(parent, signature);
+    }
+
     void printSignature(ostream &wf, size_t node)
     {
         s_type mean = getMeanSig(node);
