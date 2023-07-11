@@ -177,7 +177,6 @@ string readTreeLine(string s, string folder, tree_type &tree)
         // auto signature = tree.readInput((folder + childStr + ".bin").c_str());
         // tree.readNode(parent, child, signature, priority);
         tree.readNode(parent, child, (folder + childStr + ".bin").c_str(), priority);
-        
     }
     // tree.updatePriority(parent);
 
@@ -248,6 +247,34 @@ void compressClusterList(vector<size_t> &clusters)
         }
     }
     fprintf(stderr, "Output %zu clusters\n", remap.size());
+}
+
+size_t getSingleton(vector<size_t> &clusters)
+{
+    unordered_map<size_t, size_t> remap;
+    for (size_t clus : clusters)
+    {
+        if (remap.count(clus))
+        {
+            remap[clus]++;
+        }
+        else
+        {
+            remap[clus] = 1;
+        }
+    }
+
+    // for (auto &p : remap)
+    //     cerr << " " << p.first << " => " << p.second << '\n';
+
+    auto p = min_element(remap.begin(), remap.end(),
+                         [](const auto &l, const auto &r)
+                         { return l.second < r.second; });
+
+    // cerr << "min " << p->second << '\n';
+    // fprintf(stderr, "Output %zu clusters\n", remap.size());
+
+    return p->second;
 }
 
 seq_type getSeq(const vector<seq_type> &seqs, size_t i)
@@ -353,7 +380,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
                 // FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
                 tree.printTree(tree_meta.outputTreePath, insertionList);
             }
-            
+
             for (size_t i = 0; i < cap; i++)
             {
                 size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
@@ -371,8 +398,12 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         // }
     }
 
+    
+
     for (size_t run = 0; run < iteration; run++)
     {
+        if (debug_)
+            singleton = getSingleton(clusters);
         fprintf(stderr, "Iteration %zu (singleton = %zu)\n", run, singleton);
 
         // tree.trim();
@@ -391,16 +422,16 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             clusters[foo[i]] = clus;
         }
 
-        if (debug_)
-        {
-            auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
-            FILE *nFile = fopen(fileName.c_str(), "w");
-            tree.printNodeDistance(nFile, seqs, clusters);
+        // if (debug_)
+        // {
+        //     auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
+        //     FILE *nFile = fopen(fileName.c_str(), "w");
+        //     tree.printNodeDistance(nFile, seqs, clusters);
 
-            fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
-            FILE *cFile = fopen(fileName.c_str(), "w");
-            outputClusters(cFile, clusters);
-        }
+        //     fileName = "clusters-r" + to_string((size_t)(run)) + ".txt";
+        //     FILE *cFile = fopen(fileName.c_str(), "w");
+        //     outputClusters(cFile, clusters);
+        // }
     }
     tree.updateTree();
 
