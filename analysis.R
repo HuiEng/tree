@@ -240,7 +240,7 @@ cluQ_ktree<-cluQuality(ktree,water,4,FALSE)
 }
 
 {
-  prim<-plotEnt(paste("C://DataCopied/Research/tree/data/test/toy-k9-w50-s3-s80-l9.txt",sep=""))
+  prim<-plotEnt(paste("C://DataCopied/Research/tree/data/test/2w/toy-k9-w50-s3-b50-single-s80-l16.txt",sep=""))
   
   # prim<-plotEnt(paste(path,"-new/toy-single-k9-w100-s5-s80-l9.txt",sep=""))
   cluQ_prim<-cluQuality(prim,water,4,FALSE)

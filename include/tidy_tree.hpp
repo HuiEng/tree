@@ -1116,16 +1116,17 @@ public:
 
             if (isRootNode[child])
             { ///???
-                similarity = calcOverlapWrap(getMeanSig(child), signature);
+                double overlap = calcOverlapWrap(getMeanSig(child), signature);
+                similarity = calcSimilarityWrap(getMeanSig(child), signature);
                 printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-                if (similarity > priority[child])
+                if (overlap > stay_threshold)
                 {
                     if (similarity > dt.max_root_similarity)
                     {
                         dt.max_root_similarity = similarity;
                         dt.dest_root = child;
                     }
-                    dt.statuses.set(6);
+                    dt.statuses.set(7);
                 }
                 continue;
             }
@@ -1140,7 +1141,7 @@ public:
                     {
                         printMsg("split super\n");
                         dissolveSuper(child);
-                        dt.statuses.set(6);
+                        // dt.statuses.set(6);
                         return getStatus(signature, node);
                     }
                     dt.stay_super.push_back(child);
@@ -1495,6 +1496,10 @@ public:
             }
             // return stayNode(signature, insertionList, idx, dt.dest_super);
             return tt(signature, insertionList, idx, dt.dest_super);
+            break;
+        case 7:
+            printMsg(">>Stat>> Stay Root\n");
+            return tt_root(signature, insertionList, idx, dt.dest_root);
             break;
         default:
             fprintf(stderr, "ERROR 1 bit idx %zu, pos %zu!!\n", idx, pos);
@@ -1874,23 +1879,26 @@ public:
         }
 
         double max_similarity = 0;
+        double max_overlap = 0;
         size_t best_root = 0;
         for (size_t child : childLinks[node])
         {
-            double similarity = calcOverlapWrap(getMeanSig(child), signature);
-
-            if (similarity + split_node_threshold >= priority[child])
+            double overlap = calcOverlapWrap(getMeanSig(child), signature);
+            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            printMsg("(root %zu, %.2f, %.2f)\n", child, overlap, similarity);
+            if (overlap > max_overlap)
             {
-                printMsg("***(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-            }
-            else
-            {
-                printMsg("(root %zu, %.2f, %.2f)\n", child, priority[child], similarity);
-            }
-            if (similarity > max_similarity)
-            {
+                max_overlap = overlap;
                 max_similarity = similarity;
                 best_root = child;
+            }
+            else if (overlap == max_overlap)
+            {
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    best_root = child;
+                }
             }
         }
         size_t dest = 0;
@@ -2094,27 +2102,36 @@ public:
     inline size_t searchBestRoot(const_s_type signature, size_t node = 0)
     {
         printMsg("\nSearch Best Root %zu\n ", node);
-        size_t dest = 0;
-        double max_similarity = 0;
-        // double avg_similarity = 0;
-        vector<size_t> candidates;
 
+        double max_similarity = 0;
+        double max_overlap = 0;
+        size_t dest = 0;
         for (size_t child : childLinks[node])
         {
-            double similarity = calcOverlapWrap(getMeanSig(child), signature);
-            printMsg(" (%zu, %.2f) ", child, similarity);
-
-            if (similarity >= max_similarity)
+            double overlap = calcOverlapWrap(getMeanSig(child), signature);
+            double similarity = calcSimilarityWrap(getMeanSig(child), signature);
+            printMsg("(root %zu, %.2f, %.2f)\n", child, overlap, similarity);
+            if (overlap > max_overlap)
             {
+                max_overlap = overlap;
                 max_similarity = similarity;
                 dest = child;
             }
+            else if (overlap == max_overlap)
+            {
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = child;
+                }
+            }
         }
+
         printMsg("\n>>>%zu\n", dest);
 
         if (isBranchNode[dest])
         {
-            return searchBest(signature, dest);
+            return searchBest(signature, dest); // should always be this
         }
         else
         {
@@ -2172,16 +2189,27 @@ public:
         // do root
         size_t best_root = 0;
         double max_similarity_root = 0;
+        double max_overlap_root = 0;
 
         for (size_t root_ : children[0])
         {
-            double similarity = calcOverlapWrap(getMeanSig(root_), signature);
-            printMsg(" (%zu, %.2f) ", root_, similarity);
+            double overlap = calcOverlapWrap(getMeanSig(root_), signature);
+            double similarity = calcSimilarityWrap(getMeanSig(root_), signature);
+            printMsg(" (%zu, %.2f) ", root_, overlap, similarity);
 
-            if (similarity >= max_similarity_root)
+            if (overlap > max_overlap_root)
             {
+                max_overlap_root = overlap;
                 max_similarity_root = similarity;
                 best_root = root_;
+            }
+            else if (overlap == max_overlap_root)
+            {
+                if (similarity > max_similarity_root)
+                {
+                    max_similarity_root = similarity;
+                    best_root = root_;
+                }
             }
         }
 
@@ -2191,8 +2219,8 @@ public:
         }
 
         printMsg("\n>>>best_root: %zu, dest: %zu\n", best_root, dest);
-        max_similarity_root = calcOverlapWrap(getMeanSig(best_root), signature);
-        if (max_similarity_root > dest_similarity)
+        max_overlap_root = calcOverlapWrap(getMeanSig(best_root), signature);
+        if (max_overlap_root > dest_similarity)
         {
             return best_root;
         }
