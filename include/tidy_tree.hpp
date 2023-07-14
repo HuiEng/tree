@@ -1852,26 +1852,26 @@ public:
 
     inline size_t tt_root(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t node = 0)
     {
-        if (node != root && priority[node] < split_threshold)
-        {
-            printMsg("add subtree %zu, %.2f\n", node, priority[node]);
-            size_t parent = parentLinks[node];
-            if (addSubtree(node, insertionList) == 0)
-            {
-                printMsg("parent %zu\n", parent);
-                size_t last_child = childLinks[node][childCounts[node] - 1];
-                printMsg("last_child %zu\n", last_child);
-                if (relocate(childLinks[parent], vector<size_t>{last_child}))
-                {
-                    printMsg(">> Relocated %zu\n", last_child);
-                    return tt_root(signature, insertionList, idx, parent);
-                }
-            }
-            else
-            {
-                return tt_root(signature, insertionList, idx, parent);
-            }
-        }
+        // if (node != root && priority[node] < split_threshold)
+        // {
+        //     printMsg("add subtree %zu, %.2f\n", node, priority[node]);
+        //     size_t parent = parentLinks[node];
+        //     if (addSubtree(node, insertionList) == 0)
+        //     {
+        //         printMsg("parent %zu\n", parent);
+        //         size_t last_child = childLinks[node][childCounts[node] - 1];
+        //         printMsg("last_child %zu\n", last_child);
+        //         if (relocate(childLinks[parent], vector<size_t>{last_child}))
+        //         {
+        //             printMsg(">> Relocated %zu\n", last_child);
+        //             return tt_root(signature, insertionList, idx, parent);
+        //         }
+        //     }
+        //     else
+        //     {
+        //         return tt_root(signature, insertionList, idx, parent);
+        //     }
+        // }
 
         if (childCounts[node] == 0 || !isRootNode[childLinks[node][0]])
         {
