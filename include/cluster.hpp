@@ -403,7 +403,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     for (size_t run = 0; run < iteration; run++)
     {
         if (debug_)
-            singleton = getSingleton(clusters);
+            singleton = getSingleton(clusters) + 1;
         fprintf(stderr, "Iteration %zu (singleton = %zu)\n", run, singleton);
 
         // tree.trim();
