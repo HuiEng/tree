@@ -1912,7 +1912,7 @@ public:
             {
                 dissolveSuper(best_root);
             }
-            
+
         }
         return dest;
     }
@@ -2441,8 +2441,10 @@ public:
         // size_t node = searchBestSubtree(signature);
         // // size_t node = search2(signature);
         size_t node = searchBest(signature);
+        omp_set_lock(&locks[node]);
         seqIDs[node].push_back(idx);
         addSigToMatrix(node, signature);
+        omp_unset_lock(&locks[node]);
         return node;
     }
 

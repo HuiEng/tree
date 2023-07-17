@@ -1,6 +1,6 @@
 #ifndef INCLUDE_CLUSTER_HPP
 #define INCLUDE_CLUSTER_HPP
-
+#include <omp.h>
 using namespace std;
 
 bool random_ = false;
@@ -83,7 +83,7 @@ string setArgs(cmdline_type args)
     }
     else
     {
-        split_threshold = getSplitThreshold(inputFile,args.multiple_arg);
+        split_threshold = getSplitThreshold(inputFile, args.multiple_arg);
     }
 
     split_node_threshold = split_threshold / 2;
@@ -290,7 +290,6 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     if (firstNodes > seqCount)
         firstNodes = seqCount;
 
-    vector<size_t> insertionList; // potential nodes idx except root; root is always 0
     size_t offset = 0;
     default_random_engine rng;
 
@@ -303,15 +302,24 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         tree.printTreeJson(stderr);
     }
 
-    // node 0 reserved for root, node 1 reserved for leaves idx
-    for (size_t i = firstNodes; i < partree_capacity - offset; i++)
+    vector<size_t> insertionList(partree_capacity - offset); // potential nodes idx except root; root is always 0
+    vector<size_t> foo(seqCount);
+
+// node 0 reserved for root, node 1 reserved for leaves idx
+#pragma omp parallel
     {
-        insertionList.push_back(partree_capacity - i);
-    }
-    vector<size_t> foo;
-    for (int i = 0; i < seqCount; i++)
-    {
-        foo.push_back(i);
+#pragma omp for
+        for (size_t i = 0; i < partree_capacity - offset; i++)
+        {
+            // insertionList.push_back(partree_capacity - i);
+            insertionList[i] = partree_capacity - i - 1;
+        }
+
+#pragma omp for
+        for (int i = 0; i < seqCount; i++)
+        {
+            foo[i] = i;
+        }
     }
 
     if (random_)
@@ -323,6 +331,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
 
     if (skip_)
     {
+#pragma omp parallel for
         for (size_t i = 0; i < cap; i++)
         {
             size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
@@ -373,7 +382,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
                 // FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
                 tree.printTree(tree_meta.outputTreePath, insertionList);
             }
-
+#pragma omp parallel for
             for (size_t i = 0; i < cap; i++)
             {
                 size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
@@ -407,9 +416,10 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
 
         tree.removeAmbi();
         tree.prepReinsert();
-        // singleton++;
+// singleton++;
 
-        // tree.printTreeJson(stderr);
+// tree.printTreeJson(stderr);
+#pragma omp parallel for
         for (size_t i = 0; i < cap; i++)
         {
             size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
@@ -450,7 +460,8 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     //     tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
     // }
 
-    if (tree_meta.writeTree_){
+    if (tree_meta.writeTree_)
+    {
         tree.printTreeJson(stdout);
     }
 

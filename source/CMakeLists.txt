@@ -1,5 +1,6 @@
 #git clone --recurse-submodules https://github.com/seqan/seqan3.git
 cmake_minimum_required (VERSION 3.8)
+# set( CMAKE_VERBOSE_MAKEFILE on )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project (tree CXX)
@@ -27,6 +28,7 @@ target_include_directories ("${PROJECT_NAME}_interface" INTERFACE ../lib/robin-h
 add_executable ("${PROJECT_NAME}" main.cpp)
 target_link_libraries ("${PROJECT_NAME}" PUBLIC "${PROJECT_NAME}_interface")
 
+
 include_directories(include)
 
 # Build all subcommands
@@ -38,6 +40,7 @@ foreach(file ${files})
     add_library(${lib_we} SHARED ${lib_we}.cpp)
     target_link_libraries (${lib_we} PUBLIC "${PROJECT_NAME}_interface")
     target_link_libraries ("${PROJECT_NAME}" PUBLIC "${lib_we}")
+    target_link_libraries ("${PROJECT_NAME}" PUBLIC OpenMP::OpenMP_CXX)
     install(TARGETS ${lib_we} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 endforeach()
 message(STATUS "build_all_subcommands------------------------------------------}")
