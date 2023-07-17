@@ -301,7 +301,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         offset = readTree(tree_meta.inputTreePath, tree);
         tree.printTreeJson(stderr);
     }
-
+    offset += firstNodes;
     vector<size_t> insertionList(partree_capacity - offset); // potential nodes idx except root; root is always 0
     vector<size_t> foo(seqCount);
 
@@ -382,7 +382,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
                 // FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
                 tree.printTree(tree_meta.outputTreePath, insertionList);
             }
-#pragma omp parallel for
+            // #pragma omp parallel for
             for (size_t i = 0; i < cap; i++)
             {
                 size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
