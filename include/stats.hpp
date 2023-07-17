@@ -280,17 +280,28 @@ stats calcAllStatsKmersBatch(vector<cell_type> seqs)
 // }
 
 // stats return in percentage, coverts to decimal
-double getSplitThreshold(const string bfIn, size_t sample_size = 100, size_t runs_ = 10)
+double getSplitThreshold(const string bfIn, bool isList, size_t sample_size = 100, size_t runs_ = 10)
 {
 
-    vector<seq_type> seqs = readPartitionBFSample(bfIn, signatureSize, sample_size * runs_);
+    vector<seq_type> seqs;
+    if (isList)
+    {
+        seqs = readListPartitionBFSample(bfIn, signatureSize, sample_size * runs_);
+    }
+    else
+    {
+        seqs = readPartitionBFSample(bfIn, signatureSize, sample_size * runs_);
+    }
     fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
     size_t seqCount = seqs.size();
     max_seqCount = min(seqCount, sample_size);
     runs = runs_;
-    return calcAllStatsBatch(seqs, &calcJaccardGlobal).q3 / 100;
+    // return calcAllStatsBatch(seqs, &calcJaccardGlobal).q3 / 100;
+    return calcAllStatsBatch(seqs, &calcMatchingWindows).q3 / 100;
 }
 
+
+// no longer needed
 double getSplitThresholdList(const string bfIn, size_t sample_size = 100, size_t runs_ = 10)
 {
 

@@ -83,14 +83,7 @@ string setArgs(cmdline_type args)
     }
     else
     {
-        if (args.multiple_arg)
-        {
-            split_threshold = getSplitThresholdList(inputFile);
-        }
-        else
-        {
-            split_threshold = getSplitThreshold(inputFile);
-        }
+        split_threshold = getSplitThreshold(inputFile,args.multiple_arg);
     }
 
     split_node_threshold = split_threshold / 2;

@@ -46,3 +46,4 @@ EG:
 tree pbuild -f "../contigs/all/*.fna" -m -b "{folder}/{prefix}" -w 10000
 tree pbuild -f "../contigs/all/*.fna" -b "{prefix}"
 tree prim -M -i data.list -c $(wc -l < data.list) >tree.json 2>test.txt
+tree sim -i prim*.bin -A --skip -M 0

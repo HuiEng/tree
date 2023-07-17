@@ -222,11 +222,75 @@ write.table(temp,
             row.names=FALSE, col.names=FALSE, quote = FALSE)
 ###############################################################
 
+data=read.csv("C://DataCopied/Research/tree/data/toy/toy_seed.needleall",skip=15)%>%
+  filter(identity.<100)
+ggplot(data, aes(identity.)) + 
+  geom_density()
+
+
+######################## simulate ##################################
+source("C://DataCopied/Research/R/simulateFunctions.R")
+library(ggpubr)
+numEachClust<-100
+path<-paste("C://DataCopied/Research/tree/data/toy_seed_50_",numEachClust,sep="")
+files<-list.files(path = path,pattern="*.txt")
+numEachClust<-numEachClust+1
+maxSize<-0
+maxEnt<-0
+for (file in files){
+  tag<-strsplit(file, "-")[[1]][1]
+  if (grepl( "-f", file, fixed = TRUE)){
+    tag<-paste(tag,"f",sep="-")
+  }
+  dt<-plotEnt(paste(path,file,sep="/"),numEachClust)
+  outName<-paste("cluQ_", tag, sep="")
+  assign(outName,cluQuality(dt,numEachClust))
+  
+  temp<-max(get(outName)$size)
+  if (temp>maxSize){
+    maxSize<-temp
+  }
+  
+  temp<-max(get(outName)$ent)
+  if (temp>maxEnt){
+    maxEnt<-temp
+  }
+  
+}
+
+for (file in files){
+  tag<-strsplit(file, "-")[[1]][1]
+  if (grepl( "-f", file, fixed = TRUE)){
+    tag<-paste(tag,"f",sep="-")
+  }
+  outName<-paste("cluQ_", tag, sep="")
+  p<-ggplot(get(outName))+
+    geom_point(aes(x=clu,y=ent,size=size,colour=size))+
+    ggtitle(paste(tag," maxSize=", max(get(outName)$size),sep=""))+ 
+    scale_size(limits = c(1,maxSize))+
+    scale_color_continuous(limits = c(1,maxSize),colours = terrain.colors(7))+
+    ylim(0,maxEnt)
+  print(p)
+  break
+  # ggsave(paste(path,"/",tag,".png",sep=""),p)
+  outName<-paste("p_", tag, sep="")
+  assign(outName,p)
+  
+  
+}
+
+# plotTwo(`cluQ_prim-f`,cluQ_prim,3)
+ggarrange(p_sigClust,p_prim,p_sec,p_ktree,`p_prim-f`,`p_sec-f`,
+          ncol = 3, nrow = 2,common.legend = TRUE, legend="bottom")
 
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
-sigClust<-plotEnt(paste(path,"/sigClust-k9-c47.txt",sep=""))
+sigClust<-plotEnt(paste(path,"/PostKTree-k9.txt",sep=""))
 cluQ_sigClust<-cluQuality(sigClust,water,4,FALSE)
+ggplot(cluQ_sigClust)+
+  geom_point(aes(x=clu,y=avg_sim,size=size))+
+  # geom_point(aes(x=clu,y=avg_nodeDistance,size=size))+
+  ylim(50,100)
 
 {
 ktree<-plotEnt(paste(path,"-new/ktree.txt",sep=""))

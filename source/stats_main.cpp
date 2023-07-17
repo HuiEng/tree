@@ -87,13 +87,7 @@ int stats_main(int argc, char *argv[])
         max_seqCount = args.max_arg;
         if (args.local_arg)
         {
-            if (args.threshold_given)
-            {
-
-                minimiser_match_threshold = args.threshold_arg;
-            }
-            fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
-            calcAllStatsBatch(seqs, &calcMatchingWindows);
+            calcAllStatsBatch(seqs, &calcJaccardLocal);
         }
         else if (args.global_arg)
         {
@@ -101,7 +95,13 @@ int stats_main(int argc, char *argv[])
         }
         else
         {
-            calcAllStatsBatch(seqs, &calcJaccardLocal);
+            if (args.threshold_given)
+            {
+
+                minimiser_match_threshold = args.threshold_arg;
+            }
+            fprintf(stderr, "Matching at least %zu minimisers per window...\n", minimiser_match_threshold);
+            calcAllStatsBatch(seqs, &calcMatchingWindows);
         }
     }
 

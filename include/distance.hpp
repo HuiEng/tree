@@ -12,7 +12,7 @@ double split_threshold = 1;
 double stay_threshold = 0;
 double split_node_threshold;
 
-size_t minimiser_match_threshold = 4;
+size_t minimiser_match_threshold = 2;
 using namespace std;
 
 enum
@@ -324,7 +324,11 @@ size_t calcPartitionBitsGlobal(seq_type a, seq_type b)
     return calcInter(x, y);
 }
 
-distance_type calcSimilarity(seq_type a, seq_type b)
+// method, function
+// 1 => jaccardGlobal
+// 2 => jaccardLocal
+// else matching windows
+distance_type calcSimilarity(seq_type a, seq_type b, size_t method = 0)
 {
     // if (a.size() < b.size())
     // {
@@ -337,7 +341,18 @@ distance_type calcSimilarity(seq_type a, seq_type b)
 
     // return calcInter(a, b);
     // return calcJaccard(a,b);
-    return calcJaccardGlobal(a, b);
+    switch (method)
+    {
+    case 1:
+        return calcJaccardGlobal(a, b);
+        break;
+    case 2:
+        return calcJaccardLocal(a, b);
+        break;
+    default:
+        return calcMatchingWindows(a, b);
+        break;
+    }
 
     // return calcMatchingWindows(a, b);
 
