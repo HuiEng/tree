@@ -46,14 +46,14 @@ int tree_main(int argc, char *argv[])
         switch (calcMethod)
         {
         case 1:
-            fprintf(stderr, "Jaccard Global");
+            fprintf(stderr, "Jaccard Global\n");
             break;
         case 2:
-            fprintf(stderr, "Jaccard Local");
+            fprintf(stderr, "Jaccard Local\n");
             break;
 
         default:
-            fprintf(stderr, "Matching windows");
+            fprintf(stderr, "Matching windows\n");
             break;
         }
     }
