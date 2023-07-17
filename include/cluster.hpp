@@ -435,7 +435,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     // FILE *pFile = fopen("nodeDistance.txt", "w");
     // tree.printNodeDistance(pFile, seqs, clusters);
 
-    // // Recursively destroy all locks
+    // Recursively destroy all locks
     // tree.destroyLocks();
 
     // tree.printTreeJson(stdout);
@@ -450,7 +450,9 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     //     tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
     // }
 
-    tree.printTreeJson(stdout);
+    if (tree_meta.writeTree_){
+        tree.printTreeJson(stdout);
+    }
 
     return clusters;
 }

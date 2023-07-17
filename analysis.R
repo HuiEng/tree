@@ -222,15 +222,31 @@ write.table(temp,
             row.names=FALSE, col.names=FALSE, quote = FALSE)
 ###############################################################
 
+
+
+######################## get sim plot ###############################
 data=read.csv("C://DataCopied/Research/tree/data/toy/toy_seed.needleall",skip=15)%>%
   filter(identity.<100)
-ggplot(data, aes(identity.)) + 
-  geom_density()
+  # group_by(aseq)%>%summarise(n=n())
 
+
+p1<-ggplot() + 
+  geom_density(data=data, aes(identity.,colour="NW base Identity"))+xlab("Score %")
+
+
+# data=read.csv("C://DataCopied/Research/tree/data/test/2w/toy_seed-k9-w100-s5-b50-global_sim.txt")%>%
+#   filter(similarity<100)
+data<-read.csv("C://DataCopied/Research/tree/data/test/2w/toy_seed-k9-b10000-all_sim.txt")%>%
+  filter(similarity<100)
+  # group_by(i)%>%summarise(n=n())
+p2<-p1+
+  geom_density(data=data, aes(similarity,colour="Kmer Set (BF) Similarity"))+xlab("Score %")
+
+print(p2+theme(legend.position = "bottom"))
+ggarrange(p1,p2)
 
 ######################## simulate ##################################
 source("C://DataCopied/Research/R/simulateFunctions.R")
-library(ggpubr)
 numEachClust<-100
 path<-paste("C://DataCopied/Research/tree/data/toy_seed_50_",numEachClust,sep="")
 files<-list.files(path = path,pattern="*.txt")
@@ -266,13 +282,11 @@ for (file in files){
   outName<-paste("cluQ_", tag, sep="")
   p<-ggplot(get(outName))+
     geom_point(aes(x=clu,y=ent,size=size,colour=size))+
-    ggtitle(paste(tag," maxSize=", max(get(outName)$size),sep=""))+ 
+    ggtitle(paste(tag,", maxSize=", max(get(outName)$size),sep=""))+ 
     scale_size(limits = c(1,maxSize))+
-    scale_color_continuous(limits = c(1,maxSize),colours = terrain.colors(7))+
+    scale_color_continuous(limits = c(1,maxSize),type = "viridis")+
     ylim(0,maxEnt)
-  print(p)
-  break
-  # ggsave(paste(path,"/",tag,".png",sep=""),p)
+  ggsave(paste(path,"/",tag,".png",sep=""),p)
   outName<-paste("p_", tag, sep="")
   assign(outName,p)
   
