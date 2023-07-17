@@ -28,6 +28,7 @@ size_t partree_capacity = 10000;
 size_t singleton = 1;
 size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
+size_t calcMethod = 0;
 bool print_ = false;
 
 struct tt_data

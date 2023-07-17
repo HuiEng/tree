@@ -124,7 +124,7 @@ public:
 
     double calcSimilarityWrap(s_type a, s_type b)
     {
-        return calcSimilarity(a, b);
+        return calcSimilarity(a, b, calcMethod);
     }
 
     double calcOverlapWrap(s_type a, s_type b)

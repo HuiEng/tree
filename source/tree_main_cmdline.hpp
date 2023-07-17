@@ -388,6 +388,7 @@ public:
   bool multiple_arg;
   bool single_arg;
   bool skip_arg;
+  bool method_given;
 
   enum
   {
@@ -398,7 +399,7 @@ public:
 
   tree_main_cmdline() : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                         minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
-                        input_given(false), single_arg(false), skip_arg(false),
+                        input_given(false), single_arg(false), skip_arg(false), method_given(false),
                         minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                         random_arg(false), iteration_arg(0), seed_arg(0),
                         topology_in_given(false), topology_in_arg(""),
@@ -412,7 +413,7 @@ public:
 
   tree_main_cmdline(int argc, char *argv[]) : input_arg(""), tag_arg(""), tag_given(false), tree_order_arg(0),
                                               minimiser_match_arg(0), capacity_arg(0), sizeCap_arg(0), method_arg(0),
-                                              input_given(false), single_arg(false), skip_arg(false),
+                                              input_given(false), single_arg(false), skip_arg(false), method_given(false),
                                               minimiser_match_given(false), capacity_given(false), sizeCap_given(false),
                                               random_arg(false), iteration_arg(0), seed_arg(0),
                                               topology_in_given(false), topology_in_arg(""),
@@ -543,6 +544,7 @@ public:
         CHECK_ERR(size_t, optarg, "-c, --size_cap=size_t")
         break;
       case 'm':
+        method_given = true;
         method_arg = conv_uint<size_t>((const char *)optarg, err, false);
         CHECK_ERR(size_t, optarg, "-m=size_t")
         break;

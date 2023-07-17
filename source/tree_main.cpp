@@ -9,18 +9,13 @@ typedef sec_tree tree_type;
 using namespace std;
 static tree_main_cmdline args; // Command line switches and arguments
 
-
-
 int tree_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
     ios::sync_with_stdio(false); // No sync with stdio -> faster
 
-    
-
     string inputFile = args.input_arg;
     string outName = setArgs(args);
-    
 
     vector<size_t> clusters;
     vector<seq_type> seqs;
@@ -42,6 +37,25 @@ int tree_main(int argc, char *argv[])
     if (cap == 0)
     {
         cap = seqCount;
+    }
+
+    if (args.method_given)
+    {
+        calcMethod = args.method_arg;
+        fprintf(stderr, "Calculating similarity using ");
+        switch (calcMethod)
+        {
+        case 1:
+            fprintf(stderr, "Jaccard Global");
+            break;
+        case 2:
+            fprintf(stderr, "Jaccard Local");
+            break;
+
+        default:
+            fprintf(stderr, "Matching windows");
+            break;
+        }
     }
 
     fprintf(stderr, "Loaded %zu seqs, signatureSize %zu...\n", seqs.size(), signatureSize);
