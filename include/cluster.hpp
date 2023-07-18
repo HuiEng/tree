@@ -353,6 +353,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
                 {
                     printMsg("inserting %zu\n", foo[i]);
                     size_t clus = tree.insertSplitRoot(getSeq(seqs, i * mul), insertionList, foo[i]);
+                    clusters[foo[i]] = clus;
                 }
             }
             else
@@ -370,6 +371,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             std::cout << " a standard exception was caught, with message '"
                       << e.what() << "'\n";
             tree.printTreeJson(stdout);
+            return clusters;
         }
         // for debugging
         if (iteration_given)
