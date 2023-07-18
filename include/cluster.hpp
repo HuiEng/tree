@@ -371,6 +371,9 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             std::cout << " a standard exception was caught, with message '"
                       << e.what() << "'\n";
             tree.printTreeJson(stdout);
+            
+            // Recursively destroy all locks
+            tree.destroyLocks();
             return clusters;
         }
         // for debugging
@@ -456,9 +459,6 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     // FILE *pFile = fopen("nodeDistance.txt", "w");
     // tree.printNodeDistance(pFile, seqs, clusters);
 
-    // Recursively destroy all locks
-    // tree.destroyLocks();
-
     // tree.printTreeJson(stdout);
     // FILE *hFile = fopen("hierarchy.txt", "w");
     // fprintf(hFile, "parent,child,rank\n");
@@ -476,6 +476,8 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         tree.printTreeJson(stdout);
     }
 
+    // Recursively destroy all locks
+    tree.destroyLocks();
     return clusters;
 }
 
