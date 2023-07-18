@@ -367,8 +367,8 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         }
         catch (const std::exception &e) // caught by reference to base
         {
-            // std::cout << " a standard exception was caught, with message '"
-            //           << e.what() << "'\n";
+            std::cout << " a standard exception was caught, with message '"
+                      << e.what() << "'\n";
             tree.printTreeJson(stdout);
         }
         // for debugging
