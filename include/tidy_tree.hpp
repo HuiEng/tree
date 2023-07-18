@@ -1966,10 +1966,10 @@ public:
             }
         }
 
-        if (print_)
-        {
-            printTreeJson(stderr);
-        }
+        // if (print_)
+        // {
+        //     printTreeJson(stderr);
+        // }
         printMsg(">> addSubtree %zu\n", node);
 
         size_t t_parent = createSuper(parentLinks[node], insertionList, clusters[1]);
@@ -1977,10 +1977,10 @@ public:
         isRootNode[t_parent] = 1;
 
         updateParentMean(node);
-        if (print_)
-        {
-            printTreeJson(stderr);
-        }
+        // if (print_)
+        // {
+        //     printTreeJson(stderr);
+        // }
 
         return 1;
     }
@@ -2022,10 +2022,10 @@ public:
             }
         }
 
-        if (print_)
-        {
-            printTreeJson(stderr);
-        }
+        // if (print_)
+        // {
+        //     printTreeJson(stderr);
+        // }
         printMsg(">> forceSplitRoot %zu\n", node);
 
         // reuse clusterSize to store the new t_parents
@@ -2041,10 +2041,10 @@ public:
             addSigToMatrix(node, getMeanSig(t_parent));
         }
         updateParentMean(node);
-        if (print_)
-        {
-            printTreeJson(stderr);
-        }
+        // if (print_)
+        // {
+        //     printTreeJson(stderr);
+        // }
 
         // if (node != 0)
         // {
