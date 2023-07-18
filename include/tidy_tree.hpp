@@ -2046,14 +2046,14 @@ public:
             printTreeJson(stderr);
         }
 
-        if (node != 0)
-        {
-            recluster(node);
-            if (print_)
-            {
-                printTreeJson(stderr);
-            }
-        }
+        // if (node != 0)
+        // {
+        //     recluster(node);
+        //     if (print_)
+        //     {
+        //         printTreeJson(stderr);
+        //     }
+        // }
 
         return 1;
     }

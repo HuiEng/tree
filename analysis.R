@@ -251,51 +251,70 @@ numEachClust<-100
 path<-paste("C://DataCopied/Research/tree/data/toy_seed_50_",numEachClust,sep="")
 files<-list.files(path = path,pattern="*.txt")
 numEachClust<-numEachClust+1
-maxSize<-0
-maxEnt<-0
+# maxSize<-0
+# maxEnt<-0
+
+summ_df<-NULL
+
 for (file in files){
-  tag<-strsplit(file, "-")[[1]][1]
-  if (grepl( "-f", file, fixed = TRUE)){
-    tag<-paste(tag,"f",sep="-")
-  }
+  tag<-getTag(file)
   dt<-plotEnt(paste(path,file,sep="/"),numEachClust)
   outName<-paste("cluQ_", tag, sep="")
   assign(outName,cluQuality(dt,numEachClust))
   
-  temp<-max(get(outName)$size)
-  if (temp>maxSize){
-    maxSize<-temp
-  }
-  
-  temp<-max(get(outName)$ent)
-  if (temp>maxEnt){
-    maxEnt<-temp
-  }
+  # temp<-max(get(outName)$size)
+  # if (temp>maxSize){
+  #   maxSize<-temp
+  # }
+  # 
+  # temp<-max(get(outName)$ent)
+  # if (temp>maxEnt){
+  #   maxEnt<-temp
+  # }
+  summ_df<-rbind(summ_df,getSumm(tag))
   
 }
 
+fitered_summ<-summ_df%>%
+  filter(!grepl( "1", tag, fixed = TRUE))%>%
+  filter(!grepl( "local", tag, fixed = TRUE))%>%
+  summarise(maxSize=max(maxSize),
+            maxEnt=max(maxEnt))
+
 for (file in files){
-  tag<-strsplit(file, "-")[[1]][1]
-  if (grepl( "-f", file, fixed = TRUE)){
-    tag<-paste(tag,"f",sep="-")
-  }
+  tag<-getTag(file)
   outName<-paste("cluQ_", tag, sep="")
   p<-ggplot(get(outName))+
     geom_point(aes(x=clu,y=ent,size=size,colour=size))+
-    ggtitle(paste(tag,", maxSize=", max(get(outName)$size),sep=""))+ 
-    scale_size(limits = c(1,maxSize))+
-    scale_color_continuous(limits = c(1,maxSize),type = "viridis")+
-    ylim(0,maxEnt)
-  ggsave(paste(path,"/",tag,".png",sep=""),p)
+    ggtitle(paste(tag,", maxSize=", max(get(outName)$size),sep=""))
   outName<-paste("p_", tag, sep="")
   assign(outName,p)
   
-  
+  p<-p+ 
+    scale_size(limits = c(1,fitered_summ$maxSize))+
+    scale_color_continuous(limits = c(1,fitered_summ$maxSize),type = "viridis")+
+    ylim(0,fitered_summ$maxEnt)
+  # ggsave(paste(path,"/",tag,".png",sep=""),p)
 }
 
-# plotTwo(`cluQ_prim-f`,cluQ_prim,3)
-ggarrange(p_sigClust,p_prim,p_sec,p_ktree,`p_prim-f`,`p_sec-f`,
+
+plot_list<-group_plot(c("sigClust","prim","sec-match-thres-2",
+                        "ktree","prim-f","sec-f-match-thres-2"))
+ggarrange(plotlist = plot_list,
           ncol = 3, nrow = 2,common.legend = TRUE, legend="bottom")
+
+# plot_list<-group_plot((summ_df%>%filter(grepl( "thres", tag, fixed = TRUE)))$tag)
+target<-NULL
+for (i in seq(2,5)){
+  target<-c(target,paste("sec-match-thres-",i,sep=""),
+            paste("sec-f-match-thres-",i,sep=""))
+}
+ggarrange(plotlist = group_plot(target[1:4]),
+          ncol = 2, nrow = 2,common.legend = TRUE, legend="bottom")
+
+ggarrange(plotlist = group_plot(target[5:8]),
+          ncol = 2, nrow = 2,common.legend = TRUE, legend="bottom")
+
 
 ######################## toy ##################################
 source("C://DataCopied/Research/R/toyFunctions.R")
