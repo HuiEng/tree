@@ -38,6 +38,12 @@ string setArgs(cmdline_type args)
 
     string inputFile = args.input_arg;
 
+    if (args.skip_arg)
+    {
+        skip_ = true;
+        fprintf(stderr, "Skip inital tree construction, thresholds have no use\n");
+    }
+
     if (args.random_arg)
     {
         random_ = true;
@@ -63,12 +69,6 @@ string setArgs(cmdline_type args)
     {
         skip_ = true;
         fprintf(stderr, "Skip inital tree construction, thresholds have no use\n");
-        // if (iteration == 0)
-        // {
-        //     iteration = 1;
-        //     fprintf(stderr, "No iteration given, default = 1\n");
-        // }
-        // fprintf(stderr, "Iteration = %zu\n", iteration);
     }
     else if (args.single_arg)
     {
