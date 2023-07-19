@@ -83,10 +83,16 @@ public:
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
 
-    void test(size_t node, const_s_type signature)
+    void testing(size_t node)
     {
+        printMsg(">>>node %zu, matrix count %zu\n", node, matrices[node].size());
         toBinaryIdx(stderr, getMeanSig(node));
-        toBinaryIdx(stderr, signature);
+        printMsg(">==================\n");
+        for (size_t i = 0; i < matrices[node].size(); i += signatureSize)
+        {
+            toBinaryIdx(stderr, &matrices[node][i]);
+        }
+        printMsg("===================\n");
     }
 
     void readNodeSig(size_t parent, size_t child, const char *binFile)
@@ -122,6 +128,12 @@ public:
     void addSigToMatrix(size_t node, const_s_type signature)
     {
         matrices[node].insert(matrices[node].end(), signature, signature + signatureSize);
+    }
+
+    void delSigFromMatrix(size_t node, size_t idx)
+    {
+        idx = idx * signatureSize;
+        matrices[node].erase(matrices[node].begin() + idx, matrices[node].begin() + idx + signatureSize);
     }
 
     double calcOverlapWrap(const_s_type a, const_s_type b)

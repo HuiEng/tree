@@ -122,6 +122,11 @@ public:
         matrices[node].push_back(signature);
     }
 
+    void delSigFromMatrix(size_t node, size_t idx)
+    {
+        removeVecIdx(matrices[node], idx);
+    }
+
     double calcSimilarityWrap(s_type a, s_type b)
     {
         return calcSimilarity(a, b, calcMethod);

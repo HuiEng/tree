@@ -112,11 +112,13 @@ public:
 
     virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
 
-    virtual void test(size_t node, const_s_type signature) {}
+    virtual void testing(size_t node) {}
 
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
     virtual void addSigToMatrix(size_t node, const_s_type signature) {}
+
+    virtual void delSigFromMatrix(size_t node, size_t idx) {}
 
     virtual double calcSimilaritySigToNode(size_t node, sVec_type signatures, size_t i) { return 0; }
 
@@ -486,7 +488,8 @@ public:
         else
         {
 
-            removeVecIdx(matrices[parent], idx);
+            // removeVecIdx(matrices[parent], idx);
+            delSigFromMatrix(parent, idx);
             removeVecIdx(childLinks[parent], idx);
             childCounts[parent]--;
             // parentLinks[node] = 0;
@@ -2416,18 +2419,30 @@ public:
         }
     }
 
+    bool isLeafNode(size_t node)
+    {
+        return !(isBranchNode[node] || isSuperNode[node] || isRootNode[node]);
+    }
+
     // cluster means still remain
     void prepReinsert(size_t node = 0)
     {
         // if (!isAmbiNode[node])
         {
-            updatePriority(node);
-            if (!isBranchNode[node])
+            if (isLeafNode(node))
             {
                 updateNodeMean(node);
+                seqIDs[node].clear();
+                seqIDs[node].clear();
+            }
+            else
+            {
+
+                updatePriority(node);
             }
         }
-        seqIDs[node].clear();
+        
+
         for (size_t child : childLinks[node])
         {
             prepReinsert(child);
@@ -2438,10 +2453,14 @@ public:
     {
         // if (!isAmbiNode[node])
         {
-            updatePriority(node);
-            if (!isBranchNode[node])
+            if (isLeafNode(node))
             {
                 updateNodeMean(node);
+            }
+            else
+            {
+
+                updatePriority(node);
             }
         }
         for (size_t child : childLinks[node])
@@ -2464,8 +2483,9 @@ public:
     }
 
     void removeAmbi(size_t node = 0)
-    {
+    {printMsg("removeambi %zu\n", node);
         size_t cleared = 0;
+        size_t parent = parentLinks[node];
 
         vector<size_t> children = childLinks[node];
         if (isRootNode[node] || isSuperNode[node])
@@ -2498,11 +2518,12 @@ public:
         {
             updateParentMean(node);
         }
-        size_t parent = parentLinks[node];
+        // size_t parent = parentLinks[node];
         while (childCounts[parent] <= 1 && parent != root)
         {
             deleteUnitig(parent);
             parent = parentLinks[parent];
+            
         }
 
         if (cleared != 0)
