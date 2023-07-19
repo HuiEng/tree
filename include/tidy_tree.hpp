@@ -351,11 +351,22 @@ public:
 
     void printTree(FILE *stream, string outfolder, size_t node)
     {
+        fprintf(stream, "%zu(%.2f)", node, priority[node]);
         if (isRootNode[node])
         {
-            fprintf(stream, "-");
+            fprintf(stream, "r");
         }
-        fprintf(stream, "%zu(%.2f)>", node, priority[node]);
+        else if (isSuperNode[node])
+        {
+            fprintf(stream, "s");
+        }else if (isBranchNode[node])
+        {
+            fprintf(stream, "b");
+        }else
+        {
+            fprintf(stream, "l");
+        }
+        fprintf(stream, ">");
         for (size_t child : childLinks[node])
         {
             fprintf(stream, "%zu,", child);

@@ -136,7 +136,7 @@ string setArgs(cmdline_type args)
 template <typename tree_type>
 string readTreeLine(string s, string folder, tree_type &tree)
 {
-    int parent_temp = 0;
+    char node_type = 0;
     size_t parent = 0;
     double priority = 0;
     size_t child = 0;
@@ -145,12 +145,25 @@ string readTreeLine(string s, string folder, tree_type &tree)
     size_t pos = s.find(delimiter);
     string node = s.substr(0, pos);
     // sscanf(node.c_str(), "%zu", &parent);
-    sscanf(node.c_str(), "%d(%lf)", &parent_temp, &priority);
-    parent = parent_temp;
-    if (parent_temp < 0)
+    // sscanf(node.c_str(), "%d(%lf)", &parent_temp, &priority);
+    // parent = parent_temp;
+    // if (parent_temp < 0)
+    // {
+    //     parent = parent_temp * -1;
+    //     tree.isRootNode[parent] = 1;
+    // }
+
+    sscanf(node.c_str(), "%zu(%lf)%s", &parent, &priority, &node_type);
+    switch (node_type)
     {
-        parent = parent_temp * -1;
+    case 'r':
         tree.isRootNode[parent] = 1;
+        break;
+    case 's':
+        tree.isSuperNode[parent] = 1;
+        break;
+    default:
+        break;
     }
     s.erase(0, pos + 1);
     // cout << "Node: " << node << endl;
@@ -497,7 +510,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     //     tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
     // }
 
-    if (tree_meta.writeTree_)
+    if (tree_meta.writeTree_ | tree_meta.readTree_)
     {
         tree.printTreeJson(stdout);
     }
