@@ -83,6 +83,12 @@ public:
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
 
+    void test(size_t node, const_s_type signature)
+    {
+        toBinaryIdx(stderr, getMeanSig(node));
+        toBinaryIdx(stderr, signature);
+    }
+
     void readNodeSig(size_t parent, size_t child, const char *binFile)
     {
         vector<cell_type> signature;

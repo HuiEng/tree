@@ -112,6 +112,8 @@ public:
 
     virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
 
+    virtual void test(size_t node, const_s_type signature) {}
+
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
     virtual void addSigToMatrix(size_t node, const_s_type signature) {}
@@ -161,48 +163,48 @@ public:
         }
         this->capacity = capacity;
 
-        #pragma omp parallel
+#pragma omp parallel
         {
-            #pragma omp single
+#pragma omp single
             {
                 childCounts.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 isBranchNode.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 isAmbiNode.resize(capacity);
                 ambiLinks.resize(capacity);
                 isRootNode.reserve(capacity);
                 isSuperNode.reserve(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 childLinks.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 seqIDs.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 priority.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 parentLinks.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 locks.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 matrices.resize(capacity);
             }
-            #pragma omp single
+#pragma omp single
             {
                 // means.resize(capacity * signatureSize);
                 means.resize(capacity);
@@ -359,10 +361,12 @@ public:
         else if (isSuperNode[node])
         {
             fprintf(stream, "s");
-        }else if (isBranchNode[node])
+        }
+        else if (isBranchNode[node])
         {
             fprintf(stream, "b");
-        }else
+        }
+        else
         {
             fprintf(stream, "l");
         }
@@ -1924,7 +1928,6 @@ public:
             {
                 dissolveSuper(best_root);
             }
-
         }
         return dest;
     }
