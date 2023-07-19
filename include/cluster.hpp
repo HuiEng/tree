@@ -471,7 +471,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             return clusters;
         }
 
-tree.printTreeJson(stderr);
+// tree.printTreeJson(stderr);
 // #pragma omp parallel for
         for (size_t i = 0; i < cap; i++)
         {
@@ -480,7 +480,6 @@ tree.printTreeJson(stderr);
             // clusters[foo[i]] = tree.findAncestor(clus);
             clusters[foo[i]] = clus;
         }
-
         // if (debug_)
         // {
         //     auto fileName = "nodeDistance-r" + to_string((size_t)(run)) + ".txt";
