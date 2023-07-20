@@ -344,7 +344,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
 
     if (skip_)
     {
-// #pragma omp parallel for
+#pragma omp parallel for
         for (size_t i = 0; i < cap; i++)
         {
             size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
@@ -357,88 +357,62 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     }
     else
     {
-        try
-        {
 
-            if (force_split_)
+        if (force_split_)
+        {
+            for (size_t i = 0; i < cap; i++)
             {
-                for (size_t i = 0; i < cap; i++)
-                {
-                    printMsg("inserting %zu\n", foo[i]);
-                    size_t clus = tree.insertSplitRoot(getSeq(seqs, i * mul), insertionList, foo[i]);
-                    clusters[foo[i]] = clus;
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < cap; i++)
-                {
-                    printMsg("inserting %zu\n", foo[i]);
-                    size_t clus = tree.insert(getSeq(seqs, i * mul), insertionList, foo[i]);
-                    clusters[foo[i]] = clus;
-                }
+                printMsg("inserting %zu\n", foo[i]);
+                size_t clus = tree.insertSplitRoot(getSeq(seqs, i * mul), insertionList, foo[i]);
+                clusters[foo[i]] = clus;
             }
         }
-        catch (const std::exception &e) // caught by reference to base
+        else
         {
-            std::cout << "Error at initial a standard exception was caught, with message '"
-                      << e.what() << "'\n";
-            tree.printTreeJson(stdout);
-
-            // Recursively destroy all locks
-            tree.destroyLocks();
-            return clusters;
-        }
-
-        try
-        {
-            // for debugging
-            if (iteration_given)
+            for (size_t i = 0; i < cap; i++)
             {
-                // prep to remove and reinsert ambi
-                // fprintf(stderr, "\n\n\nBefore\n");
-                // tree.printTreeJson(stderr);
-
-                singleton = 0;
-                // tree.trim();
-                tree.removeAmbi();
-                singleton = 1;
-                printMsg("\n\nReinserting ambi (all)\n");
-                tree.prepReinsert();
-
-                if (tree_meta.writeTree_)
-                {
-                    // string outFile = tree_meta.outputTreePath;
-                    // FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
-                    tree.printTree(tree_meta.outputTreePath, insertionList);
-                }
-                // #pragma omp parallel for
-                for (size_t i = 0; i < cap; i++)
-                {
-                    size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
-                    printMsg("\n Reinsert %zu at %zu\n", foo[i], clus);
-                    // clusters[foo[i]] = tree.findAncestor(clus);
-                    clusters[foo[i]] = clus;
-                }
-
-                // tree.printTreeJson(stderr);
+                printMsg("inserting %zu\n", foo[i]);
+                size_t clus = tree.insert(getSeq(seqs, i * mul), insertionList, foo[i]);
+                clusters[foo[i]] = clus;
             }
-            // else if (tree_meta.readTree_)
-            // {
-            //     singleton = 0;
-            //     tree.removeAmbi();
-            // }
         }
-        catch (const std::exception &e) // caught by reference to base
-        {
-            std::cout << "Error after initial a standard exception was caught, with message '"
-                      << e.what() << "'\n";
-            tree.printTreeJson(stdout);
 
-            // Recursively destroy all locks
-            tree.destroyLocks();
-            return clusters;
+        // for debugging
+        if (iteration_given)
+        {
+            // prep to remove and reinsert ambi
+            // fprintf(stderr, "\n\n\nBefore\n");
+            // tree.printTreeJson(stderr);
+
+            singleton = 0;
+            // tree.trim();
+            tree.removeAmbi();
+            singleton = 1;
+            printMsg("\n\nReinserting ambi (all)\n");
+            tree.prepReinsert();
+
+            if (tree_meta.writeTree_)
+            {
+                // string outFile = tree_meta.outputTreePath;
+                // FILE *tFile = fopen((outFile + "tree.txt").c_str(), "w");
+                tree.printTree(tree_meta.outputTreePath, insertionList);
+            }
+#pragma omp parallel for
+            for (size_t i = 0; i < cap; i++)
+            {
+                size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
+                printMsg("\n Reinsert %zu at %zu\n", foo[i], clus);
+                // clusters[foo[i]] = tree.findAncestor(clus);
+                clusters[foo[i]] = clus;
+            }
+
+            // tree.printTreeJson(stderr);
         }
+        // else if (tree_meta.readTree_)
+        // {
+        //     singleton = 0;
+        //     tree.removeAmbi();
+        // }
     }
     singleton = 1;
 
@@ -452,26 +426,11 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
         }
         fprintf(stderr, "Iteration %zu (singleton = %zu)\n", run, singleton);
 
-        // tree.trim();
-        try
-        {
-            tree.removeAmbi();
-            tree.prepReinsert();
-            // singleton++;
-        }
-        catch (const std::exception &e) // caught by reference to base
-        {
-            std::cout << "Error at prep reinsert a standard exception was caught, with message '"
-                      << e.what() << "'\n";
-            tree.printTreeJson(stdout);
-
-            // Recursively destroy all locks
-            tree.destroyLocks();
-            return clusters;
-        }
+        tree.removeAmbi();
+        tree.prepReinsert();
 
 // tree.printTreeJson(stderr);
-// #pragma omp parallel for
+#pragma omp parallel for
         for (size_t i = 0; i < cap; i++)
         {
             size_t clus = tree.reinsert(getSeq(seqs, i * mul), foo[i]);
