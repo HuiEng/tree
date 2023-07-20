@@ -440,7 +440,6 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             return clusters;
         }
     }
-
     singleton = 1;
 
     for (size_t run = 0; run < iteration; run++)

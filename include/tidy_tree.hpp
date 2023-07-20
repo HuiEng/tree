@@ -30,6 +30,7 @@ size_t minClusSize = partree_capacity;
 size_t tree_order = 5;
 size_t calcMethod = 0;
 bool print_ = false;
+size_t test_cnt = 0;
 
 struct tt_data
 {
@@ -2437,7 +2438,7 @@ public:
             {
                 updateNodeMean(node);
                 seqIDs[node].clear();
-                seqIDs[node].clear();
+                matrices[node].clear();
             }
             else
             {
@@ -2487,7 +2488,7 @@ public:
 
     void removeAmbi(size_t node = 0)
     {
-        printMsg("removeambi %zu\n", node);
+        // printMsg("removeambi %zu\n", node);
         size_t cleared = 0;
         size_t parent = parentLinks[node];
 
