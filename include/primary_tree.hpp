@@ -132,8 +132,12 @@ public:
 
     void delSigFromMatrix(size_t node, size_t idx)
     {
-        idx = idx * signatureSize;
-        matrices[node].erase(matrices[node].begin() + idx, matrices[node].begin() + idx + signatureSize);
+        size_t start = idx * signatureSize;
+        size_t end = start + signatureSize;
+        if (end > matrices[node].size()-1){
+            printMsg("Error deleting sig %zu from node %zu\n", idx, node);
+        }
+        matrices[node].erase(matrices[node].begin() + start, matrices[node].begin() + end);
     }
 
     double calcOverlapWrap(const_s_type a, const_s_type b)

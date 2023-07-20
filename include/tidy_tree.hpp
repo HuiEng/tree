@@ -435,6 +435,10 @@ public:
                 break;
             }
         }
+        if (idx == -1)
+        {
+            fprintf(stderr, "Error at getNodeIdx(%zu)\n", node);
+        }
         return idx;
     }
 
@@ -2441,7 +2445,6 @@ public:
                 updatePriority(node);
             }
         }
-        
 
         for (size_t child : childLinks[node])
         {
@@ -2483,7 +2486,8 @@ public:
     }
 
     void removeAmbi(size_t node = 0)
-    {printMsg("removeambi %zu\n", node);
+    {
+        printMsg("removeambi %zu\n", node);
         size_t cleared = 0;
         size_t parent = parentLinks[node];
 
@@ -2519,11 +2523,10 @@ public:
             updateParentMean(node);
         }
         // size_t parent = parentLinks[node];
-        while (childCounts[parent] <= 1 && parent != root)
+        while (childCounts[parent] == 1 && parent != root)
         {
             deleteUnitig(parent);
             parent = parentLinks[parent];
-            
         }
 
         if (cleared != 0)
