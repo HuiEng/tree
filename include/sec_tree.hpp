@@ -20,6 +20,15 @@ typedef vector<seq_type> sVec_type;
 s_type createMeanSig(sVec_type clusterSigs)
 {
     s_type meanSig;
+    if (clusterSigs.size() == 0)
+    {
+        return meanSig;
+    }
+    else if (clusterSigs.size() == 1)
+    {
+        return clusterSigs[0];
+    }
+    
     // find the smallest windows count
     size_t winNum = clusterSigs[0].size();
     for (s_type matrix : clusterSigs)
@@ -77,6 +86,45 @@ public:
     using tidy_tree::tidy_tree;
 
     s_type getMeanSig(size_t node) { return means[node]; }
+
+    void testNode(size_t node, FILE *pFile)
+    {
+        size_t childCount = childCounts[node];
+        string node_type = "leaf";
+        if (isRootNode[node])
+        {
+            node_type = "root";
+        }
+        else if (isSuperNode[node])
+        {
+            node_type = "super";
+        }
+        else if (isBranchNode[node])
+        {
+            node_type = "branch";
+        }
+        else
+        {
+            childCount = matrices[node].size();
+            if (isAmbiNode[node])
+            {
+                node_type = "ambi";
+            }
+        }
+        printMsg("test_cnt %zu, node %zu\n", test_cnt, node);
+
+        fprintf(pFile, ">>>node %zu, node_type %s, parent %zu, matrixcount %zu, seqCount %zu, childCount %zu\n",
+                node, node_type.c_str(), parentLinks[node], matrices[node].size(), matrices[node].size(), childCount);
+
+        // dbgPrintSignatureIdx(pFile, getMeanSig(node));
+        // fprintf(pFile, ">==================\n");
+        // for (size_t i = 0; i < matrices[node].size(); i++)
+        // {
+        //     fprintf(pFile, "(%zu)\t", i);
+        //     dbgPrintSignatureIdx(pFile, matrices[node][i]);
+        // }
+        // fprintf(pFile, "===================\n");
+    }
 
     const_s_type readInput(const char *inputFile)
     {
@@ -203,6 +251,7 @@ public:
     // union mean of children
     inline void updateNodeMean(size_t node)
     {
+
         if (isRootNode[node])
         {
             const_s_type meanSig = getMeanSig(childLinks[node][0]);

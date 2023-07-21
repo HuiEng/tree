@@ -114,40 +114,16 @@ public:
         fprintf(pFile, ">>>node %zu, node_type %s, parent %zu, matrixcount %zu, seqCount %zu, childCount %zu\n",
                 node, node_type.c_str(), parentLinks[node], matrices[node].size(), matrices[node].size() / signatureSize, childCount);
 
-        toBinaryIdx(pFile, getMeanSig(node));
-        fprintf(pFile, ">==================\n");
-        for (size_t i = 0; i < matrices[node].size(); i += signatureSize)
-        {
-            fprintf(pFile, "(%zu)\t", i / signatureSize);
-            toBinaryIdx(pFile, &matrices[node][i]);
-        }
-        fprintf(pFile, "===================\n");
+        // toBinaryIdx(pFile, getMeanSig(node));
+        // fprintf(pFile, ">==================\n");
+        // for (size_t i = 0; i < matrices[node].size(); i += signatureSize)
+        // {
+        //     fprintf(pFile, "(%zu)\t", i / signatureSize);
+        //     toBinaryIdx(pFile, &matrices[node][i]);
+        // }
+        // fprintf(pFile, "===================\n");
     }
 
-    void do_test(size_t node, bool print_txt = true)
-    {
-        // FILE *pFile = stderr;
-        // testNode(node, stderr);
-
-        if (print_txt)
-        {
-            string outName = to_string(test_cnt) + "_" + to_string(node) + ".txt";
-            FILE *pFile = fopen(outName.c_str(), "w");
-            testNode(node, pFile);
-        }
-
-        for (size_t child : childLinks[node])
-        {
-            do_test(child, print_txt);
-        }
-    }
-
-    void testing(size_t node)
-    {
-        printTreeJson(stderr);
-        do_test(node, true);
-        test_cnt++;
-    }
 
     void readNodeSig(size_t parent, size_t child, const char *binFile)
     {

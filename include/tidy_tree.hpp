@@ -113,8 +113,6 @@ public:
 
     virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
 
-    virtual void testing(size_t node) {}
-
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
     virtual void addSigToMatrix(size_t node, const_s_type signature) {}
@@ -126,6 +124,28 @@ public:
     virtual double calcSimilarityWrap(const_s_type a, const_s_type b) { return 0; }
 
     virtual double calcOverlapWrap(const_s_type a, const_s_type b) { return 0; }
+
+    virtual void testNode(size_t node, FILE *pFile) {}
+
+    void do_test(size_t node)
+    {
+        testNode(node, stderr);
+        // string outName = to_string(test_cnt) + "_" + to_string(node) + ".txt";
+        // FILE *pFile = fopen(outName.c_str(), "w");
+        // testNode(node, pFile);
+
+        for (size_t child : childLinks[node])
+        {
+            do_test(child);
+        }
+    }
+
+    void testing()
+    {
+        printTreeJson(stderr);
+        do_test(0);
+        test_cnt++;
+    }
 
     double calcScore(const_s_type a, const_s_type b, bool isRoot)
     {
@@ -222,15 +242,6 @@ public:
         isBranchNode[root] = 0;
         isRootNode[root] = 1;
         isSuperNode[root] = 0;
-    }
-
-    void printMatrix(FILE *stream, size_t node)
-    {
-        fprintf(stream, ">>>printing matrix at node %zu\n", node);
-        for (s_type seq : matrices[node])
-        {
-            dbgPrintSignature(stream, seq);
-        }
     }
 
     size_t getNewNodeIdx(vector<size_t> &insertionList)
@@ -515,7 +526,7 @@ public:
         parentLinks[node] = 0;
     }
 
-    void deleteUnitig(size_t node)
+    size_t deleteUnitig(size_t node)
     {
         size_t parent = parentLinks[node];
         size_t child = childLinks[node][0];
@@ -525,6 +536,8 @@ public:
         parentLinks[child] = parent;
         // deleteNode(node);
         clearNode(node);
+
+        return parent;
     }
 
     inline bool checkdeleteUniSuper(size_t node)
@@ -2455,18 +2468,16 @@ public:
 
     void updateTree(size_t node = 0)
     {
-        // if (!isAmbiNode[node])
+        if (isLeafNode(node))
         {
-            if (isLeafNode(node))
-            {
-                updateNodeMean(node);
-            }
-            else
-            {
-
-                updatePriority(node);
-            }
+            updateNodeMean(node);
         }
+        else
+        {
+
+            updatePriority(node);
+        }
+
         for (size_t child : childLinks[node])
         {
             updateTree(child);
@@ -2526,8 +2537,9 @@ public:
         // size_t parent = parentLinks[node];
         while (childCounts[parent] == 1 && parent != root)
         {
-            deleteUnitig(parent);
-            parent = parentLinks[parent];
+            parent = deleteUnitig(parent);
+            // deleteUnitig(parent);
+            // parent = parentLinks[parent];
         }
 
         if (cleared != 0)
