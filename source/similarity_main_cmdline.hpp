@@ -568,7 +568,7 @@ public:
   };
   static const char *help()
   {
-    return "Read minimisers BF and get all-against-all Jaccard similarity\n\n"
+    return "Read minimisers BF and get all-against-all similarity, default is with matching window\n\n"
            "Options (default value in (), *required):\n"
            " -i, --input                              BF input path\n"
            " -b, --batch                              recommended for processing large input, do in batch size [default=false]\n"
@@ -577,8 +577,9 @@ public:
            " -M, --min                                only print entry greater than this value, and do skip [default=0.5]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            " -A, --all                                input is all kmers\n"
-           " -G, --global                             count with global minimiserset\n"
-           " -L, --local                              count % matching minimsers by window\n"
+           " -G, --global                             count with global minimiser set\n"
+           " -L, --local                              count with local jaccard\n"
+           " {no flag}                                count % matching minimsers by window\n"
            " -S, --skip                               skip printing half the output\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
