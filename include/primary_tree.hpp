@@ -83,12 +83,37 @@ public:
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
 
-    void testNode(size_t node)
+    void testNode(size_t node, FILE *pFile)
     {
+        size_t childCount = childCounts[node];
+        string node_type = "leaf";
+        if (isRootNode[node])
+        {
+            node_type = "root";
+        }
+        else if (isSuperNode[node])
+        {
+            node_type = "super";
+        }
+        else if (isBranchNode[node])
+        {
+            node_type = "branch";
+        }
+        else
+        {
+            childCount = matrices[node].size() / signatureSize;
+            if (isAmbiNode[node])
+            {
+                node_type = "ambi";
+            }
+        }
         printMsg("test_cnt %zu, node %zu\n", test_cnt, node);
-        string outName = to_string(test_cnt) + ".txt";
-        FILE *pFile = fopen(outName.c_str(), "w");
-        fprintf(pFile, ">>>node %zu, matrix count %zu, seqCount %zu\n", node, matrices[node].size(), matrices[node].size() / signatureSize);
+        // string outName = to_string(test_cnt) + "_" + to_string(node) + ".txt";
+        // FILE *pFile = fopen(outName.c_str(), "w");
+        // FILE *pFile = stderr;
+        fprintf(pFile, ">>>node %zu, node_type %s, parent %zu, matrixcount %zu, seqCount %zu, childCount %zu\n",
+                node, node_type.c_str(), parentLinks[node], matrices[node].size(), matrices[node].size() / signatureSize, childCount);
+
         toBinaryIdx(pFile, getMeanSig(node));
         fprintf(pFile, ">==================\n");
         for (size_t i = 0; i < matrices[node].size(); i += signatureSize)
@@ -97,16 +122,31 @@ public:
             toBinaryIdx(pFile, &matrices[node][i]);
         }
         fprintf(pFile, "===================\n");
-        test_cnt++;
+    }
+
+    void do_test(size_t node, bool print_txt = true)
+    {
+        // FILE *pFile = stderr;
+        // testNode(node, stderr);
+
+        if (print_txt)
+        {
+            string outName = to_string(test_cnt) + "_" + to_string(node) + ".txt";
+            FILE *pFile = fopen(outName.c_str(), "w");
+            testNode(node, pFile);
+        }
+
+        for (size_t child : childLinks[node])
+        {
+            do_test(child, print_txt);
+        }
     }
 
     void testing(size_t node)
     {
-        testNode(node);
-        for (size_t child : childLinks[node])
-        {
-            testing(child);
-        }
+        printTreeJson(stderr);
+        do_test(node, true);
+        test_cnt++;
     }
 
     void readNodeSig(size_t parent, size_t child, const char *binFile)
@@ -150,7 +190,7 @@ public:
         size_t end = start + signatureSize;
         if (end > matrices[node].size())
         {
-            printMsg("Error deleting sig %zu from node %zu (%zu>%zu-1)\n", idx, node, end,  matrices[node].size());
+            printMsg("Error deleting sig %zu from node %zu (%zu>%zu-1)\n", idx, node, end, matrices[node].size());
         }
         matrices[node].erase(matrices[node].begin() + start, matrices[node].begin() + end);
     }
