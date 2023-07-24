@@ -719,7 +719,7 @@ public:
         {
             // super can only be stay or split
             printMsg("(super %.2f)", priority[child]);
-            return similarityStatusF(getMeanSig(child), signature, priority[child] + split_node_threshold, 100);
+            return similarityStatusF(getMeanSig(child), signature, priority[child], 100);
         }
         else if (isBranchNode[child])
         {
