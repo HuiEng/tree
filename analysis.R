@@ -248,7 +248,7 @@ ggarrange(p1,p2)
 ######################## simulate ##################################
 source("C://DataCopied/Research/R/simulateFunctions.R")
 numEachClust<-100
-path<-paste("C://DataCopied/Research/tree/data/toy_seed_50_",numEachClust,sep="")
+path<-paste("C://DataCopied/Research/tree/data/bigdata/toy_seed_50_",numEachClust,sep="")
 files<-list.files(path = path,pattern="*.txt")
 numEachClust<-numEachClust+1
 # maxSize<-0

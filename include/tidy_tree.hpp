@@ -1063,10 +1063,55 @@ public:
         return t_parent;
     }
 
+    inline size_t mergeSuper(size_t node, vector<size_t> &insertionList)
+    {
+        // obtain supers of "node"
+        vector<size_t> supers;
+        for (size_t child : childLinks[node])
+        {
+            if (isSuperNode[child])
+            {
+                supers.push_back(child);
+            }
+        }
+
+        if (supers.size() <= 1)
+        {
+            return 0;
+        }
+
+        // compare the latest super with the others 
+        // form a new (parent) super if any of the sibling similarity > split
+        size_t target = supers.back();
+        supers.pop_back();
+        s_type target_mean = getMeanSig(target);
+        vector<size_t> candidates;
+
+        for (size_t sibling : supers)
+        {
+            double similiarity = calcSimilarityWrap(target_mean, getMeanSig(sibling));
+            if (similiarity > split_threshold)
+            {
+                candidates.push_back(sibling);
+            }
+        }
+
+        if (candidates.size() < 1)
+        {
+            return 0;
+        }
+
+        // do merge
+        candidates.push_back(target);
+        size_t t_parent = createBranch(node, insertionList, candidates);
+        isSuperNode[t_parent] = 1;
+    }
+
     // create a new super under "node"
     // then move candidates to the new super
     inline size_t createSuper(size_t node, vector<size_t> &insertionList, vector<size_t> candidates)
     {
+        mergeSuper(node, insertionList);
         size_t t_parent = createBranch(node, insertionList, candidates);
         isSuperNode[t_parent] = 1;
         return t_parent;
