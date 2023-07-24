@@ -719,7 +719,7 @@ public:
         {
             // super can only be stay or split
             printMsg("(super %.2f)", priority[child]);
-            return similarityStatusF(getMeanSig(child), signature, priority[child], 100);
+            return similarityStatusF(getMeanSig(child), signature, priority[child] + split_node_threshold, 100);
         }
         else if (isBranchNode[child])
         {
@@ -1080,7 +1080,7 @@ public:
             return 0;
         }
 
-        // compare the latest super with the others 
+        // compare the latest super with the others
         // form a new (parent) super if any of the sibling similarity > split
         size_t target = supers.back();
         supers.pop_back();
@@ -1102,16 +1102,26 @@ public:
         }
 
         // do merge
+        printTreeJson(stderr);
         candidates.push_back(target);
         size_t t_parent = createBranch(node, insertionList, candidates);
-        isSuperNode[t_parent] = 1;
+        isRootNode[t_parent] = 1;
+        updateNodeMean(t_parent);
+        
+        fprintf(stderr, "merged %zu old supers to new super %zu\n", candidates.size(), t_parent);
+        printTreeJson(stderr);
+        fprintf(stderr, "\n\n");
+        return t_parent;
     }
 
     // create a new super under "node"
     // then move candidates to the new super
     inline size_t createSuper(size_t node, vector<size_t> &insertionList, vector<size_t> candidates)
     {
-        mergeSuper(node, insertionList);
+        // if (node == root)
+        // {
+        //     mergeSuper(node, insertionList);
+        // }
         size_t t_parent = createBranch(node, insertionList, candidates);
         isSuperNode[t_parent] = 1;
         return t_parent;

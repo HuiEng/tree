@@ -470,7 +470,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     {
         tree.printTreeJson(stdout);
     }
-
+tree.printTreeJson(stdout);
     // Recursively destroy all locks
     tree.destroyLocks();
     return clusters;
