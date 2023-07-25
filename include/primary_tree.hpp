@@ -351,6 +351,15 @@ public:
 
         return calcAvgSim(temp_matrix);
     }
+
+    double preloadPriority(size_t ambi, sVec_type signatures)
+    {
+        // preload sig into matrices to check for priority
+        sVec_type temp_matrix = matrices[ambi];
+        insertVecRange(temp_matrix, signatures);
+
+        return calcAvgSim(temp_matrix);
+    }
 };
 
 #endif

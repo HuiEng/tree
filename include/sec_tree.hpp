@@ -28,7 +28,7 @@ s_type createMeanSig(sVec_type clusterSigs)
     {
         return clusterSigs[0];
     }
-    
+
     // find the smallest windows count
     size_t winNum = clusterSigs[0].size();
     for (s_type matrix : clusterSigs)
@@ -330,6 +330,18 @@ public:
         // preload sig into matrices to check for priority
         sVec_type temp_matrix = matrices[ambi];
         temp_matrix.push_back(signature);
+
+        return calcAvgSim(temp_matrix);
+    }
+
+    double preloadPriority(size_t ambi, sVec_type signatures)
+    {
+        // preload sig into matrices to check for priority
+        sVec_type temp_matrix = matrices[ambi];
+        for (const_s_type signature : signatures)
+        {
+            temp_matrix.push_back(signature);
+        }
 
         return calcAvgSim(temp_matrix);
     }
