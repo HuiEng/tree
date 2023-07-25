@@ -176,6 +176,9 @@ public:
 
     virtual double preloadPriority(size_t node, const_s_type signature) { return 0; }
     virtual double preloadPriority(size_t node, sVec_type signatures) { return 0; }
+    
+    // check if first child of branch is a singleton
+    virtual inline bool isSingleton(size_t child) { return false; }
 
     void reserve(size_t capacity)
     {
@@ -1155,12 +1158,6 @@ public:
             }
         }
         return moved == children.size();
-    }
-
-    // check if first child of branch is a singleton
-    inline bool isSingleton(size_t child)
-    {
-        return matrices[child].size() == 1;
     }
 
     // separate roots and non roots children of node

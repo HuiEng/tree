@@ -124,6 +124,10 @@ public:
         // fprintf(pFile, "===================\n");
     }
 
+    inline bool isSingleton(size_t child)
+    {
+        return matrices[child].size() == signatureSize;
+    }
 
     void readNodeSig(size_t parent, size_t child, const char *binFile)
     {

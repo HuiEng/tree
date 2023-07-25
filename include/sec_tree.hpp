@@ -126,6 +126,11 @@ public:
         // fprintf(pFile, "===================\n");
     }
 
+    inline bool isSingleton(size_t child)
+    {
+        return matrices[child].size() == 1;
+    }
+
     const_s_type readInput(const char *inputFile)
     {
         return readPartitionBF(inputFile, signatureSize)[0];
