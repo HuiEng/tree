@@ -1480,7 +1480,7 @@ public:
     {
         if (dt.stay_branch.size() > 1)
         {
-            printTreeJson(stderr, parentLinks[dt.dest_branch]);
+            // printTreeJson(stderr, parentLinks[dt.dest_branch]);
             for (size_t b : dt.stay_branch)
             {
                 if (b == dt.dest_branch)
@@ -1502,7 +1502,7 @@ public:
             dt.stay_branch.clear();
             dt.stay_branch.push_back(dt.dest_branch);
 
-            printTreeJson(stderr, parentLinks[dt.dest_branch]);
+            // printTreeJson(stderr, parentLinks[dt.dest_branch]);
         }
     }
 
