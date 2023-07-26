@@ -83,6 +83,12 @@ public:
 
     s_type getMeanSig(size_t node) { return &means[node * signatureSize]; }
 
+    // check if first child of branch is a singleton
+    inline bool isSingleton(size_t child)
+    {
+        return matrices[child].size() == signatureSize;
+    }
+
     void testNode(size_t node, FILE *pFile)
     {
         size_t childCount = childCounts[node];

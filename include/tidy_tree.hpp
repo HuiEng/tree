@@ -113,6 +113,8 @@ public:
 
     virtual s_type getMeanSig(size_t node) { return returnEmpy<s_type>(); }
 
+    virtual inline bool isSingleton(size_t child) { return false; }
+
     virtual void updateMeanSig(size_t node, const_s_type signature) {}
 
     virtual void addSigToMatrix(size_t node, const_s_type signature) {}
@@ -1107,12 +1109,6 @@ public:
             }
         }
         return moved == children.size();
-    }
-
-    // check if first child of branch is a singleton
-    inline bool isSingleton(size_t child)
-    {
-        return matrices[child].size() == 1;
     }
 
     // separate roots and non roots children of node
