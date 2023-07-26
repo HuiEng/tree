@@ -18,6 +18,8 @@ size_t bf_element_cnt = 1000;
 bool debug = false;
 bool compressReads = false;
 bool multipleOut = false;
+bool fixedLength = false;
+size_t max_window_count = 10;
 string outfile = "";
 
 // void writeInt(std::ostream &os, unsigned long long int i)
@@ -147,6 +149,38 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
         // end of seq flag, print empty bf
         bf.print(wf);
     }
+    else if (fixedLength)
+    {
+        vector<bloom_filter> wBFL;
+        for (size_t i = 0; i < max_window_count; i++)
+        {
+            bloom_filter temp(parameters);
+            wBFL.push_back(temp);
+        }
+
+        for (auto &[seq, id, qual] : file_in)
+        {
+            size_t i = 0;
+            // fprintf(stdout, ">\n");
+            for (auto &&hashes : seq | minimiser_view)
+            {
+                for (size_t hash : hashes)
+                {
+                    wBFL[i % max_window_count].insert(hash);
+                }
+                i++;
+            }
+            // print the list
+            for (bloom_filter wbf : wBFL)
+            {
+                wbf.print(wf);
+                wbf.clear();
+            }
+            // end of seq flag, print empty bf
+            bf.print(wf);
+        }
+
+    }
 
     else
     {
@@ -214,7 +248,6 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
     // wf.close();
 }
 
-
 int build_partition_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -267,6 +300,16 @@ int build_partition_main(int argc, char *argv[])
     {
         std::cout << "Compressing Reads" << std::endl;
     }
+
+
+    if (args.fixedLength_given)
+    {
+        fixedLength = true;
+        max_window_count = args.fixedLength_arg;
+        std::cout << "Limiting the number of BFs in a list to " << max_window_count<< std::endl;
+    }
+
+
     multipleOut = args.multiple_arg;
     if (multipleOut)
     {
@@ -290,7 +333,7 @@ int build_partition_main(int argc, char *argv[])
     {
         bf_element_cnt = args.element_arg;
     }
-    
+
     if (args.step_given)
     {
         step_size = args.step_arg;

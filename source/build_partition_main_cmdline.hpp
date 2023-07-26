@@ -363,6 +363,7 @@ public:
   uint32_t step_arg;
   size_t size_arg;
   size_t element_arg;
+  size_t fixedLength_arg;
 
   bool output_given;
   bool kmer_given;
@@ -378,6 +379,7 @@ public:
   bool toSingle_arg;
   bool folder_arg;
   bool compress_arg;
+  bool fixedLength_given;
 
   enum
   {
@@ -388,25 +390,27 @@ public:
   };
 
   build_partition_main_cmdline() : input_arg(""), output_arg(""),
-                                   kmer_arg(0), window_arg(0), step_arg(0), element_arg(0),
+                                   kmer_arg(0), window_arg(0), step_arg(0),
+                                   element_arg(0), fixedLength_arg(0),
                                    output_given(false),
                                    kmer_given(false), window_given(false), step_given(false),
                                    element_given(false), multiple_arg(false), get_element(false),
                                    canonical_arg(false), size_given(false),
                                    size_arg(0), debug(false), set_arg(false), folder_arg(false),
-                                   toSingle_arg(false), compress_arg(false)
+                                   toSingle_arg(false), compress_arg(false), fixedLength_given(false)
   {
   }
 
   build_partition_main_cmdline(int argc, char *argv[]) : input_arg(""), output_arg(""),
-                                                         kmer_arg(0), window_arg(0), step_arg(0), element_arg(0),
+                                                         kmer_arg(0), window_arg(0), step_arg(0),
+                                                         element_arg(0), fixedLength_arg(0),
                                                          output_given(false),
                                                          kmer_given(false), window_given(false), step_given(false),
                                                          element_given(false), multiple_arg(false), get_element(false),
                                                          canonical_arg(false), size_given(false),
                                                          size_arg(0), debug(false), set_arg(false),
                                                          folder_arg(false), toSingle_arg(false),
-                                                         compress_arg(false)
+                                                         compress_arg(false), fixedLength_given(false)
   {
     parse(argc, argv);
   }
@@ -421,6 +425,7 @@ public:
         {"multiple", 0, 0, 'm'},
         {"canonical", 0, 0, 'C'},
         {"compress", 0, 0, 'c'},
+        {"length", 1, 0, 'L'},
         {"toSingle", 0, 0, 'x'},
         {"partition", 0, 0, 'p'},
         {"size", 1, 0, 's'},
@@ -431,7 +436,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVb:k:w:mCs:de:fxcE";
+    static const char *short_options = "hVb:k:w:mCs:de:fxcEL:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -510,6 +515,11 @@ public:
         break;
       case 'c':
         compress_arg = true;
+        break;
+      case 'L':
+        fixedLength_given = true;
+        fixedLength_arg = conv_uint<size_t>((const char *)optarg, err, false);
+        CHECK_ERR(size_t, optarg, "-L, --length=size_t")
         break;
       case 's':
         size_given = true;
@@ -595,6 +605,7 @@ public:
            " -E, --get_element                        estimate number of element in BF \n"
            " -C, --canonical                          canonical [default=FALSE]\n"
            " -c, --compress                           compress all seqs in a fasta into single BF [default=FALSE]\n"
+           " -L, --length                             limit the number of BFs in list for each seq [default=false]\n"
            " -s, --size                               number of minimiser per window [default=3]\n"
            " -k,                                      kmer length [default=4]\n"
            " -w,                                      window length [default=8]\n"

@@ -14,7 +14,7 @@ options:
 options for pbuild only:
 - s, number of minimiser per window
 - x, get multiple minimiser per window but store in single BF. Output filename consists term "single". The output structure is same as "build" but the signature generated may not be the same
-
+- L {size_t}, limit the number of BFs in a list, only for long seq
 
 options for build only:
 - m, output every entry to single binary file
