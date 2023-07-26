@@ -176,7 +176,7 @@ public:
 
     virtual double preloadPriority(size_t node, const_s_type signature) { return 0; }
     virtual double preloadPriority(size_t node, sVec_type signatures) { return 0; }
-    
+
     // check if first child of branch is a singleton
     virtual inline bool isSingleton(size_t child) { return false; }
 
@@ -806,7 +806,7 @@ public:
         }
     }
 
-    inline size_t insertAmbi(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
+    inline size_t insertAmbi(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t branch, size_t singleton_leaf)
     {
 
         if (ambiLinks[branch].size() == 0)
@@ -852,6 +852,15 @@ public:
             }
         }
 
+        // if (singleton_leaf != 0 && dest != 0 && !isSingleton(dest))
+        // {
+        //     // bad branch
+        //     printMsg("Bad Branch %zu, ambi %zu\n", branch, dest);
+        //     isAmbiNode[dest] = 0;
+        //     updateParentMean(dest);
+        //     removeVecValue(ambiLinks[branch], dest);
+        // }
+
         if (ambi_split == ambiLinks[branch].size())
         {
             return createAmbiNode(signature, insertionList, branch, idx);
@@ -867,6 +876,8 @@ public:
     // else create new ambi
     inline size_t insertBranch(const_s_type signature, vector<size_t> &insertionList, size_t idx, size_t branch)
     {
+        size_t singleton_leaf = 0;
+        size_t non_singleton_leaf_cnt = 0;
         double max_similarity = stay_threshold;
         size_t dest = 0;
         for (size_t child : childLinks[branch])
@@ -877,6 +888,17 @@ public:
             {
                 max_similarity = similarity;
                 dest = child;
+            }
+            if (!isAmbiNode[child])
+            {
+                if (isSingleton(child))
+                {
+                    singleton_leaf = child;
+                }
+                else
+                {
+                    non_singleton_leaf_cnt++;
+                }
             }
         }
 
@@ -892,7 +914,12 @@ public:
             return dest;
         }
 
-        return insertAmbi(signature, insertionList, idx, branch);
+        if (non_singleton_leaf_cnt > 0)
+        {
+            singleton_leaf = 0;
+        }
+
+        return insertAmbi(signature, insertionList, idx, branch, singleton_leaf);
     }
 
     // find best leaf from the NN branches, if dest = 0, create new node
