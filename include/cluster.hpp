@@ -18,6 +18,7 @@ struct tree_meta_st
     bool writeTree_ = false;
     const char *inputTreePath;
     const char *outputTreePath;
+    bool writeJSON = false;
 };
 
 tree_meta_st tree_meta;
@@ -119,6 +120,7 @@ string setArgs(cmdline_type args)
     tree_meta.writeTree_ = args.topology_out_given;
     tree_meta.inputTreePath = args.topology_in_arg;
     tree_meta.outputTreePath = args.topology_out_arg;
+    tree_meta.writeJSON = args.print_tree_given;
 
     size_t firstindex = inputFile.find_last_of("/") + 1;
     size_t lastindex = inputFile.find_last_of(".");
@@ -390,6 +392,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             singleton = 1;
             printMsg("\n\nReinserting ambi (all)\n");
             tree.prepReinsert();
+            // tree.removeRedundant();
 
             if (tree_meta.writeTree_)
             {
@@ -428,6 +431,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
 
         tree.removeAmbi();
         tree.prepReinsert();
+        // tree.removeRedundant();
 
 // tree.printTreeJson(stderr);
 #pragma omp parallel for
@@ -466,7 +470,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
     //     tree.printTree(tFile, insertionList, tree_meta.outputTreePath);
     // }
 
-    if (tree_meta.writeTree_ | tree_meta.readTree_)
+    if (tree_meta.writeTree_ | tree_meta.writeJSON)
     {
         tree.printTreeJson(stdout);
     }

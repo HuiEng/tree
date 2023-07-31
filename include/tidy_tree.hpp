@@ -2462,6 +2462,28 @@ public:
         }
     }
 
+    void removeRedundant()
+    {
+        for (size_t i = 0; i < childLinks[root].size() - 1; i++)
+        {
+            size_t child = childLinks[root][i];
+            s_type signature = getMeanSig(child);
+            for (size_t j = 1 + 1; j < childLinks[root].size(); j++)
+            {
+                size_t sibling = childLinks[root][j];
+                double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
+                if (similarity >= stay_threshold)
+                {
+                    fprintf(stderr, "*****stay %zu, %zu, %.2f\n", child, sibling, similarity);
+                }
+                else if (similarity > split_threshold)
+                {
+                    fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
+                }
+            }
+        }
+    }
+
     void updateTree(size_t node = 0)
     {
         if (isLeafNode(node))
