@@ -392,7 +392,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
             singleton = 1;
             printMsg("\n\nReinserting ambi (all)\n");
             tree.prepReinsert();
-            // tree.removeRedundant();
+            tree.removeRedundant();
 
             if (tree_meta.writeTree_)
             {
@@ -431,7 +431,7 @@ vector<size_t> clusterSignatures(const vector<signature_type> &seqs, size_t seqC
 
         tree.removeAmbi();
         tree.prepReinsert();
-        // tree.removeRedundant();
+        tree.removeRedundant();
 
 // tree.printTreeJson(stderr);
 #pragma omp parallel for

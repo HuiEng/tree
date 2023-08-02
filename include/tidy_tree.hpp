@@ -530,9 +530,13 @@ public:
 
     size_t deleteUnitig(size_t node)
     {
+        int idx = getNodeIdx(node);
+        if (idx < 0)
+        {
+            return root;
+        }
         size_t parent = parentLinks[node];
         size_t child = childLinks[node][0];
-        size_t idx = getNodeIdx(node);
 
         childLinks[parent][idx] = child;
         parentLinks[child] = parent;
@@ -2462,24 +2466,51 @@ public:
         }
     }
 
+    void removeRedundant(size_t child)
+    {
+        s_type signature = getMeanSig(child);
+        double threshold = stay_threshold;
+        if (isSuperNode[child] || isRootNode[child])
+        {
+            threshold = priority[child];
+        }
+        for (size_t sibling : childLinks[root])
+        {
+            double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
+            if (similarity >= threshold)
+            {
+                fprintf(stderr, "*****stay %zu, %zu, %.2f\n", child, sibling, similarity);
+            }
+            // else if (similarity > split_threshold)
+            // {
+            //     fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
+            // }
+        }
+    }
+
     void removeRedundant()
     {
         for (size_t i = 0; i < childLinks[root].size() - 1; i++)
         {
             size_t child = childLinks[root][i];
             s_type signature = getMeanSig(child);
-            for (size_t j = 1 + 1; j < childLinks[root].size(); j++)
+            double threshold = stay_threshold;
+            if (isSuperNode[child] || isRootNode[child])
+            {
+                threshold = priority[child];
+            }
+            for (size_t j = i + 1; j < childLinks[root].size(); j++)
             {
                 size_t sibling = childLinks[root][j];
                 double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
-                if (similarity >= stay_threshold)
+                if (similarity >= threshold)
                 {
                     fprintf(stderr, "*****stay %zu, %zu, %.2f\n", child, sibling, similarity);
                 }
-                else if (similarity > split_threshold)
-                {
-                    fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
-                }
+                // else if (similarity > split_threshold)
+                // {
+                //     fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
+                // }
             }
         }
     }
