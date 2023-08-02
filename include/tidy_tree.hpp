@@ -779,6 +779,37 @@ public:
     //     }
     // }
 
+    size_t mergeNodes(size_t dest, vector<size_t> &candidates)
+    {
+        if (isLeafNode(dest))
+        {
+            return 0;
+        }
+        for (size_t node : candidates)
+        {
+            if (isLeafNode(node))
+            {
+                moveParent(node, dest);
+            }
+            else
+            {
+                for (size_t child : childLinks[node])
+                {
+                    parentLinks[child] = dest;
+                }
+                childCounts[dest] += childCounts[node];
+                insertVecRange(childLinks[dest], childLinks[node]);
+                insertVecRange(matrices[dest], matrices[node]);
+                insertVecRange(ambiLinks[dest], ambiLinks[node]);
+
+                deleteNode(node);
+                clearNode(node);
+            }
+        }
+        updateParentMean(dest);
+        return 1;
+    }
+
     void mergeAmbi(size_t branch)
     {
         vector<size_t> candidates;
@@ -2479,6 +2510,8 @@ public:
         {
             threshold = priority[child];
         }
+
+        vector<size_t> candidates;
         for (size_t j = idx + 1; j < childLinks[node].size(); j++)
         {
             size_t sibling = childLinks[node][j];
@@ -2486,12 +2519,20 @@ public:
             if (similarity >= threshold)
             {
                 fprintf(stderr, "*****stay %zu, %zu, %.2f\n", child, sibling, similarity);
+                candidates.push_back(sibling);
             }
             // else if (similarity > split_threshold)
             // {
             //     fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
             // }
         }
+
+        if (candidates.size() < 1)
+        {
+            return 0;
+        }
+
+        mergeNodes(child, candidates);
         return 1;
     }
 
