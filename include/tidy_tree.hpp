@@ -532,9 +532,13 @@ public:
 
     size_t deleteUnitig(size_t node)
     {
+        int idx = getNodeIdx(node);
+        if (idx < 0)
+        {
+            return root;
+        }
         size_t parent = parentLinks[node];
         size_t child = childLinks[node][0];
-        size_t idx = getNodeIdx(node);
 
         childLinks[parent][idx] = child;
         parentLinks[child] = parent;
