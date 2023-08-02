@@ -2466,16 +2466,22 @@ public:
         }
     }
 
-    void removeRedundant(size_t child)
+    size_t removeRedundant(size_t child, size_t node = 0)
     {
+        int idx = getNodeIdx(child);
+        if (idx < 0)
+        {
+            return 0;
+        }
         s_type signature = getMeanSig(child);
         double threshold = stay_threshold;
         if (isSuperNode[child] || isRootNode[child])
         {
             threshold = priority[child];
         }
-        for (size_t sibling : childLinks[root])
+        for (size_t j = idx + 1; j < childLinks[node].size(); j++)
         {
+            size_t sibling = childLinks[node][j];
             double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
             if (similarity >= threshold)
             {
@@ -2486,32 +2492,14 @@ public:
             //     fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
             // }
         }
+        return 1;
     }
 
     void removeRedundant()
     {
-        for (size_t i = 0; i < childLinks[root].size() - 1; i++)
+        for (size_t child : childLinks[root])
         {
-            size_t child = childLinks[root][i];
-            s_type signature = getMeanSig(child);
-            double threshold = stay_threshold;
-            if (isSuperNode[child] || isRootNode[child])
-            {
-                threshold = priority[child];
-            }
-            for (size_t j = i + 1; j < childLinks[root].size(); j++)
-            {
-                size_t sibling = childLinks[root][j];
-                double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
-                if (similarity >= threshold)
-                {
-                    fprintf(stderr, "*****stay %zu, %zu, %.2f\n", child, sibling, similarity);
-                }
-                // else if (similarity > split_threshold)
-                // {
-                //     fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
-                // }
-            }
+            removeRedundant(child);
         }
     }
 
