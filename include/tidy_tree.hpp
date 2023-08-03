@@ -2499,6 +2499,10 @@ public:
 
     size_t removeRedundant(size_t child, size_t node = 0)
     {
+        if (isRootNode[child])
+        {
+            return 0;
+        }
         int idx = getNodeIdx(child);
         if (idx < 0)
         {
@@ -2515,6 +2519,10 @@ public:
         for (size_t j = idx + 1; j < childLinks[node].size(); j++)
         {
             size_t sibling = childLinks[node][j];
+            if (isRootNode[sibling])
+            {
+                continue;
+            }
             double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
             if (similarity >= threshold)
             {
