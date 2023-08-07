@@ -530,13 +530,9 @@ public:
 
     size_t deleteUnitig(size_t node)
     {
-        int idx = getNodeIdx(node);
-        if (idx < 0)
-        {
-            return root;
-        }
         size_t parent = parentLinks[node];
         size_t child = childLinks[node][0];
+        size_t idx = getNodeIdx(node);
 
         childLinks[parent][idx] = child;
         parentLinks[child] = parent;
@@ -779,37 +775,6 @@ public:
     //     }
     // }
 
-    size_t mergeNodes(size_t dest, vector<size_t> &candidates)
-    {
-        if (isLeafNode(dest))
-        {
-            return 0;
-        }
-        for (size_t node : candidates)
-        {
-            if (isLeafNode(node))
-            {
-                moveParent(node, dest);
-            }
-            else
-            {
-                for (size_t child : childLinks[node])
-                {
-                    parentLinks[child] = dest;
-                }
-                childCounts[dest] += childCounts[node];
-                insertVecRange(childLinks[dest], childLinks[node]);
-                insertVecRange(matrices[dest], matrices[node]);
-                insertVecRange(ambiLinks[dest], ambiLinks[node]);
-
-                deleteNode(node);
-                clearNode(node);
-            }
-        }
-        updateParentMean(dest);
-        return 1;
-    }
-
     void mergeAmbi(size_t branch)
     {
         vector<size_t> candidates;
@@ -994,11 +959,6 @@ public:
         }
 
         updateParentMean(dest);
-
-        if (t_parent != node)
-        {
-            mergeSuper(t_parent);
-        }
         return dest;
     }
 
@@ -1103,34 +1063,6 @@ public:
         addSigToMatrix(node, getMeanSig(t_parent));
         updateParentMean(t_parent);
         return t_parent;
-    }
-
-    // called after creating a new super
-    // to check if need to combine other siblings
-    inline void mergeSuper(size_t new_super)
-    {
-
-        size_t parent = parentLinks[new_super];
-        vector<size_t> siblings = childLinks[parent];
-        siblings.pop_back(); // assume new super being the last child;
-        s_type signature = getMeanSig(new_super);
-
-        vector<size_t> candidates;
-        for (size_t sibling : siblings)
-        {
-            // may want to check if sibling is root, but it does not happen now
-            double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
-            if (similarity >= priority[new_super])
-            {
-                fprintf(stderr, "*****merge %zu, %zu, %.2f\n", new_super, sibling, similarity);
-                candidates.push_back(sibling);
-            }
-        }
-
-        if (candidates.size() > 0)
-        {
-            mergeNodes(new_super, candidates);
-        }
     }
 
     // create a new super under "node"
@@ -1391,7 +1323,6 @@ public:
                 size_t t_parent = createSuper(node, insertionList, target);
                 movedRemaining(node, t_parent, moved_all_nn, candidates);
                 updateParentMean(t_parent);
-                mergeSuper(t_parent);
                 return t_parent;
             }
         }
@@ -1437,7 +1368,6 @@ public:
             movedRemaining(node, t_parent, moved_all_stay, stay_candidates);
             movedRemaining(node, t_parent, moved_all_nn, nn_candidates);
             updateParentMean(t_parent);
-            mergeSuper(t_parent);
             return t_parent;
         }
 
@@ -1464,7 +1394,6 @@ public:
                 movedRemaining(node, t_parent, moved_all_low, low_candidates);
                 movedRemaining(node, t_parent, moved_all_high, high_candidates);
                 updateParentMean(t_parent);
-                mergeSuper(t_parent);
                 return t_parent;
             }
         }
@@ -1503,7 +1432,6 @@ public:
                 movedRemaining(node, t_parent, moved_all_nn_branch, dt.nn_branch);
 
                 updateParentMean(t_parent);
-                mergeSuper(t_parent);
                 return t_parent;
             }
         }
@@ -1530,7 +1458,6 @@ public:
                 // there is some candidates can't be moved to high or low, move to super
                 movedRemaining(node, t_parent, moved_all, candidates);
                 updateParentMean(t_parent);
-                mergeSuper(t_parent);
                 return t_parent;
             }
         }
@@ -1573,7 +1500,6 @@ public:
                 {
                     t_parent = createSuper(node, insertionList, dt.stay_branch);
                     recluster(t_parent);
-                    mergeSuper(t_parent);
                 }
             }
             return insertBranch(signature, insertionList, idx, dt.dest_branch);
@@ -1599,7 +1525,6 @@ public:
                 {
                     t_parent = createSuper(node, insertionList, dt.stay_super);
                     recluster(t_parent);
-                    mergeSuper(t_parent);
                 }
             }
             // return stayNode(signature, insertionList, idx, dt.dest_super);
@@ -1669,7 +1594,6 @@ public:
                             moveParent(b, t_parent);
                         }
                         // recluster(t_parent);
-                        mergeSuper(t_parent);
                     }
                     return dt.dest;
                 }
@@ -2037,6 +1961,60 @@ public:
         return node;
     }
 
+    size_t addSubtree(size_t node, vector<size_t> &insertionList)
+    {
+        size_t clusterCount = 2;
+        vector<size_t> children = childLinks[node];
+        vector<vector<size_t>> clusters(clusterCount);
+
+        sVec_type temp_centroids = createRandomSigs(node, clusterCount);
+
+        for (size_t child : children)
+        {
+            size_t dest = 0;
+            double max_similarity = 0;
+            for (size_t i = 0; i < clusterCount; i++)
+            {
+                double similarity = calcSimilaritySigToNode(child, temp_centroids, i);
+                printMsg("%zu, %f\n", i, similarity);
+                if (similarity > max_similarity)
+                {
+                    max_similarity = similarity;
+                    dest = i;
+                }
+            }
+            printMsg("--- %zu goes to %zu\n", child, dest);
+            clusters[dest].push_back(child);
+        }
+
+        for (vector<size_t> cluster : clusters)
+        {
+            if (cluster.size() <= 1)
+            {
+                // printTreeJson(stderr);
+                printMsg("??something is wrong cannot add subtree evenly\n");
+                return 0;
+            }
+        }
+
+        // if (print_)
+        // {
+        //     printTreeJson(stderr);
+        // }
+        printMsg(">> addSubtree %zu\n", node);
+
+        size_t t_parent = createSuper(parentLinks[node], insertionList, clusters[1]);
+        isSuperNode[t_parent] = 0;
+        isRootNode[t_parent] = 1;
+
+        updateParentMean(node);
+        // if (print_)
+        // {
+        //     printTreeJson(stderr);
+        // }
+
+        return 1;
+    }
 
     size_t forceSplitRoot(vector<size_t> &insertionList, size_t node = 0, size_t clusterCount = 2)
     {
@@ -2481,61 +2459,6 @@ public:
         for (size_t child : childLinks[node])
         {
             prepReinsert(child);
-        }
-    }
-
-    size_t removeRedundant(size_t child, size_t node = 0)
-    {
-        if (isRootNode[child])
-        {
-            return 0;
-        }
-        int idx = getNodeIdx(child);
-        if (idx < 0)
-        {
-            return 0;
-        }
-        s_type signature = getMeanSig(child);
-        double threshold = stay_threshold;
-        if (isSuperNode[child])
-        {
-            threshold = priority[child];
-        }
-
-        vector<size_t> candidates;
-        for (size_t j = idx + 1; j < childLinks[node].size(); j++)
-        {
-            size_t sibling = childLinks[node][j];
-            if (isRootNode[sibling])
-            {
-                continue;
-            }
-            double similarity = calcSimilarityWrap(getMeanSig(sibling), signature);
-            if (similarity >= threshold)
-            {
-                fprintf(stderr, "*****stay %zu, %zu, %.2f\n", child, sibling, similarity);
-                candidates.push_back(sibling);
-            }
-            // else if (similarity > split_threshold)
-            // {
-            //     fprintf(stderr, "-----nn %zu, %zu, %.2f\n", child, sibling, similarity);
-            // }
-        }
-
-        if (candidates.size() < 1)
-        {
-            return 0;
-        }
-
-        mergeNodes(child, candidates);
-        return 1;
-    }
-
-    void removeRedundant()
-    {
-        for (size_t child : childLinks[root])
-        {
-            removeRedundant(child);
         }
     }
 

@@ -378,7 +378,6 @@ public:
   bool random_arg;
   bool topology_in_given;
   bool topology_out_given;
-  bool print_tree_given;
   bool split_threshold_given;
   bool stay_threshold_given;
   bool debug_arg;
@@ -405,7 +404,6 @@ public:
                         random_arg(false), iteration_arg(0), seed_arg(0),
                         topology_in_given(false), topology_in_arg(""),
                         topology_out_given(false), topology_out_arg(""),
-                        print_tree_given(false),
                         split_threshold_given(false), split_threshold_arg(0),
                         stay_threshold_given(false), stay_threshold_arg(0), tree_order_given(false),
                         debug_arg(false), print_arg(false), force_split_arg(false),
@@ -420,7 +418,6 @@ public:
                                               random_arg(false), iteration_arg(0), seed_arg(0),
                                               topology_in_given(false), topology_in_arg(""),
                                               topology_out_given(false), topology_out_arg(""),
-                                              print_tree_given(false),
                                               split_threshold_given(false), split_threshold_arg(0),
                                               stay_threshold_given(false), stay_threshold_arg(0), tree_order_given(false),
                                               debug_arg(false), print_arg(false), force_split_arg(false),
@@ -450,7 +447,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:c:C:R:dfI:q:Ww:sS:L:m:T:pfF:M";
+    static const char *short_options = "hVi:o:c:C:R:dfI:q:w:sS:L:m:T:pfF:M";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -515,9 +512,6 @@ public:
       case 'w':
         topology_out_given = true;
         topology_out_arg = optarg;
-        break;
-      case 'W':
-        print_tree_given = true;
         break;
       case 's':
         skip_arg = true;
@@ -648,7 +642,6 @@ public:
            " -c, --size_cap                           Only cluster the first c seqs [default=10000]\n"
            " -q, --topology_in                        Read tree topology from this folder [must end with '/']\n"
            " -w, --topology_out                       Print tree topology into this folder [must end with '/']\n"
-           " -W,                                      Print final tree JSON to stdout [default=false] \n"
            " -s, --skip                               skip to reinsertion step, must use with -q\n"
            " -L, --split                              split node if HD >= signature length * split_threshold [default=1]\n"
            " -S, --stay                               stay in node if HD <= signature length * stay_threshold [default=0]\n"
