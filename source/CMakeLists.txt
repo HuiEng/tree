@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.8)
 # set( CMAKE_VERBOSE_MAKEFILE on )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-project (tree CXX)
+project (treeAll CXX)
 
 # find_package(BF_LIB libbf REQUIRED)
 find_package(OpenMP)
@@ -46,4 +46,4 @@ endforeach()
 message(STATUS "build_all_subcommands------------------------------------------}")
 
 
-install(TARGETS tree DESTINATION bin)
+install(TARGETS treeAll DESTINATION bin)

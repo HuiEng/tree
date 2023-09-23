@@ -9,6 +9,7 @@ using namespace std;
 
 // static size_t signatureSize;         // Signature size (depends on element in BF, obtained while read binary)
 bool skip = false;
+bool skip_min = false;
 size_t batch = 300;
 double min_print_sim = 0.5;
 
@@ -54,10 +55,7 @@ void calcAllSimilarityLocal(FILE *pFile, vector<seq_type> seqs, size_t offset = 
             {
                 // double dist = calcDistance(seqs[i], seqs[j]) * 100.0 / max(countBits(seqs[i]), countBits(seqs[j]));
                 double similarity = calcJaccardLocal(seqs[i], seqs[j]);
-                if (similarity > min_print_sim)
-                {
-                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
-                }
+                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
             }
         }
     }
@@ -88,10 +86,7 @@ void calcAllSimilarityWindow(FILE *pFile, vector<seq_type> seqs, size_t offset =
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 double similarity = calcMatchingWindows(seqs[i], seqs[j]);
-                if (similarity > min_print_sim)
-                {
-                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
-                }
+                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
             }
         }
     }
@@ -121,10 +116,7 @@ void calcAllSimilarityGlobal(FILE *pFile, vector<seq_type> seqs, size_t offset =
             for (size_t j = i + 1; j < seqCount; j++)
             {
                 double similarity = calcJaccardGlobal(seqs[i], seqs[j]);
-                if (similarity > min_print_sim)
-                {
-                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
-                }
+                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, similarity * 100);
             }
         }
     }
@@ -157,10 +149,7 @@ void calcAllSimilarityKmers(FILE *pFile, vector<cell_type> seqs, size_t offset =
                 // size_t bits = max(temp, countSetBits(&seqs[j * signatureSize], signatureSize));
                 // fprintf(stdout, "%zu,%zu,%zu\n", i, j, bits);
                 double sim = calcSimilarity(&seqs[i * signatureSize], &seqs[j * signatureSize], signatureSize);
-                if (sim > min_print_sim)
-                {
-                    fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, sim * 100);
-                }
+                fprintf(pFile, "%zu,%zu,%.2f\n", i + offset, j + offset, sim * 100);
             }
         }
     }

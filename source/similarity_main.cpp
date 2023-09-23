@@ -70,6 +70,97 @@ void allKmersBatch(FILE *pFile, const string inputFile)
     fprintf(stderr, "Loaded %zu seqs..\n", seqCount);
 }
 
+void outputClusters(FILE *pFile, const vector<size_t> &clusters)
+{
+    for (size_t sig = 0; sig < clusters.size(); sig++)
+    {
+        fprintf(pFile, "%llu,%llu\n", static_cast<unsigned long long>(sig), static_cast<unsigned long long>(clusters[sig]));
+    }
+}
+
+vector<vector<size_t>> compressClusterList(const string file)
+{
+    string line;
+    ifstream clusterStream(file);
+
+    size_t id = 0;
+    size_t clus = 0;
+    vector<size_t> clusters;
+
+    while (getline(clusterStream, line))
+    {
+        sscanf(line.c_str(), "%zu,%zu", &id, &clus);
+        clusters.push_back(clus);
+    }
+    clusterStream.close();
+
+    unordered_map<size_t, size_t> remap;
+    vector<vector<size_t>> clusterGroup;
+    size_t i = 0;
+    for (size_t &clus : clusters)
+    {
+        if (remap.count(clus))
+        {
+            clus = remap[clus];
+            clusterGroup[clus].push_back(i);
+        }
+        else
+        {
+            size_t newClus = remap.size();
+            remap[clus] = newClus;
+            clus = newClus;
+            clusterGroup.push_back({i});
+        }
+        i++;
+    }
+    fprintf(stderr, "Output %zu clusters\n", remap.size());
+    FILE *cFile = fopen("test.txt", "w");
+    outputClusters(cFile, clusters);
+    return clusterGroup;
+}
+
+template <typename T>
+void insertVecRange(vector<T> &to, vector<T> &from)
+{
+    to.insert(to.end(), from.begin(), from.end());
+}
+
+template <typename funcType, typename sigType>
+void sepCluster(const string file,
+                funcType simFunc,
+                vector<sigType> &seqs, size_t mul = 1)
+{
+    string rawname = "test";
+
+    vector<vector<size_t>> clusterGroup = compressClusterList(file);
+    size_t offset = 0;
+    size_t offset_old = 0;
+    size_t clu = 0;
+    for (vector<size_t> cluster : clusterGroup)
+    {
+        FILE *pFile = fopen(("intra" + to_string(clu) + "-all_sim.txt").c_str(), "w");
+        fprintf(pFile, "i,j,similarity\n");
+        vector<sigType> temp;
+        for (size_t id : cluster)
+        {
+            if (mul == 1)
+            {
+                temp.push_back(seqs[id]);
+            }
+            else
+            {
+                sigType *signature = &seqs[id * mul];
+                temp.insert(temp.end(), signature, signature + signatureSize);
+            }
+            offset++;
+        }
+        fprintf(stderr, "Loaded %zu seqs...in cluster %zu\n", temp.size() / mul, clu);
+        clu++;
+        simFunc(pFile, temp, offset_old);
+        offset_old = offset;
+    }
+}
+
 int similarity_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -85,17 +176,6 @@ int similarity_main(int argc, char *argv[])
         skip = true;
     }
 
-    if (args.min_sim_given)
-    {
-        min_print_sim = args.min_sim_arg;
-        skip = true;
-    }
-
-    if (skip)
-    {
-        fprintf(stderr, "Only printing entries > %.1f %%\n", min_print_sim * 100);
-    }
-
     size_t firstindex = inputFile.find_last_of("/") + 1;
     size_t lastindex = inputFile.find_last_of(".");
     string rawname = inputFile.substr(firstindex, lastindex - firstindex);
@@ -106,7 +186,23 @@ int similarity_main(int argc, char *argv[])
     }
     FILE *pFile;
 
-    if (args.batch_given)
+    if (args.cluster_given)
+    {
+        if (args.all_kmer_arg)
+        {
+            vector<cell_type> seqs;
+            signatureSize = readSignatures(inputFile, seqs);
+            fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
+            sepCluster(args.cluster_arg, calcAllSimilarityKmers, seqs, signatureSize);
+        }
+        else
+        {
+            vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
+            fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
+            sepCluster(args.cluster_arg, &calcAllSimilarityWindow, seqs);
+        }
+    }
+    else if (args.batch_given)
     {
         skip = true;
         batch = args.batch_arg;
@@ -131,7 +227,6 @@ int similarity_main(int argc, char *argv[])
             {
                 pFile = fopen((rawname + "local_sim.txt").c_str(), "w");
                 batching(inputFile, pFile, &calcAllSimilarityLocal, &calcAllSimilarityBatch);
-                
             }
             else if (args.global_arg)
             {

@@ -358,6 +358,7 @@ class similarity_main_cmdline
 public:
   const char *bf_input_arg;
   const char *output_arg;
+  const char *cluster_arg;
   size_t threshold_arg;
   size_t window_arg;
   size_t element_arg;
@@ -366,6 +367,7 @@ public:
 
   bool bf_input_given;
   bool output_given;
+  bool cluster_given;
   bool threshold_given;
   bool window_given;
   bool element_given;
@@ -383,10 +385,11 @@ public:
     USAGE_OPT
   };
 
-  similarity_main_cmdline() : bf_input_arg(""), output_arg(""),
+  similarity_main_cmdline() : bf_input_arg(""), output_arg(""), cluster_arg(""),
                               threshold_arg(0), window_arg(0),
                               element_arg(0), batch_arg(0), min_sim_arg(0),
-                              bf_input_given(false), output_given(false), min_sim_given(false),
+                              bf_input_given(false), output_given(false),
+                              cluster_given(false), min_sim_given(false),
                               threshold_given(false), window_given(false),
                               element_given(false), multiple_arg(false),
                               all_kmer_arg(false), global_arg(false),
@@ -394,10 +397,11 @@ public:
   {
   }
 
-  similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""),
+  similarity_main_cmdline(int argc, char *argv[]) : bf_input_arg(""), output_arg(""), cluster_arg(""),
                                                     threshold_arg(0), window_arg(0),
                                                     element_arg(0), batch_arg(0), min_sim_arg(0),
-                                                    bf_input_given(false), output_given(false), min_sim_given(false),
+                                                    bf_input_given(false), output_given(false),
+                                                    cluster_given(false), min_sim_given(false),
                                                     threshold_given(false), window_given(false),
                                                     element_given(false), multiple_arg(false),
                                                     all_kmer_arg(false), global_arg(false),
@@ -412,6 +416,7 @@ public:
         {"input", 1, 0, 'i'},
         {"batch", 1, 0, 'b'},
         {"output", 1, 0, 'o'},
+        {"cluster", 1, 0, 'c'},
         {"capacity", 1, 0, 'c'},
         {"threshold", 1, 0, 't'},
         {"min", 1, 0, 'M'},
@@ -424,7 +429,7 @@ public:
         {"usage", 0, 0, USAGE_OPT},
         {"version", 0, 0, 'V'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVi:o:t:w:M:mAGLSb:";
+    static const char *short_options = "hVi:o:c:t:w:M:mAGLSb:";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -466,6 +471,10 @@ public:
       case 'o':
         output_given = true;
         output_arg = optarg;
+        break;
+      case 'c':
+        cluster_given = true;
+        cluster_arg = optarg;
         break;
       case 'b':
         batch_given = true;
@@ -573,7 +582,8 @@ public:
            " -i, --input                              BF input path\n"
            " -b, --batch                              recommended for processing large input, do in batch size [default=false]\n"
            " -o, --output                             output path is {input}{-output}_sim.txt\n"
-           " -t, --threshold                          matching threshold per window  [default=4]\n"
+           " -c, --cluster                            output path is {input}{-output}_sim.txt\n"
+           " -t, --threshold                          output inter and intra cluster sim by cluster file  [default=NULL]\n"
            " -M, --min                                only print entry greater than this value, and do skip [default=0.5]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            " -A, --all                                input is all kmers\n"
@@ -599,6 +609,8 @@ public:
        << " bf_input_arg:" << bf_input_arg << "\n";
     os << " output_given:" << output_given << "\t"
        << " output_arg:" << output_arg << "\n";
+    os << " cluster_given:" << cluster_given << "\t"
+       << " cluster_arg:" << cluster_arg << "\n";
     os << " threshold_given:" << threshold_given << "\t"
        << " threshold_arg:" << threshold_arg << "\n";
     os << " window_given:" << window_given << "\t"
