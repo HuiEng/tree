@@ -3,6 +3,7 @@
 #include <random>
 #include "similarity_main_cmdline.hpp"
 #include "similarity.hpp"
+#include "similarity2.hpp"
 static similarity_main_cmdline args; // Command line switches and arguments
 
 void allKmersBatch(FILE *pFile, const string inputFile)
@@ -70,182 +71,6 @@ void allKmersBatch(FILE *pFile, const string inputFile)
     fprintf(stderr, "Loaded %zu seqs..\n", seqCount);
 }
 
-void outputClusters(FILE *pFile, const vector<size_t> &clusters)
-{
-    for (size_t sig = 0; sig < clusters.size(); sig++)
-    {
-        fprintf(pFile, "%llu,%llu\n", static_cast<unsigned long long>(sig), static_cast<unsigned long long>(clusters[sig]));
-    }
-}
-
-vector<vector<size_t>> compressClusterList(const string file)
-{
-    string line;
-    ifstream clusterStream(file);
-
-    size_t id = 0;
-    size_t clus = 0;
-    vector<size_t> clusters;
-
-    while (getline(clusterStream, line))
-    {
-        sscanf(line.c_str(), "%zu,%zu", &id, &clus);
-        clusters.push_back(clus);
-    }
-    clusterStream.close();
-
-    unordered_map<size_t, size_t> remap;
-    vector<vector<size_t>> clusterGroup;
-    size_t i = 0;
-    for (size_t &clus : clusters)
-    {
-        if (remap.count(clus))
-        {
-            clus = remap[clus];
-            clusterGroup[clus].push_back(i);
-        }
-        else
-        {
-            size_t newClus = remap.size();
-            remap[clus] = newClus;
-            clus = newClus;
-            clusterGroup.push_back({i});
-        }
-        i++;
-    }
-    fprintf(stderr, "Output %zu clusters\n", remap.size());
-    FILE *cFile = fopen("test.txt", "w");
-    outputClusters(cFile, clusters);
-    return clusterGroup;
-}
-
-template <typename T>
-void insertVecRange(vector<T> &to, vector<T> &from)
-{
-    to.insert(to.end(), from.begin(), from.end());
-}
-
-template <typename sigType>
-vector<vector<sigType>> getSigsGroup(const string file,
-                                     vector<sigType> &seqs, size_t mul)
-{
-    vector<vector<size_t>> clusterGroup = compressClusterList(file);
-    vector<vector<sigType>> sigsGroup;
-    for (vector<size_t> cluster : clusterGroup)
-    {
-
-        vector<sigType> temp;
-        for (size_t id : cluster)
-        {
-            if (mul == 1)
-            {
-                temp.push_back(seqs[id]);
-            }
-            else
-            {
-                sigType *signature = &seqs[id * mul];
-                temp.insert(temp.end(), signature, signature + signatureSize);
-            }
-        }
-        sigsGroup.push_back(temp);
-    }
-
-    return sigsGroup;
-}
-
-template <typename funcType, typename sigType>
-void sepCluster_intra(const string file,
-                      funcType simFunc,
-                      vector<sigType> &seqs, size_t mul = 1)
-{
-    vector<vector<sigType>> sigsGroup = getSigsGroup(file, seqs, mul);
-    size_t offset = 0;
-    size_t clu = 0;
-
-    string rawname = "-all_sim.txt";
-    if (mul == 1)
-    {
-        char buffer[50];
-        sprintf(buffer, "-t%zu-window_sim.txt", minimiser_match_threshold);
-        rawname = buffer;
-    }
-    FILE *pFile = fopen(("intra" + rawname).c_str(), "w");
-    fprintf(pFile, "i,j,similarity\n");
-
-    for (vector<sigType> clusterSigs : sigsGroup)
-    {
-        simFunc(pFile, clusterSigs, offset);
-        size_t clusSize = clusterSigs.size() / mul;
-        offset += clusSize;
-        fprintf(stderr, "Loaded %zu seqs...in cluster %zu\n", clusSize, clu);
-        clu++;
-    }
-}
-
-void calcAllSimilarityWindow2(FILE *pFile,
-                              vector<seq_type> seqs_a,
-                              vector<size_t> ids_a,
-                              vector<seq_type> seqs_b,
-                              vector<size_t> ids_b)
-{
-    for (size_t i = 0; i < ids_a.size(); i++)
-    {
-        for (size_t j = 0; j < ids_b.size(); j++)
-        {
-            double similarity = calcMatchingWindows(seqs_a[i], seqs_b[j]);
-            fprintf(pFile, "%zu,%zu,%.2f\n", ids_a[i], ids_b[j], similarity * 100);
-        }
-    }
-}
-
-// Jaccard similarity
-void calcAllSimilarityKmers2(FILE *pFile,
-                             vector<cell_type> seqs_a,
-                             vector<size_t> ids_a,
-                             vector<cell_type> seqs_b,
-                             vector<size_t> ids_b)
-{
-    for (size_t i = 0; i < ids_a.size(); i++)
-    {
-        for (size_t j = 0; j < ids_b.size(); j++)
-        {
-            double similarity = calcSimilarity(&seqs_a[i * signatureSize], &seqs_b[j * signatureSize], signatureSize);
-            fprintf(pFile, "%zu,%zu,%.2f\n", ids_a[i], ids_b[j], similarity * 100);
-        }
-    }
-}
-
-template <typename funcType, typename sigType>
-void sepCluster(const string file,
-                funcType simFunc,
-                vector<sigType> &seqs, size_t mul = 1)
-{
-    vector<vector<sigType>> sigsGroup = getSigsGroup(file, seqs, mul);
-    vector<vector<size_t>> clusterGroup = compressClusterList(file);
-    size_t offset = 0;
-    size_t clu = 0;
-
-    string rawname = "-all_sim.txt";
-    if (mul == 1)
-    {
-        char buffer[50];
-        sprintf(buffer, "-t%zu-window_sim.txt", minimiser_match_threshold);
-        rawname = buffer;
-    }
-    FILE *pFile = fopen(("inter" + rawname).c_str(), "w");
-    fprintf(pFile, "i,j,similarity\n");
-
-    for (size_t i = 0; i < clusterGroup.size(); i++)
-    {
-        vector<sigType> clusterSigs = sigsGroup[i];
-        simFunc(pFile, clusterSigs, offset);
-        size_t clusSize = clusterSigs.size() / mul;
-        offset += clusSize;
-        fprintf(stderr, "Loaded %zu seqs...in cluster %zu\n", clusSize, clu);
-        clu++;
-    }
-}
-
 int similarity_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
@@ -273,18 +98,22 @@ int similarity_main(int argc, char *argv[])
 
     if (args.cluster_given)
     {
+
+        vector<vector<size_t>> clusterGroup = compressClusterList(args.cluster_arg);
         if (args.all_kmer_arg)
         {
             vector<cell_type> seqs;
             signatureSize = readSignatures(inputFile, seqs);
             fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
-            sepCluster(args.cluster_arg, calcAllSimilarityKmers, seqs, signatureSize);
+            // sepCluster_intra(args.cluster_arg, &calcAllSimilarityKmers1, seqs, signatureSize);
+            sepCluster(clusterGroup, &calcAllSimilarityKmers2, seqs, signatureSize);
         }
         else
         {
             vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
             fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
-            sepCluster(args.cluster_arg, &calcAllSimilarityWindow, seqs);
+            // sepCluster_intra(args.cluster_arg, &calcAllSimilarityWindow1, seqs);
+            sepCluster(clusterGroup, &calcAllSimilarityWindow2, seqs);
         }
     }
     else if (args.batch_given)
