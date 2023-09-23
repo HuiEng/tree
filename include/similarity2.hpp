@@ -123,6 +123,8 @@ void sepCluster_intra(vector<vector<size_t>> clusterGroup,
     {
         simFunc(pFile, sigsGroup[i], clusterGroup[i]);
     }
+
+    fprintf(stderr, "done intra_sim\n");
 }
 
 void calcAllSimilarityWindow2(FILE *pFile,
@@ -163,9 +165,6 @@ void sepCluster_inter(vector<vector<size_t>> clusterGroup,
                       funcType simFunc,
                       vector<vector<sigType>> sigsGroup, size_t mul = 1)
 {
-    size_t offset = 0;
-    size_t clu = 0;
-
     string rawname = "-all_sim.txt";
     if (mul == 1)
     {
@@ -186,16 +185,25 @@ void sepCluster_inter(vector<vector<size_t>> clusterGroup,
                     sigsGroup[j], clusterGroup[j]);
         }
     }
+    fprintf(stderr, "done inter_sim\n");
 }
 
-template <typename funcType, typename sigType>
+template <typename sigType>
 void sepCluster(vector<vector<size_t>> clusterGroup,
-                funcType simFunc,
-                vector<sigType> &seqs, size_t mul = 1)
+                vector<sigType> &seqs)
+{
+    vector<vector<sigType>> sigsGroup = getSigsGroup(clusterGroup, seqs, 1);
+    sepCluster_intra(clusterGroup, &calcAllSimilarityWindow1, sigsGroup);
+    sepCluster_inter(clusterGroup, &calcAllSimilarityWindow2, sigsGroup);
+}
+
+template <typename sigType>
+void sepCluster(vector<vector<size_t>> clusterGroup,
+                vector<sigType> &seqs, size_t mul)
 {
     vector<vector<sigType>> sigsGroup = getSigsGroup(clusterGroup, seqs, mul);
-    // sepCluster_intra(clusterGroup, simFunc, sigsGroup, mul);
-    sepCluster_inter(clusterGroup, simFunc, sigsGroup, mul);
+    sepCluster_intra(clusterGroup, &calcAllSimilarityKmers1, sigsGroup, mul);
+    sepCluster_inter(clusterGroup, &calcAllSimilarityKmers2, sigsGroup, mul);
 }
 
 #endif

@@ -106,14 +106,16 @@ int similarity_main(int argc, char *argv[])
             signatureSize = readSignatures(inputFile, seqs);
             fprintf(stderr, "Loaded %zu seqs...\n", seqs.size() / signatureSize);
             // sepCluster_intra(args.cluster_arg, &calcAllSimilarityKmers1, seqs, signatureSize);
-            sepCluster(clusterGroup, &calcAllSimilarityKmers2, seqs, signatureSize);
+            // sepCluster(clusterGroup, &calcAllSimilarityKmers2, seqs, signatureSize);
+            sepCluster(clusterGroup, seqs, signatureSize);
+            
         }
         else
         {
             vector<seq_type> seqs = readPartitionBF(inputFile, signatureSize);
             fprintf(stderr, "Loaded %zu seqs...\n", seqs.size());
             // sepCluster_intra(args.cluster_arg, &calcAllSimilarityWindow1, seqs);
-            sepCluster(clusterGroup, &calcAllSimilarityWindow2, seqs);
+            sepCluster(clusterGroup, seqs);
         }
     }
     else if (args.batch_given)
