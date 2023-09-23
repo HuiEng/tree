@@ -125,21 +125,15 @@ void insertVecRange(vector<T> &to, vector<T> &from)
     to.insert(to.end(), from.begin(), from.end());
 }
 
-template <typename funcType, typename sigType>
-void sepCluster(const string file,
-                funcType simFunc,
-                vector<sigType> &seqs, size_t mul = 1)
+template <typename sigType>
+vector<vector<sigType>> getSigsGroup(const string file,
+                                     vector<sigType> &seqs, size_t mul)
 {
-    string rawname = "test";
-
     vector<vector<size_t>> clusterGroup = compressClusterList(file);
-    size_t offset = 0;
-    size_t offset_old = 0;
-    size_t clu = 0;
+    vector<vector<sigType>> sigsGroup;
     for (vector<size_t> cluster : clusterGroup)
     {
-        FILE *pFile = fopen(("intra" + to_string(clu) + "-all_sim.txt").c_str(), "w");
-        fprintf(pFile, "i,j,similarity\n");
+
         vector<sigType> temp;
         for (size_t id : cluster)
         {
@@ -152,12 +146,39 @@ void sepCluster(const string file,
                 sigType *signature = &seqs[id * mul];
                 temp.insert(temp.end(), signature, signature + signatureSize);
             }
-            offset++;
         }
-        fprintf(stderr, "Loaded %zu seqs...in cluster %zu\n", temp.size() / mul, clu);
+        sigsGroup.push_back(temp);
+    }
+
+    return sigsGroup;
+}
+
+template <typename funcType, typename sigType>
+void sepCluster(const string file,
+                funcType simFunc,
+                vector<sigType> &seqs, size_t mul = 1)
+{
+    vector<vector<sigType>> sigsGroup = getSigsGroup(file, seqs, mul);
+    size_t offset = 0;
+    size_t clu = 0;
+
+    string rawname = "-all_sim.txt";
+    if (mul > 1)
+    {
+        char buffer[50];
+        sprintf(buffer, "-t%zu-window_sim.txt", minimiser_match_threshold);
+        rawname = buffer;
+    }
+    FILE *pFile = fopen(("intra" + rawname).c_str(), "w");
+    fprintf(pFile, "i,j,similarity\n");
+
+    for (vector<sigType> clusterSigs : sigsGroup)
+    {
+        simFunc(pFile, clusterSigs, offset);
+        size_t clusSize = clusterSigs.size() / mul;
+        offset += clusSize;
+        fprintf(stderr, "Loaded %zu seqs...in cluster %zu\n", clusSize, clu);
         clu++;
-        simFunc(pFile, temp, offset_old);
-        offset_old = offset;
     }
 }
 
