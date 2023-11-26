@@ -86,7 +86,6 @@ size_t countSetBits(const cell_type *a, size_t signatureSize)
    return c;
 }
 
-
 // find the number of overlapping bits divide by the number of bits inthe refer_sig
 double calcOverlap(const cell_type *query_sig, const cell_type *refer_sig, size_t signatureSize)
 {
@@ -94,7 +93,6 @@ double calcOverlap(const cell_type *query_sig, const cell_type *refer_sig, size_
    double n = countSetBits(refer_sig, signatureSize);
    return i / n;
 }
-
 
 static const std::size_t bits_per_char = 0x08; // 8 bits in 1 char(unsigned)
 
@@ -491,6 +489,18 @@ public:
         predicated/expected number of inserted elements.
       */
       return std::pow(1.0 - std::exp(-1.0 * salt_.size() * inserted_element_count_ / size()), 1.0 * salt_.size());
+   }
+
+   inline size_t setBits()
+   {
+
+      size_t c = 0;
+      for (std::size_t i = 0; i < bit_table_.size(); ++i)
+      {
+         c += __builtin_popcountll(bit_table_[i]);
+      }
+
+      return c;
    }
 
    inline bloom_filter &operator&=(const bloom_filter &f)
