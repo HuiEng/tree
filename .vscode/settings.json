@@ -94,7 +94,8 @@
         "format": "cpp",
         "clocale": "cpp",
         "source_location": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "*.tbl": "cpp"
     },
     "cmake.sourceDirectory": "C:/DataCopied/Research/tree/source"
 }
