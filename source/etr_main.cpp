@@ -96,7 +96,9 @@ int etr_main(int argc, char *argv[])
     {
         minimiser_size = args.size_arg;
     }
-    fprintf(stderr, "kmerLength,windowLength,minimiser_size,seqCount,indi_sum,total,etr\n");
+    if (args.debug){
+        fprintf(stderr, "kmerLength,windowLength,minimiser_size,seqCount,indi_sum,total,etr\n");
+    }
     fprintf(stdout, "%u,%u,%zu,", kmerLength, windowLength, minimiser_size);
 
     string inputFile = args.input_arg;
