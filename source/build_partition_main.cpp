@@ -318,47 +318,70 @@ int build_partition_main(int argc, char *argv[])
             fprintf(stderr, "Please provide output file path\n");
             return 0;
         }
-
-        string delimiter = "/*";
-        string folder = inputFile.substr(0, inputFile.find(delimiter));
-        string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
-        fprintf(stderr, "Reading folder %s\n", folder.c_str());
-
+        
         outfile = outfile + buffer;
-
         bloom_filter bf(parameters);
+        outfile = outfile + ".bin";
+        ofstream wf(outfile, ios::out | ios::binary);
+        writeInt(wf, bf.table_size());
 
-        if (multipleOut)
+        string line;
+        size_t cnt = 0;
+
+        // Read from the text file
+        ifstream listStream(inputFile.c_str());
+        while (getline(listStream, line))
         {
-            size_t i = 0;
-            for (const auto &entry : fs::directory_iterator(folder))
-            {
-                if (entry.path().extension() == ext)
-                {
-                    ofstream wf(outfile + "_" + to_string(i) + ".bin", ios::out | ios::binary);
-                    writeInt(wf, bf.table_size());
-                    doWork(wf, parameters, entry.path());
-                    wf.close();
-                    i++;
-                }
-            }
+            doWork(wf, parameters, line);
+            cnt++;
         }
-        else
-        {
-            outfile = outfile + ".bin";
-            ofstream wf(outfile, ios::out | ios::binary);
-            writeInt(wf, bf.table_size());
-            for (const auto &entry : fs::directory_iterator(folder))
-            {
-                if (entry.path().extension() == ext)
-                {
-                    // cout << entry.path().stem().string() << '\n';
-                    doWork(wf, parameters, entry.path());
-                }
-            }
-            wf.close();
-            return 0;
-        }
+        listStream.close();
+        wf.close();
+        fprintf(stderr,"Processed %zu files, signatureSize %zu\n", cnt, bf.table_size());
+        fprintf(stderr,"lastFile to %s signatureSize %zu\n", line.c_str(), bf.table_size());
+        fprintf(stderr,"output to %s signatureSize %zu\n", outfile.c_str());
+        return 0;
+
+        // string delimiter = "/*";
+        // string folder = inputFile.substr(0, inputFile.find(delimiter));
+        // string ext = inputFile.substr(inputFile.find(delimiter) + delimiter.size(), inputFile.size() - 1);
+        // fprintf(stderr, "Reading folder %s\n", folder.c_str());
+
+        // outfile = outfile + buffer;
+
+        // bloom_filter bf(parameters);
+
+        // if (multipleOut)
+        // {
+        //     size_t i = 0;
+        //     for (const auto &entry : fs::directory_iterator(folder))
+        //     {
+        //         if (entry.path().extension() == ext)
+        //         {
+        //             ofstream wf(outfile + "_" + to_string(i) + ".bin", ios::out | ios::binary);
+        //             writeInt(wf, bf.table_size());
+        //             doWork(wf, parameters, entry.path());
+        //             wf.close();
+        //             i++;
+        //         }
+        //     }
+        // }
+        // else
+        // {
+        //     outfile = outfile + ".bin";
+        //     ofstream wf(outfile, ios::out | ios::binary);
+        //     writeInt(wf, bf.table_size());
+        //     for (const auto &entry : fs::directory_iterator(folder))
+        //     {
+        //         if (entry.path().extension() == ext)
+        //         {
+        //             // cout << entry.path().stem().string() << '\n';
+        //             doWork(wf, parameters, entry.path());
+        //         }
+        //     }
+        //     wf.close();
+        //     return 0;
+        // }
     }
 
     else
