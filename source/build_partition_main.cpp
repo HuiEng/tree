@@ -19,6 +19,7 @@ bool debug = false;
 bool compressReads = false;
 bool multipleOut = false;
 string outfile = "";
+size_t chunkRatio = 1;
 
 // void writeInt(std::ostream &os, unsigned long long int i)
 // {
@@ -182,9 +183,9 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
 
 
 template <typename view>
-void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf, size_t ratio)
+void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
 {
-    fprintf(stderr,"compressPartitionMinimisers %zu\n", ratio);
+    fprintf(stderr,"compressPartitionMinimisers %zu\n", chunkRatio);
     seqan3::sequence_file_input<dna4_traits> file_in{filename};
     // ofstream outfile(outname);
     size_t max = 8;
@@ -213,7 +214,7 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
                 }
                 cout << "\n";
                 n++;
-                if (n==ratio){
+                if (n==chunkRatio){
                     cout << "###########\n";
                     bf.print(wf);
                     bf.clear();
@@ -246,7 +247,7 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
                     bf.insert(hash);
                 }
                 n++;
-                if (n==ratio){
+                if (n==chunkRatio){
                     bf.print(wf);
                     bf.clear();
                     n=0;
@@ -282,15 +283,6 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
                                                                   seqan3::seed{0});
         getPartitionMinimisers(partition_view, parameters, inputFile, wf);
     }
-    else if (step_size!=windowLength)
-    {
-        double ratio = windowLength*1.0/step_size;
-        windowLength = step_size;
-        size_t temp = windowLength - kmerLength + 1;
-        auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
-
-        compressPartitionMinimisers(partition_view, parameters, inputFile, wf, ratio);
-    }
     else
     {
         // to get minimisers with w=8,k=4
@@ -301,6 +293,15 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
         if (args.toSingle_arg)
         {
             getMinimisers(partition_view, parameters, inputFile, wf);
+        }
+        else if (chunkRatio != 1)
+        {
+            // double chunkRatio = windowLength*1.0/step_size;
+            // windowLength = step_size;
+            // size_t temp = windowLength - kmerLength + 1;
+            // auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
+
+            compressPartitionMinimisers(partition_view, parameters, inputFile, wf);
         }
         else
         {
@@ -403,6 +404,10 @@ int build_partition_main(int argc, char *argv[])
     {
         buffer = buffer + "-single";
     }
+
+    double temp = windowLength*1.0/step_size;
+    chunkRatio = temp;
+    windowLength = step_size;
 
     if (args.folder_arg)
     {
