@@ -441,7 +441,7 @@ int build_partition_main(int argc, char *argv[])
         wf.close();
         fprintf(stderr,"Processed %zu files, signatureSize %zu\n", cnt, bf.table_size());
         fprintf(stderr,"lastFile to %s signatureSize %zu\n", line.c_str(), bf.table_size());
-        fprintf(stderr,"output to %s signatureSize %zu\n", outfile.c_str());
+        fprintf(stderr,"output to %s \n", outfile.c_str());
         return 0;
 
         // string delimiter = "/*";
