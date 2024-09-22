@@ -185,7 +185,6 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
 template <typename view>
 void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
 {
-    fprintf(stderr,"compressPartitionMinimisers %zu\n", chunkRatio);
     seqan3::sequence_file_input<dna4_traits> file_in{filename};
     // ofstream outfile(outname);
     size_t max = 8;
@@ -408,6 +407,7 @@ int build_partition_main(int argc, char *argv[])
     double temp = windowLength*1.0/step_size;
     chunkRatio = temp;
     windowLength = step_size;
+    fprintf(stderr,"chunkRatio %zu\n", chunkRatio);
 
     if (args.folder_arg)
     {
