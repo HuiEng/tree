@@ -155,6 +155,9 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
         // Retrieve the sequences and ids.
         for (auto &[seq, id, qual] : file_in)
         {
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
+            auto it = result.begin();
+
             // fprintf(stdout, ">\n");
             for (auto &&hashes : seq | minimiser_view)
             {
@@ -162,6 +165,11 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
                 {
                     bf.insert(hash);
                 }
+                for (size_t hash : *it)
+                {
+                    bf.insert(hash);
+                }
+                it++;
                 bf.print(wf);
                 // bf.printBFIdx(stderr);
 
