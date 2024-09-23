@@ -204,6 +204,14 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
             // fprintf(stdout, ">\n");
             cout << ">0|" << i << "|0\n";
             size_t n = 0;
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view ;
+            // cout << "***"<<std::distance(result.begin(), result.end()) <<"\n";
+             cout << "***\n";
+             auto it = result.begin();
+            // seqan3::debug_stream << *it << '\n';
+            // seqan3::debug_stream << *(result.end()) << '\n';
+
+            // for (size_t i = 0;i<hashes.size();i++)
             for (auto &&hashes : seq | minimiser_view)
             {
                 for (size_t hash : hashes)
@@ -212,6 +220,15 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
                     cout << hashToMer_str(kmerLength, hash) << ";";
                 }
                 cout << "\n";
+                for (size_t hash : *it)
+                {
+                    bf.insert(hash);
+                    cout << hashToMer_str(kmerLength, hash) << ";";
+                }
+                cout << "\n";
+                seqan3::debug_stream << hashes << '\n';
+                seqan3::debug_stream << *it << '\n';
+                it++;
                 n++;
                 if (n==chunkRatio){
                     cout << "###########\n";
@@ -238,6 +255,8 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
         // Retrieve the sequences and ids.
         for (auto &[seq, id, qual] : file_in)
         {
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
+            auto it = result.begin();
             // fprintf(stdout, ">\n");
             for (auto &&hashes : seq | minimiser_view)
             {
@@ -245,6 +264,11 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
                 {
                     bf.insert(hash);
                 }
+                for (size_t hash : *it)
+                {
+                    bf.insert(hash);
+                }
+                it++;
                 n++;
                 if (n==chunkRatio){
                     bf.print(wf);
@@ -288,7 +312,11 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
         // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
         size_t temp = windowLength - kmerLength + 1;
         auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
-
+// auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
+//                                                                   seqan3::window_size{windowLength},
+//                                                                   seqan3::minimiser_size{minimiser_size},
+//                                                                   seqan3::step_size{step_size},
+//                                                                   seqan3::seed{0});
         if (args.toSingle_arg)
         {
             getMinimisers(partition_view, parameters, inputFile, wf);
