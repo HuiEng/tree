@@ -17,6 +17,7 @@ static size_t minimiser_size = 3;
 static size_t bf_element_cnt = 1000;
 static bool debug = false;
 static bool compressReads = false;
+static bool compressWindows = false;
 static bool multipleOut = false;
 static string outfile = "";
 static size_t chunkRatio = 1;
@@ -336,7 +337,7 @@ void doWork_rc(ofstream &wf, bloom_parameters parameters, string inputFile)
         {
             getMinimisers_rc(partition_view, parameters, inputFile, wf);
         }
-        else if (chunkRatio != 1)
+        else if (compressWindows)
         {
             // double chunkRatio = windowLength*1.0/step_size;
             // windowLength = step_size;
@@ -447,10 +448,14 @@ int build_rc_main(int argc, char *argv[])
         buffer = buffer + "-single";
     }
 
-    double temp = windowLength*1.0/step_size;
-    chunkRatio = temp;
-    windowLength = step_size;
-    fprintf(stderr,"chunkRatio %zu\n", chunkRatio);
+    compressWindows = args.compress_windows_arg;
+    if (compressWindows)
+    {
+        double temp = windowLength * 1.0 / step_size;
+        chunkRatio = temp;
+        windowLength = step_size;
+        fprintf(stderr, "chunkRatio %zu\n", chunkRatio);
+    }
 
     if (args.folder_arg)
     {
