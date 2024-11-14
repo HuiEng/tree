@@ -15,6 +15,7 @@ static size_t windowLength = 8; // window length
 typedef int(main_func_t)(int argc, char *argv[]);
 main_func_t build_main;
 main_func_t build_partition_main;
+main_func_t build_rc_main;
 main_func_t similarity_main;
 main_func_t stats_main;
 main_func_t count_main;
@@ -23,9 +24,9 @@ main_func_t ktree_main;
 main_func_t minimiser_main;
 main_func_t partree_main;
 main_func_t partree_multi_main;
-main_func_t tree_main;
-main_func_t primary_tree_main;
-main_func_t test_main;
+// main_func_t tree_main;
+// main_func_t primary_tree_main;
+// main_func_t test_main;
 main_func_t histo_main;
 main_func_t etr_main;
 main_func_t estimate_bf_main;
@@ -46,11 +47,12 @@ cmd_func cmd_list[] = {
     {"ktree", &ktree_main},
     {"minimiser", &minimiser_main},
     {"pbuild", &build_partition_main},
+    {"rc", &build_rc_main},
     {"partree", &partree_main},
     {"partreeM", &partree_multi_main},
-    {"tree", &tree_main},
-    {"prim", &primary_tree_main},
-    {"test", &test_main},
+    // {"tree", &tree_main},
+    // {"prim", &primary_tree_main},
+    // {"test", &test_main},
     {"histo", &histo_main},
     {"etr", &etr_main},
     {"est", &estimate_bf_main},

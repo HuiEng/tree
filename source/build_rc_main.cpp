@@ -13,14 +13,13 @@ static build_partition_main_cmdline args; // Command line switches and arguments
 static uint8_t kmerLength = 9;            // Kmer length
 static uint32_t windowLength = 50;        // window length
 static uint32_t step_size = windowLength; // window length
-size_t minimiser_size = 3;
-size_t bf_element_cnt = 1000;
-bool debug = false;
-bool compressReads = false;
-bool compressWindows = false;
-bool multipleOut = false;
-string outfile = "";
-size_t chunkRatio = 1;
+static size_t minimiser_size = 3;
+static size_t bf_element_cnt = 1000;
+static bool debug = false;
+static bool compressReads = false;
+static bool multipleOut = false;
+static string outfile = "";
+static size_t chunkRatio = 1;
 
 // void writeInt(std::ostream &os, unsigned long long int i)
 // {
@@ -28,7 +27,7 @@ size_t chunkRatio = 1;
 // }
 
 template <typename view>
-void getMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
+void getMinimisers_rc(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
 {
     seqan3::sequence_file_input<dna4_traits> file_in{filename};
     size_t max = 8;
@@ -57,19 +56,19 @@ void getMinimisers(view minimiser_view, bloom_parameters parameters, string file
         // Retrieve the sequences and ids.
         for (auto &[seq, id, qual] : file_in)
         {
-            // auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
-            // auto it = result.begin();
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
+            auto it = result.begin();
             for (auto &&hashes : seq | minimiser_view)
             {
                 for (size_t hash : hashes)
                 {
                     bf.insert(hash);
                 }
-                // for (size_t hash : *it)
-                // {
-                //     bf.insert(hash);
-                // }
-                // it++;
+                for (size_t hash : *it)
+                {
+                    bf.insert(hash);
+                }
+                it++;
             }
             bf.print(wf);
             bf.clear();
@@ -78,7 +77,7 @@ void getMinimisers(view minimiser_view, bloom_parameters parameters, string file
 }
 
 template <typename view>
-void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
+void getPartitionMinimisers_rc(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
 {
     seqan3::sequence_file_input<dna4_traits> file_in{filename};
     // ofstream outfile(outname);
@@ -163,8 +162,8 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
         // Retrieve the sequences and ids.
         for (auto &[seq, id, qual] : file_in)
         {
-            // auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
-            // auto it = result.begin();
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
+            auto it = result.begin();
 
             // fprintf(stdout, ">\n");
             for (auto &&hashes : seq | minimiser_view)
@@ -173,11 +172,11 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
                 {
                     bf.insert(hash);
                 }
-                // for (size_t hash : *it)
-                // {
-                //     bf.insert(hash);
-                // }
-                // it++;
+                for (size_t hash : *it)
+                {
+                    bf.insert(hash);
+                }
+                it++;
                 bf.print(wf);
                 // bf.printBFIdx(stderr);
 
@@ -196,8 +195,10 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
     // wf.close();
 }
 
+
+
 template <typename view>
-void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
+void compressPartitionMinimisers_rc(view minimiser_view, bloom_parameters parameters, string filename, ofstream &wf)
 {
     seqan3::sequence_file_input<dna4_traits> file_in{filename};
     // ofstream outfile(outname);
@@ -218,10 +219,10 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
             // fprintf(stdout, ">\n");
             cout << ">0|" << i << "|0\n";
             size_t n = 0;
-            // auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view ;
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view ;
             // cout << "***"<<std::distance(result.begin(), result.end()) <<"\n";
-            cout << "***\n";
-            //  auto it = result.begin();
+             cout << "***\n";
+             auto it = result.begin();
             // seqan3::debug_stream << *it << '\n';
             // seqan3::debug_stream << *(result.end()) << '\n';
 
@@ -234,30 +235,28 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
                     cout << hashToMer_str(kmerLength, hash) << ";";
                 }
                 cout << "\n";
-                // for (size_t hash : *it)
-                // {
-                //     bf.insert(hash);
-                //     cout << hashToMer_str(kmerLength, hash) << ";";
-                // }
+                for (size_t hash : *it)
+                {
+                    bf.insert(hash);
+                    cout << hashToMer_str(kmerLength, hash) << ";";
+                }
                 cout << "\n";
                 seqan3::debug_stream << hashes << '\n';
-                // seqan3::debug_stream << *it << '\n';
-                // it++;
+                seqan3::debug_stream << *it << '\n';
+                it++;
                 n++;
-                if (n == chunkRatio)
-                {
+                if (n==chunkRatio){
                     cout << "###########\n";
                     bf.print(wf);
                     bf.clear();
-                    n = 0;
+                    n=0;
                 }
             }
-            if (n != 0)
-            {
+            if (n!=0){
                 cout << "@@@\n";
                 bf.print(wf);
                 bf.clear();
-                n = 0;
+                n=0;
             }
             cout << "\n";
             // end of seq flag, print empty bf
@@ -271,8 +270,8 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
         // Retrieve the sequences and ids.
         for (auto &[seq, id, qual] : file_in)
         {
-            // auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
-            // auto it = result.begin();
+            auto result = seq  | std::views::reverse | seqan3::views::complement | minimiser_view;
+            auto it = result.begin();
             // fprintf(stdout, ">\n");
             for (auto &&hashes : seq | minimiser_view)
             {
@@ -280,26 +279,24 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
                 {
                     bf.insert(hash);
                 }
-                // for (size_t hash : *it)
-                // {
-                //     bf.insert(hash);
-                // }
-                // it++;
-                n++;
-                if (n == chunkRatio)
+                for (size_t hash : *it)
                 {
+                    bf.insert(hash);
+                }
+                it++;
+                n++;
+                if (n==chunkRatio){
                     bf.print(wf);
                     bf.clear();
-                    n = 0;
+                    n=0;
                 }
             }
 
-            if (n != 0)
-            {
+            if (n!=0){
                 bf.print(wf);
                 bf.clear();
-                n = 0;
-            }
+                n=0;
+            }    
 
             // end of seq flag, print empty bf
             bf.print(wf);
@@ -308,7 +305,8 @@ void compressPartitionMinimisers(view minimiser_view, bloom_parameters parameter
     // wf.close();
 }
 
-void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
+
+void doWork_rc(ofstream &wf, bloom_parameters parameters, string inputFile)
 {
     // ofstream wf(outfile, ios::out | ios::binary);
     // bloom_filter bf(parameters);
@@ -321,7 +319,7 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
                                                                   seqan3::minimiser_size{minimiser_size},
                                                                   seqan3::step_size{step_size},
                                                                   seqan3::seed{0});
-        getPartitionMinimisers(partition_view, parameters, inputFile, wf);
+        getPartitionMinimisers_rc(partition_view, parameters, inputFile, wf);
     }
     else
     {
@@ -329,34 +327,35 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
         // input param for the minimiser view is calculated by: window size - k-mer size + 1, here: 8 - 4 + 1 = 5)
         size_t temp = windowLength - kmerLength + 1;
         auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
-        // auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
-        //                                                                   seqan3::window_size{windowLength},
-        //                                                                   seqan3::minimiser_size{minimiser_size},
-        //                                                                   seqan3::step_size{step_size},
-        //                                                                   seqan3::seed{0});
+// auto partition_view = seqan3::views::partition_multi_hash(seqan3::shape{seqan3::ungapped{kmerLength}},
+//                                                                   seqan3::window_size{windowLength},
+//                                                                   seqan3::minimiser_size{minimiser_size},
+//                                                                   seqan3::step_size{step_size},
+//                                                                   seqan3::seed{0});
         if (args.toSingle_arg)
         {
-            getMinimisers(partition_view, parameters, inputFile, wf);
+            getMinimisers_rc(partition_view, parameters, inputFile, wf);
         }
-        else if (compressWindows)
+        else if (chunkRatio != 1)
         {
             // double chunkRatio = windowLength*1.0/step_size;
             // windowLength = step_size;
             // size_t temp = windowLength - kmerLength + 1;
             // auto partition_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
 
-            compressPartitionMinimisers(partition_view, parameters, inputFile, wf);
+            compressPartitionMinimisers_rc(partition_view, parameters, inputFile, wf);
         }
         else
         {
-            getPartitionMinimisers(partition_view, parameters, inputFile, wf);
+            getPartitionMinimisers_rc(partition_view, parameters, inputFile, wf);
         }
     }
 
     // wf.close();
 }
 
-int build_partition_main(int argc, char *argv[])
+
+int build_rc_main(int argc, char *argv[])
 {
     args.parse(argc, argv);
     std::ios::sync_with_stdio(false); // No sync with stdio -> faster
@@ -408,7 +407,6 @@ int build_partition_main(int argc, char *argv[])
     {
         std::cout << "Compressing Reads" << std::endl;
     }
-
     multipleOut = args.multiple_arg;
     if (multipleOut)
     {
@@ -432,7 +430,7 @@ int build_partition_main(int argc, char *argv[])
     {
         bf_element_cnt = args.element_arg;
     }
-
+    
     if (args.step_given)
     {
         step_size = args.step_arg;
@@ -449,14 +447,10 @@ int build_partition_main(int argc, char *argv[])
         buffer = buffer + "-single";
     }
 
-    compressWindows = args.compress_windows_arg;
-    if (compressWindows)
-    {
-        double temp = windowLength * 1.0 / step_size;
-        chunkRatio = temp;
-        windowLength = step_size;
-        fprintf(stderr, "chunkRatio %zu\n", chunkRatio);
-    }
+    double temp = windowLength*1.0/step_size;
+    chunkRatio = temp;
+    windowLength = step_size;
+    fprintf(stderr,"chunkRatio %zu\n", chunkRatio);
 
     if (args.folder_arg)
     {
@@ -469,7 +463,7 @@ int build_partition_main(int argc, char *argv[])
             fprintf(stderr, "Please provide output file path\n");
             return 0;
         }
-
+        
         outfile = outfile + buffer;
         bloom_filter bf(parameters);
         outfile = outfile + ".bin";
@@ -483,14 +477,14 @@ int build_partition_main(int argc, char *argv[])
         ifstream listStream(inputFile.c_str());
         while (getline(listStream, line))
         {
-            doWork(wf, parameters, line);
+            doWork_rc(wf, parameters, line);
             cnt++;
         }
         listStream.close();
         wf.close();
-        fprintf(stderr, "Processed %zu files, signatureSize %zu\n", cnt, bf.table_size());
-        fprintf(stderr, "lastFile to %s signatureSize %zu\n", line.c_str(), bf.table_size());
-        fprintf(stderr, "output to %s \n", outfile.c_str());
+        fprintf(stderr,"Processed %zu files, signatureSize %zu\n", cnt, bf.table_size());
+        fprintf(stderr,"lastFile to %s signatureSize %zu\n", line.c_str(), bf.table_size());
+        fprintf(stderr,"output to %s \n", outfile.c_str());
         return 0;
 
         // string delimiter = "/*";
@@ -511,7 +505,7 @@ int build_partition_main(int argc, char *argv[])
         //         {
         //             ofstream wf(outfile + "_" + to_string(i) + ".bin", ios::out | ios::binary);
         //             writeInt(wf, bf.table_size());
-        //             doWork(wf, parameters, entry.path());
+        //             doWork_rc(wf, parameters, entry.path());
         //             wf.close();
         //             i++;
         //         }
@@ -527,7 +521,7 @@ int build_partition_main(int argc, char *argv[])
         //         if (entry.path().extension() == ext)
         //         {
         //             // cout << entry.path().stem().string() << '\n';
-        //             doWork(wf, parameters, entry.path());
+        //             doWork_rc(wf, parameters, entry.path());
         //         }
         //     }
         //     wf.close();
@@ -545,7 +539,7 @@ int build_partition_main(int argc, char *argv[])
         ofstream wf(outfile, ios::out | ios::binary);
         bloom_filter bf(parameters);
         writeInt(wf, bf.table_size());
-        doWork(wf, parameters, inputFile);
+        doWork_rc(wf, parameters, inputFile);
         wf.close();
     }
     return 0;

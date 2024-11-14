@@ -378,6 +378,7 @@ public:
   bool toSingle_arg;
   bool folder_arg;
   bool compress_arg;
+  bool compress_windows_arg;
 
   enum
   {
@@ -394,7 +395,7 @@ public:
                                    element_given(false), multiple_arg(false), get_element(false),
                                    canonical_arg(false), size_given(false),
                                    size_arg(0), debug(false), set_arg(false), folder_arg(false),
-                                   toSingle_arg(false), compress_arg(false)
+                                   toSingle_arg(false), compress_arg(false),compress_windows_arg(false)
   {
   }
 
@@ -406,7 +407,7 @@ public:
                                                          canonical_arg(false), size_given(false),
                                                          size_arg(0), debug(false), set_arg(false),
                                                          folder_arg(false), toSingle_arg(false),
-                                                         compress_arg(false)
+                                                         compress_arg(false),compress_windows_arg(false)
   {
     parse(argc, argv);
   }
@@ -431,7 +432,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVb:k:w:mCs:de:fxcE";
+    static const char *short_options = "hVb:k:w:mCs:de:fxcES";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -510,6 +511,9 @@ public:
         break;
       case 'c':
         compress_arg = true;
+        break;
+      case 'S':
+        compress_windows_arg = true;
         break;
       case 's':
         size_given = true;
@@ -595,6 +599,7 @@ public:
            " -E, --get_element                        estimate number of element in BF \n"
            " -C, --canonical                          canonical [default=FALSE]\n"
            " -c, --compress                           compress all seqs in a fasta into single BF [default=FALSE]\n"
+           " -S                                       compress multiple windows into one bf (for sec sigs) [default=FALSE]\n"
            " -s, --size                               number of minimiser per window [default=3]\n"
            " -k,                                      kmer length [default=4]\n"
            " -w,                                      window length [default=8]\n"
