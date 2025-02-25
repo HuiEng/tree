@@ -52,3 +52,17 @@ Root:
 - distorition can be very big, aka low priority
 - should be split/rotate/promote
 
+
+
+#################################################
+*** try to deal with long Seqs
+if windowLength!= stepSize (windowLength assume to be >> stepSize)
+- treat each window as a subseq and build prim sig on each window and store in a bf
+- sec_sig length depends on windowLength and density in each bf depends on the stepSize (aka sub-windowLength)
+
+
+
+
+
+
+

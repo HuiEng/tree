@@ -510,7 +510,6 @@ int build_partition_main(int argc, char *argv[])
             fprintf(stderr, "Please provide output file path\n");
             return 0;
         }
-
         outfile = outfile + buffer;
         bloom_filter bf(parameters);
         outfile = outfile + ".bin";
