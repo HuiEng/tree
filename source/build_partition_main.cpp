@@ -16,6 +16,7 @@ static uint32_t step_size = windowLength; // window length
 size_t minimiser_size = 3;
 size_t bf_element_cnt = 1000;
 bool debug = false;
+bool reverseReads = false;
 bool compressReads = false;
 bool compressWindows = false;
 bool multipleOut = false;
@@ -51,6 +52,22 @@ void getMinimisers(view minimiser_view, bloom_parameters parameters, string file
         }
         bf.print(wf);
         bf.clear();
+    }
+    else if (reverseReads)
+    {
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
+        {
+            for (auto &&hashes : seq | std::views::reverse | minimiser_view)
+            {
+                for (size_t hash : hashes)
+                {
+                    bf.insert(hash);
+                }
+            }
+            bf.print(wf);
+            bf.clear();
+        }
     }
     else
     {
@@ -155,6 +172,24 @@ void getPartitionMinimisers(view minimiser_view, bloom_parameters parameters, st
         }
         // end of seq flag, print empty bf
         bf.print(wf);
+    }
+    else if (reverseReads)
+    {
+
+        // Retrieve the sequences and ids.
+        for (auto &[seq, id, qual] : file_in)
+        {
+            for (auto &&hashes : seq | std::views::reverse | minimiser_view)
+            {
+                for (size_t hash : hashes)
+                {
+                    bf.insert(hash);
+                }
+                bf.print(wf);
+                bf.clear();
+            }
+            bf.print(wf);
+        }
     }
 
     else
@@ -407,6 +442,12 @@ int build_partition_main(int argc, char *argv[])
     if (compressReads)
     {
         std::cout << "Compressing Reads" << std::endl;
+    }
+
+    reverseReads = args.compress_arg;
+    if (reverseReads)
+    {
+        std::cout << "Reversing Reads" << std::endl;
     }
 
     multipleOut = args.multiple_arg;

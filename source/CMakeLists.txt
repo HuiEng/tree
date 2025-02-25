@@ -11,6 +11,20 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -lstdc++fs")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
+# Get the current working branch
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# Get the latest commit hash
+execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 # add seqan3 to search path
 list(APPEND CMAKE_PREFIX_PATH "../lib/seqan3/build_system")
 
@@ -28,6 +42,11 @@ target_include_directories ("${PROJECT_NAME}_interface" INTERFACE ../lib/robin-h
 add_executable ("${PROJECT_NAME}" main.cpp)
 target_link_libraries ("${PROJECT_NAME}" PUBLIC "${PROJECT_NAME}_interface")
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "-DGIT_BRANCH=\"${GIT_BRANCH}\"")
 
 include_directories(include)
 

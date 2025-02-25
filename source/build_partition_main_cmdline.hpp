@@ -377,6 +377,7 @@ public:
   bool set_arg;
   bool toSingle_arg;
   bool folder_arg;
+  bool reverse_arg;
   bool compress_arg;
   bool compress_windows_arg;
 
@@ -395,7 +396,7 @@ public:
                                    element_given(false), multiple_arg(false), get_element(false),
                                    canonical_arg(false), size_given(false),
                                    size_arg(0), debug(false), set_arg(false), folder_arg(false),
-                                   toSingle_arg(false), compress_arg(false),compress_windows_arg(false)
+                                   toSingle_arg(false), reverse_arg(false), compress_arg(false),compress_windows_arg(false)
   {
   }
 
@@ -406,7 +407,7 @@ public:
                                                          element_given(false), multiple_arg(false), get_element(false),
                                                          canonical_arg(false), size_given(false),
                                                          size_arg(0), debug(false), set_arg(false),
-                                                         folder_arg(false), toSingle_arg(false),
+                                                         folder_arg(false), toSingle_arg(false), reverse_arg(false),
                                                          compress_arg(false),compress_windows_arg(false)
   {
     parse(argc, argv);
@@ -423,6 +424,7 @@ public:
         {"canonical", 0, 0, 'C'},
         {"compress", 0, 0, 'c'},
         {"toSingle", 0, 0, 'x'},
+        {"reverse", 0, 0, '1'},
         {"partition", 0, 0, 'p'},
         {"size", 1, 0, 's'},
         {"step", 1, 0, STEP_OPT},
@@ -432,7 +434,7 @@ public:
         {"version", 0, 0, 'V'},
         {"debug", 0, 0, 'd'},
         {0, 0, 0, 0}};
-    static const char *short_options = "hVb:k:w:mCs:de:fxcES";
+    static const char *short_options = "hVb:k:w:mCs:de:fxcESr";
 
     ::std::string err;
 #define CHECK_ERR(type, val, which)                                                      \
@@ -511,6 +513,9 @@ public:
         break;
       case 'c':
         compress_arg = true;
+        break;
+      case 'r':
+        reverse_arg = true;
         break;
       case 'S':
         compress_windows_arg = true;
@@ -606,6 +611,7 @@ public:
            " --step,                                  step size for winnowing [default=window length]\n"
            " -m,                                      output one binary file per seq [default=FALSE], give folder name with -b\n"
            " -x, --toSingle                           print wBFL to single BF, plz verify BF size [default=FALSE]\n"
+           " -r, --reverse                            reverse seqs [default=FALSE]\n"
            "     --usage                              Usage\n"
            " -h, --help                               This message\n"
            " -V, --version                            Version\n"
