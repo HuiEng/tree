@@ -9,6 +9,15 @@
 // #include "bf/all.hpp"
 // using namespace bf;
 
+#ifndef GIT_BRANCH
+#define GIT_BRANCH "?"
+#endif
+#ifndef GIT_COMMIT_HASH
+#define GIT_COMMIT_HASH "?"
+#endif
+string commit_branch = GIT_BRANCH;
+string commit_hash = GIT_COMMIT_HASH;
+
 static size_t kmerLength = 4;   // Kmer length
 static size_t windowLength = 8; // window length
 
@@ -90,7 +99,8 @@ int sos(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-
+  fprintf(stderr, "current branch: %s \n", commit_branch.c_str());
+  fprintf(stderr, "current commit: %s \n", commit_hash.c_str());
   std::string error;
 
   if (argc < 2)
