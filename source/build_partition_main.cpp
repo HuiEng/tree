@@ -444,7 +444,7 @@ int build_partition_main(int argc, char *argv[])
         std::cout << "Compressing Reads" << std::endl;
     }
 
-    reverseReads = args.compress_arg;
+    reverseReads = args.reverse_arg;
     if (reverseReads)
     {
         std::cout << "Reversing Reads" << std::endl;
