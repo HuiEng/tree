@@ -59,7 +59,7 @@ cmd_func cmd_list[] = {
     {"pbuild", &build_partition_main},
     {"rc", &build_rc_main},
     {"partree", &partree_main},
-    {"test", &test},
+    {"test", &test_main},
     {"partreeM", &partree_multi_main},
     // {"tree", &tree_main},
     // {"prim", &primary_tree_main},
