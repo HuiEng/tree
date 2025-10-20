@@ -28,7 +28,7 @@ void doWork(ofstream &wf, bloom_parameters parameters, string inputFile)
     // getPartitionMinimisers
     size_t temp = windowLength - kmerLength + 1;
     auto minimiser_view = seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{kmerLength}}) | seqan3::views::partition_multi(temp, kmerLength, minimiser_size, step_size);
-    seqan3::sequence_file_input<dna4_traits> file_in{filename};
+    seqan3::sequence_file_input<dna4_traits> file_in{inputFile};
 
     bloom_filter bf(parameters);
     {
